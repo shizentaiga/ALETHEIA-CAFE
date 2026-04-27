@@ -1,14 +1,27 @@
 import { jsxRenderer } from 'hono/jsx-renderer'
-import { Link, ViteClient } from 'vite-ssr-components/hono'
 
 export const renderer = jsxRenderer(({ children }) => {
   return (
-    <html>
+    <html lang="ja">
       <head>
-        <ViteClient />
-        <Link href="/src/style.css" rel="stylesheet" />
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>ALETHEIA-CAFE</title>
+        
+        {/* 【将来的な拡張予定】
+          1. クライアント側JS (src/client.ts) の読み込み
+          2. ページごとのタイトル(title変数)の動的反映
+          3. メタタグの動的制御
+        */}
+
+        {/* CSSを直接指定（Viteがパスを解決します） */}
+        <link href="/src/style.css" rel="stylesheet" />
       </head>
-      <body>{children}</body>
+      <body>
+        <main>
+          {children}
+        </main>
+      </body>
     </html>
   )
 })
