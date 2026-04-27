@@ -26,17 +26,21 @@ ALETHEIA-PROTOの課題（密結合）を解消し、機能追加や変更に強
 
 ### ディレクトリ構成
 
-- **src/**
-  - **index.tsx**: アプリケーション全体のメインエントリ。ルーティングとミドルウェアの制御を担当。
-  - **renderer.tsx**: 全ページ共通のHTML構造を定義する共通レンダラー。HTMXの読み込みやグローバルスタイルの管理。
-  - **pages/**: 各画面を構成するコンポーネント集。
-    - **TopPage.tsx**: トップページのメインオーケストレーター。
-    - **TopHeader.tsx**: 透過背景とセリフ体ロゴを持つヘッダー。
-    - **TopMain.tsx**: 検索機能やメインコンテンツ。
-    - **TopFooter.tsx**: 画面最下部に固定（Sticky Footer）されるフッター。
-
-- **public/**: 静的資産の格納場所。
-  - **style.css**: プロジェクト全体の外部CSS。
+src/
+├── index.tsx          # エントリポイント。ルーティングとサーバー設定
+├── renderer.tsx       # 全ページ共通の土台（<head>, HTMX, 共通CSSの読み込み）
+├── style.css          # リセットCSSや、全画面共通の変数（変数のみを推奨）
+├── pages/
+│   ├── TopPage.tsx    # トップページの親。Header/Main/Footerを配置
+│   ├── TopHeader.tsx  # ロゴ・透過背景ヘッダー（自己完結型）
+│   ├── TopFooter.tsx  # Sticky Footer（自己完結型）
+│   └── TopMain.tsx    # メイン領域。1〜3のコンポーネントをレイアウトする
+├── components/        # ★ここが重要。TopMainの中で使う「独立国家」たち
+│   ├── SearchArea.tsx     # 旧TopMain_1：ドリルダウン（CSS/JS内包）
+│   ├── SearchCategory.tsx # 旧TopMain_2：カテゴリ選択（CSS/JS内包）
+│   └── SearchResult.tsx   # 旧TopMain_3：結果一覧リスト（CSS/JS内包）
+└── public/
+    └── (画像やfaviconなどの静的資産)
 
 ### 設計方針
 
