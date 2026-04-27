@@ -1,6 +1,13 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "aletheia-cafe",
-  "compatibility_date": "2025-08-03",
-  "main": "./src/index.tsx"
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "aletheia-cafe",
+	"compatibility_date": "2025-08-03",
+	"main": "./src/index.tsx",
+	"d1_databases": [
+		{
+			"binding": "ALETHEIA_CAFE_DB",
+			"database_name": "ALETHEIA-CAFE-DB",
+			"database_id": "70ed05d4-20d7-484d-bdc1-3a5e9ea63086"
+		}
+	]
 }
