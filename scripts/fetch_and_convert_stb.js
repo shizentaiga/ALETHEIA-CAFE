@@ -1,0 +1,180 @@
+/**
+ * =============================================================================
+ * 【 ALETHEIA - Starbucks API Sync & Transformer (v1.3.0) 】
+ * =============================================================================
+ * 役割：公式サイト API から最新の店舗 JSON を取得し、D1 用シード SQL を自動生成する。
+ * * ■ プロジェクト構造 (Work-tree)
+ * root/
+ * ├── src/db/seed/chains/           # [OUTPUT 1] 本番用シード配置先
+ * │   └── starbucks.sql             # apply_seeds.sh が参照する本体
+ * └── scripts/                      # 作業用ワークスペース
+ * ├── fetch_and_convert_stb.js  # [MAIN] 本スクリプト
+ * └── logs/                     # [OUTPUT 2] 作業ログ・一時保存
+ * ├── st_all_raw.json       # 取得した全県分の生JSON（デバッグ用）
+
+* * ■ 設計思想 & 処理フロー (Data Pipeline)
+ * 1. 【API連携】pref_code (01-47) をループし、ヘッダー偽装を用いて JSON を一括取得。
+ * 2. 【ページネーション】'found' 値に基づき、100件超の店舗も漏れなく自動巡回。
+ * 3. 【正規化】
+ * - 座標：'location' (WGS84) を採用。
+ * - 住所：'address_5' から不要な空白を除去し、都道府県開始ルールを適用。
+ * - 設備：'public_wireless_service_flg' を has_wifi へマッピング。
+ * 4. 【資産化】
+ * - 'store_id' を元に 'STB_OFFICIAL_xxxx' という一意な ext_place_id を生成。
+ * - INSERT OR REPLACE 形式で D1 への冪等性を担保。
+ * 
+ * * ■ 実行方法 (Execution)
+ * $ node scripts/fetch_and_convert_stb.js
+ * =============================================================================
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/**
+ * 設定
+ */
+const CONFIG = {
+    DB_ID: 'brand_starbucks',
+    OWNER_ID: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+    OUTPUT_SQL: path.join(__dirname, '../src/db/seed/chains/starbucks.sql'),
+    LOG_RAW: path.join(__dirname, 'logs/st_all_raw.json'),
+    WAIT_LONG: 2000,  // 都道府県ごとの待機 (2秒)
+    WAIT_SHORT: 2000, // ページごとの待機 (2秒)
+    CONCURRENCY: 5    // 同時にリクエストを投げる都道府県数
+};
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * 住所のクレンジング
+ * スペースを完全に消さず、正規化するに留める（検索ヒット率向上のため）
+ */
+function normalizeAddress(addr) {
+    if (!addr) return '';
+    return addr.replace(/　/g, ' ').trim();
+}
+
+/**
+ * SQL生成
+ * 新規フォーマット（3テーブル構成）に準拠。
+ * 外部IDや設備フラグはすべて attributes_json に集約します。
+ */
+function convertToSql(hits) {
+    return hits.map(hit => {
+        const f = hit.fields;
+        const storeId = f.store_id;
+        const serviceId = `STB_${storeId}`;
+        
+        const cleanAddress = normalizeAddress(f.address_5);
+        const [lat, lng] = f.location ? f.location.split(',') : ['NULL', 'NULL'];
+        
+        // 🌟 設備・メタデータを JSON オブジェクトとして構成
+        const attributes = {
+            category: "cat_cafe",
+            wifi: f.public_wireless_service_flg === "1",
+            ext_source: "starbucks_official",
+            ext_place_id: `STB_OFFICIAL_${storeId}`,
+
+            // // 必要に応じて他のフィールドも追加可能
+            // business_hours: f.business_hours_text || null 
+            // 改行コードを半角スペースなどに置換して一行に収める
+            business_hours: f.business_hours_text ? f.business_hours_text.replace(/\r?\n/g, ' ') : null
+        };
+
+        const escapedTitle = `スターバックス コーヒー ${f.name}`.replace(/'/g, "''");
+        const jsonString = JSON.stringify(attributes).replace(/'/g, "''");
+
+        // 🌟 新規 services テーブルの定義に合わせた単一の INSERT 文
+        return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, title, address, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.DB_ID}', '${CONFIG.OWNER_ID}', 'free', '${escapedTitle}', '${cleanAddress}', ${lat}, ${lng}, '${jsonString}');`;
+    }).join('\n');
+}
+
+async function fetchStarbucksData(prefCode, start = 0) {
+    const baseUrl = 'https://hn8madehag.execute-api.ap-northeast-1.amazonaws.com/prd-2019-08-21/storesearch';
+    
+    // 🌟 ポイント： '01' を 1 (数値) に変換します
+    const numericPrefCode = parseInt(prefCode, 10);
+
+    const params = new URLSearchParams({
+        size: '100',
+        'q.parser': 'structured',
+        // 🌟 数値としてクエリを組み立てます
+        q: `(and record_type:1 pref_code:${numericPrefCode})`,
+        sort: 'store_id asc',
+        start: start.toString()
+    });
+
+    try {
+        const response = await fetch(`${baseUrl}?${params.toString()}`, {
+            headers: {
+                'origin': 'https://store.starbucks.co.jp',
+                'referer': 'https://store.starbucks.co.jp/',
+                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0'
+            }
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+    } catch (e) {
+        console.error(`  ⚠️  Error fetching Pref:${prefCode} (as ${numericPrefCode}): ${e.message}`);
+        return null;
+    }
+}
+
+async function main() {
+    console.log("🚀 Starting Safe Starbucks Data Acquisition...");
+    const prefList = Array.from({ length: 47 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+    let allHits = [];
+    let totalSql = "-- ALETHEIA Starbucks Nationwide Generated Seeds\n\n";
+
+    // チャンクに分けて実行 (2都道府県ずつ)
+    for (let i = 0; i < prefList.length; i += CONFIG.CONCURRENCY) {
+        const chunk = prefList.slice(i, i + CONFIG.CONCURRENCY);
+        console.log(`📦 Processing: ${chunk.join(', ')}...`);
+
+        const results = await Promise.all(chunk.map(async (pref) => {
+            let start = 0;
+            let hitsInPref = [];
+            let hasMore = true;
+
+            while (hasMore) {
+                const data = await fetchStarbucksData(pref, start);
+                if (!data || !data.hits) break;
+
+                const hits = data.hits.hit || [];
+                hitsInPref.push(...hits);
+
+                console.log(`  📍 Pref:${pref} - Found: ${hits.length} (Total: ${data.hits.found})`);
+
+                start += 100;
+                if (start >= data.hits.found) {
+                    hasMore = false;
+                } else {
+                    await sleep(CONFIG.WAIT_SHORT); // ページ内待機
+                }
+            }
+            return hitsInPref;
+        }));
+
+        const flattened = results.flat().filter(Boolean);
+        allHits.push(...flattened);
+        totalSql += convertToSql(flattened) + "\n";
+
+        console.log(`⏳ Waiting ${CONFIG.WAIT_LONG}ms for next chunk...`);
+        await sleep(CONFIG.WAIT_LONG); // チャンク間待機
+    }
+
+    // 保存処理
+    if (!fs.existsSync(path.dirname(CONFIG.LOG_RAW))) fs.mkdirSync(path.dirname(CONFIG.LOG_RAW), { recursive: true });
+    fs.writeFileSync(CONFIG.OUTPUT_SQL, totalSql);
+    fs.writeFileSync(CONFIG.LOG_RAW, JSON.stringify(allHits, null, 2));
+
+    console.log(`\n✨ Done! Total Records: ${allHits.length}`);
+}
+
+main();

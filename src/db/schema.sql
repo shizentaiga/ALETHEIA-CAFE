@@ -1,4 +1,5 @@
--- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/schema.sql --local
+-- (DB作成：初回のみ) npx wrangler d1 create ALETHEIA-CAFE-DB
+-- (テーブル作成) npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/schema.sql --local
 
 /**
  * =============================================================================
