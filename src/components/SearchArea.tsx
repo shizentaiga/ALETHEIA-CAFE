@@ -1,5 +1,3 @@
-// メイン1：エリア検索
-
 import { html } from 'hono/html'
 import type { FC } from 'hono/jsx'
 
