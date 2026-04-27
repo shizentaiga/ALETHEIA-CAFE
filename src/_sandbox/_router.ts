@@ -13,6 +13,8 @@ import { trimTrailingSlash } from 'hono/trailing-slash'
 import { test00 } from './test00_hello'
 import { test01 } from './test01_db'
 import { test02 } from './test02_oauth'
+import { test03 } from './test03_drill'
+import { test04 } from './test04_drill2'
 
 export const sandboxApp = new Hono<{}>()
 
@@ -30,4 +32,6 @@ sandboxApp.use('*', trimTrailingSlash())
 sandboxApp.route('/test00', test00)
 sandboxApp.route('/test01', test01)
 sandboxApp.route('/test02', test02)
+sandboxApp.route('/test03', test03)
+sandboxApp.route('/test04', test04)
 
