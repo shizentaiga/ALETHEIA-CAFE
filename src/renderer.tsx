@@ -1,17 +1,27 @@
 import { jsxRenderer } from 'hono/jsx-renderer'
 
+// --- Configuration (定数定義) ---
+const SITE_CONFIG = {
+  title: 'ALETHEIA-CAFE',
+  lang: 'ja',
+  charset: 'UTF-8',
+  // public フォルダ内の資産パス
+  assets: {
+    css: '/style.css',
+  }
+} as const
+
+// --- Renderer ---
 export const renderer = jsxRenderer(({ children }) => {
   return (
-    <html lang="ja">
+    <html lang={SITE_CONFIG.lang}>
       <head>
-        <meta charset="UTF-8" />
+        <meta charset={SITE_CONFIG.charset} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>ALETHEIA-CAFE</title>
+        <title>{SITE_CONFIG.title}</title>
         
-        {/* public/style.css を参照。
-          開発・本番ともにパスが固定（/style.css）されるため、ビルドエラーの影響を受けません。
-        */}
-        <link href="/style.css" rel="stylesheet" />
+        {/* 静的資産の読み込み */}
+        <link href={SITE_CONFIG.assets.css} rel="stylesheet" />
       </head>
       <body>
         <main>
