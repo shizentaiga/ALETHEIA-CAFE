@@ -12,6 +12,7 @@ import { trimTrailingSlash } from 'hono/trailing-slash'
 // 新しい実験用ファイルを作成するたびに、ここに追加します
 import { test00 } from './test00_hello'
 import { test01 } from './test01_db'
+import { test02 } from './test02_oauth'
 
 export const sandboxApp = new Hono<{}>()
 
@@ -28,3 +29,5 @@ sandboxApp.use('*', trimTrailingSlash())
  */
 sandboxApp.route('/test00', test00)
 sandboxApp.route('/test01', test01)
+sandboxApp.route('/test02', test02)
+
