@@ -1,4 +1,7 @@
 import { Hono } from 'hono'
+import { TopHeader } from './TopHeader'
+import { TopMain } from './TopMain'
+import { TopFooter } from './TopFooter'
 
 export const home = new Hono()
 
@@ -6,7 +9,9 @@ export const home = new Hono()
 home.get('/', (c) => {
   return c.render(
     <>
-      <p>トップページのtestです。（共通レンダラー適用済み）</p>
+      <TopHeader />
+      <TopMain />
+      <TopFooter />
     </>
   )
 })
