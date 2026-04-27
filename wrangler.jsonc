@@ -9,5 +9,13 @@
 			"database_name": "ALETHEIA-CAFE-DB",
 			"database_id": "70ed05d4-20d7-484d-bdc1-3a5e9ea63086"
 		}
-	]
+	],
+
+	"vars": {
+    "ENVIRONMENT": "proto",
+    "GOOGLE_CLIENT_ID": "479168082736-c0rosu4b1ptkr613g7osa8qm0a5ul3q9.apps.googleusercontent.com",
+    "ADMIN_EMAIL": "tshizen2506@gmail.com",
+    "SESSION_EXPIRY": "2592000" // 30日（秒単位）: テクニカル・ガバナンスに基づく
+  }
+
 }

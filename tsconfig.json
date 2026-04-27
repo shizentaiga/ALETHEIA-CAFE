@@ -6,10 +6,15 @@
     "strict": true,
     "skipLibCheck": true,
     "lib": [
-      "ESNext"
+      "ESNext",
+      "DOM",      // 🌟 URL や URLSearchParams を値として認識させるために必要
+      "DOM.Iterable"
     ],
-    "types": ["vite/client"],
+    "types": [
+      "vite/client",
+      "@cloudflare/workers-types" // 🌟 これを追加することで D1 や URL クラスが解決されます
+    ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
-  },
+  }
 }
