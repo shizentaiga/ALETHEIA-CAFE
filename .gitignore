@@ -12,7 +12,7 @@ dist/
 *.log
 .DS_Store
 
-# VSCode (チーム開発や環境再現を優先し、個人設定のみ除外)
+# VSCode (チーム開発や環境再現を優先。個人設定のみ除外)
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
