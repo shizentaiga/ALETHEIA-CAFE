@@ -38,7 +38,7 @@ const moduleStyle = (scope: string) => `
  * 【Content & Data Settings】
  */
 const LABELS = {
-  defaultButtonText: "エリアを選択",
+  defaultButtonText: "エリア",
   icon: "📍"
 }
 

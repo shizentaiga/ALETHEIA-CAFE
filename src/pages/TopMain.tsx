@@ -12,14 +12,14 @@ const layoutStyle = `
     margin: 0 auto;
     padding: 20px;
   }
-  /* エリアと絞り込みを横に並べる */
   .search-bar-row {
     display: flex;
     gap: 12px;
     width: 100%;
   }
-  .search-bar-row > div {
-    flex: 1; /* 50%ずつ均等に広げる */
+  /* 直下の全要素を均等(1:1)に並べる。これが最も不具合が起きにくい指定です */
+  .search-bar-row > * {
+    flex: 1;
   }
 `
 
@@ -27,13 +27,13 @@ export const TopMain: FC<{ results: any[], total: number }> = ({ results, total 
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
-    {/* 上段：2つのチップを横並びに配置 */}
+    {/* シンプルに2つのチップを並べる */}
     <div class="search-bar-row">
       <SearchArea />
       <SearchCategory />
     </div>
 
-    {/* 下段：検索結果 */}
+    {/* 検索結果 */}
     <div id="search-result-module">
       <SearchResult results={results} total={total} />
     </div>

@@ -33,7 +33,7 @@ const moduleStyle = (scope: string) => `
 
 /** 【Content & Data Settings】 */
 const LABELS = {
-  sectionTitle: "絞り込み条件",
+  sectionTitle: "条件",
   icon: "⚙"
 }
 
