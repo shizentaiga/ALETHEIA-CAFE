@@ -1,18 +1,14 @@
 import { html } from 'hono/html'
 import type { FC } from 'hono/jsx'
+import { formatAttributes } from '../db/queries' // 1. インポート追加
 
 /**
  * 【Design Settings】
- * デザイナー向け：結果リストおよびカードの見た目はここを編集してください。
  */
 const moduleStyle = (scope: string) => `
   #${scope} { margin-top: 10px; }
   #${scope} .result-header { font-size: 0.8rem; color: #666; margin-bottom: 8px; }
-  
-  /* 差し替えターゲットの外枠（HTMXで中身が入れ替わる） */
   #search-results-target { display: flex; flex-direction: column; gap: 8px; }
-
-  /* カードの最小スタイル */
   #${scope} .cafe-card {
     display: block; text-decoration: none; color: inherit;
     padding: 16px; border: 1px solid #eee; border-radius: 10px;
@@ -21,11 +17,11 @@ const moduleStyle = (scope: string) => `
   #${scope} .cafe-card:hover { background: #fafafa; border-color: #ddd; }
   #${scope} .name { font-weight: 700; display: block; }
   #${scope} .addr { font-size: 0.75rem; color: #888; }
+  /* タグ用の最小スタイルを追加 */
+  .tag-box { display: flex; gap: 4px; margin-top: 4px; }
+  .tag { font-size: 0.65rem; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; color: #64748b; }
 `
 
-/**
- * 【Content & Data Settings】
- */
 const LABELS = {
   resultPrefix: "検索結果:"
 }
@@ -36,25 +32,24 @@ export const SearchResult: FC<{ results: any[], total: number }> = ({ results, t
   return (
     <section id={scope}>
       <style>{moduleStyle(scope)}</style>
-
-      {/* 件数表示 */}
       <div class="result-header">{LABELS.resultPrefix} {total}件</div>
 
-      {/* HTMXはこの div の中身(innerHTML)だけを書き換える */}
       <div id="search-results-target">
         {results.map(row => (
           <a href={`/cafe/${row.service_id}`} class="cafe-card">
             <span class="name">{row.title}</span>
             <span class="addr">{row.address}</span>
+            {/* 2. タグ表示の追加（ここだけ） */}
+            <div class="tag-box">
+              {formatAttributes(row.attributes_json).map(tag => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
           </a>
         ))}
       </div>
 
-      {html`
-        <script>
-          // 将来的にはここで「無限スクロール」や「画像の遅延読み込み」を制御
-        </script>
-      `}
+      {html`<script></script>`}
     </section>
   )
 }
