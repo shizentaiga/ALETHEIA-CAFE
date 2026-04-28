@@ -1,6 +1,6 @@
 /**
  * [File Path] src/api/area.ts
- * [Role] エリア選択ドリルダウンのHTML断片を返却
+ * [Role] エリア選択ドリルダウンのHTML断片を返却（UX改善・行全体クリック仕様）
  */
 import { Hono } from 'hono'
 import { html } from 'hono/html'
@@ -20,24 +20,18 @@ const menuStyle = `
     overflow: hidden;
   }
   .area-dropdown-item {
-    display: flex; align-items: center; padding: 0;
+    display: block; width: 100%; padding: 0;
     transition: background 0.2s; border-bottom: 1px solid #f9fafb;
+    cursor: pointer;
   }
   .area-dropdown-item:last-child { border-bottom: none; }
+  .area-dropdown-item:hover { background: #f3f4f6; }
   
-  /* 左側：確定エリア */
-  .item-label {
-    flex: 1; padding: 12px 16px; font-size: 0.95rem; color: #374151; cursor: pointer;
+  .item-content {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; font-size: 0.95rem; color: #374151;
   }
-  .item-label:hover { background: #f3f4f6; color: #111827; }
-
-  /* 右側：詳細エリア（矢印） */
-  .item-arrow {
-    padding: 12px 20px; color: #94a3b8; cursor: pointer;
-    font-size: 0.8rem; border-left: 1px solid #f3f4f6;
-    transition: all 0.2s;
-  }
-  .item-arrow:hover { background: #eff6ff; color: #3b82f6; }
+  .item-arrow { color: #94a3b8; font-size: 0.8rem; }
 
   .menu-backdrop {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -53,11 +47,12 @@ areaApp.get('/', (c) => {
   if (level === 'close') return c.html(html``)
 
   let items: string[] = []
-  if (level === 'region') {
+  const isRegion = level === 'region'
+
+  if (isRegion) {
     items = Object.keys(SEARCH_MASTER.region.options)
   } else if (level === 'pref' && regionName) {
     const regionEntry = Object.entries(SEARCH_MASTER.region.options).find(([name]) => name === regionName)
-    // SEARCH_MASTER の id をキーにして JP_REGIONS から都道府県リストを抽出
     items = regionEntry?.[1].id ? (JP_REGIONS as any)[regionEntry[1].id] : []
   }
 
@@ -65,31 +60,28 @@ areaApp.get('/', (c) => {
     const encodedName = encodeURIComponent(name)
     
     /**
-     * 【修正ポイント】
-     * 1. 宛先を TopPage (/) に変更
-     * 2. クエリパラメータを fetchServices が期待する "area" に統一
-     * 3. hx-push-url="true" でブラウザの履歴とURLを更新
+     * 【UX改善ポイント】
+     * 地方(region)階層：行全体クリックで「都道府県リスト」へ遷移（確定させない）
+     * 都道府県(pref)階層：行全体クリックで「検索実行・メニュー閉じる」
      */
-    const searchAttr = html`
-      hx-get="/?area=${encodedName}"
-      hx-target="#search-result-module"
-      hx-push-url="true"
-      hx-on::after-request="document.getElementById('area-menu-target').innerHTML = ''"
-    `
-
-    // 地方リスト表示時のみ詳細展開用の矢印を表示
-    const arrowBox = level === 'region' ? html`
-      <div class="item-arrow" 
-           hx-get="/api/area?level=pref&region=${encodedName}" 
-           hx-target="#area-menu-target">
-        ＞
-      </div>
-    ` : html``
+    const actionAttr = isRegion
+      ? html`
+          hx-get="/api/area?level=pref&region=${encodedName}"
+          hx-target="#area-menu-target"
+        `
+      : html`
+          hx-get="/?area=${encodedName}"
+          hx-target="#search-result-module"
+          hx-push-url="true"
+          hx-on::after-request="document.getElementById('area-menu-target').innerHTML = ''"
+        `
 
     return html`
-      <li class="area-dropdown-item">
-        <div class="item-label" ${searchAttr}>${name}</div>
-        ${arrowBox}
+      <li class="area-dropdown-item" ${actionAttr}>
+        <div class="item-content">
+          <span>${name}</span>
+          ${isRegion ? html`<span class="item-arrow">＞</span>` : ''}
+        </div>
       </li>`
   })
 
