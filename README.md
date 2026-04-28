@@ -33,28 +33,29 @@
 ~~~
 src/
 ├── index.tsx              # エントリポイント。ルーティングとサーバー設定
-├── renderer.tsx           # 全ページ共通の土台
+├── renderer.tsx           # 全ページ共通の土台（HTML外枠）
 ├── style.css              # リセット CSS・全画面共通変数
 │
 ├── pages/                 # 画面単位の構成要素
-│   ├── TopPage.tsx        # トップページの親レイアウト
-│   ├── TopHeader.tsx      # ヘッダーコンポーネント
-│   ├── TopFooter.tsx      # フッターコンポーネント
-│   └── TopMain.tsx        # メイン領域のレイアウト
+│   ├── TopPage.tsx        # トップページの親レイアウト（データ取得の蛇口）
+│   ├── TopHeader.tsx      # ヘッダー（ロゴ・検索窓・ログインリンク）
+│   ├── TopFooter.tsx      # フッター
+│   └── TopMain.tsx        # メイン領域のレイアウト（配置担当）
 │
 ├── components/            # 機能単位のコンポーネント
 │   ├── SearchArea.tsx     # ドリルダウン検索
 │   ├── SearchCategory.tsx # カテゴリ選択
-│   └── SearchResult.tsx   # 結果一覧リスト（queries.ts を利用）
+│   └── SearchResult.tsx   # 結果一覧リスト（HTMX更新ターゲット）
 │
 ├── db/                    # データベース関連
-│   ├── queries.ts         # ★ 検索クエリ・データ整形ロジック（TypeScript）
+│   ├── queries.ts         # 検索クエリ・データ整形ロジック（D1操作）
 │   ├── schema.sql         # テーブル定義
 │   └── seed/              # 初期データ投入スクリプト
 │       ├── areas/         # エリア別データ
-│       │   └── koiwa.sql
 │       └── chains/        # チェーン店別データ
-│           └── starbucks.sql
+│
+├── lib/                   # 外部連携・共通ロジック
+│   └── auth.ts            # ★ Google OAuth2.0 認証ユーティリティ
 │
 └── public/                # 静的資産
     └── (画像・favicon など)
