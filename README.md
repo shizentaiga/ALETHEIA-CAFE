@@ -36,35 +36,34 @@ src/
 ├── renderer.tsx           # 全ページ共通の土台（HTML外枠）
 ├── style.css              # リセット CSS・全画面共通変数
 │
-├── pages/                 # 【View】画面単位の構成要素
-│   ├── TopPage.tsx        # トップページの親レイアウト（データ取得の蛇口）
-│   ├── TopHeader.tsx      # ヘッダー（ロゴ・検索窓・ログインリンク）
+├── pages/                 # 【View & Page Controllers】画面と認証ハンドラ
+│   ├── TopPage.tsx        # トップページの親レイアウト
+│   ├── TopHeader.tsx      # ヘッダー
 │   ├── TopFooter.tsx      # フッター
-│   └── TopMain.tsx        # メイン領域のレイアウト（配置担当）
+│   ├── TopMain.tsx        # メイン領域のレイアウト
+│   └── GoogleAuth.ts      # ★認証ハンドラ（ログイン・コールバック・ログアウト）
 │
 ├── components/            # 【UI Parts】機能単位のコンポーネント
 │   ├── SearchArea.tsx     # ドリルダウン検索（初期表示用）
 │   ├── SearchCategory.tsx # カテゴリ選択
-│   ├── SearchResult.tsx   # 結果一覧リスト（HTMX更新ターゲット）
-│   └── AreaList.tsx       # ドリルダウン用リスト（HTMXで部分更新される小部品）
+│   ├── SearchResult.tsx   # 結果一覧リスト
+│   └── AreaList.tsx       # ドリルダウン用リスト（HTMX小部品）
 │
-├── api/                   # 【Logic】HTMXから呼び出される動的エンドポイント
-│   └── area.ts            # ドリルダウン用の階層データを返すロジック
+├── api/                   # 【Logic】HTMX用動的エンドポイント
+│   └── area.ts            # ドリルダウン用階層データ返却
 │
 ├── db/                    # 【Data】データベース関連
-│   ├── queries/           # ★物理分割されたクエリ層
-│   │   ├── main.ts        # 外部（API）への統合窓口
-│   │   ├── search.ts      # D1からの検索実行
-│   │   ├── transformers.ts # UI用ラベルへの整形
-│   │   └── utils.ts       # SQL補助・共通判定
+│   ├── queries/           # 物理分割されたクエリ層
+│   │   ├── main.ts        # 統合窓口
+│   │   ├── search.ts      # D1検索実行
+│   │   ├── transformers.ts # UI用整形
+│   │   └── utils.ts       # SQL補助
 │   ├── schema.sql         # テーブル定義
-│   └── seed/              # 初期データ投入スクリプト
-│       ├── areas/
-│       └── chains/
+│   └── seed/              # 初期データ
 │
 ├── lib/                   # 【Shared】共通定数・外部連携
-│   ├── constants.ts       # 地理情報・UIラベル・マスターデータ
-│   └── auth.ts            # 認証ユーティリティ
+│   ├── constants.ts       # 地理情報・UIラベル
+│   └── auth.ts            # Google OAuth2.0 内部処理（低レイヤー）
 │
 └── public/                # 静的資産
 ~~~
