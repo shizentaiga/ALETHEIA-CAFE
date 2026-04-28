@@ -1,19 +1,13 @@
 import { Hono } from 'hono'
-import { html } from 'hono/html'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
-import type { D1Database } from '@cloudflare/workers-types'
+import { googleAuth } from '../lib/auth'
 
 // ==========================================================
 // 1. プログラム定数・設定値 (Config)
 // ==========================================================
 const AUTH_CONFIG = {
-  GOOGLE_AUTH_ENDPOINT: 'https://accounts.google.com/o/oauth2/v2/auth',
-  GOOGLE_TOKEN_ENDPOINT: 'https://oauth2.googleapis.com/token',
-  GOOGLE_USERINFO_ENDPOINT: 'https://www.googleapis.com/oauth2/v3/userinfo',
   CALLBACK_PATH: '/auth/google/callback',
   SESSION_COOKIE: 'aletheia_test_session',
-  SCOPES: 'openid email profile',
-  PROMPT: 'select_account',
 } as const
 
 // ==========================================================
@@ -41,7 +35,6 @@ export const test02 = new Hono<{ Bindings: Bindings }>()
 
 /**
  * A. トップ画面
- * 修正ポイント：href の指定を末尾スラッシュ考慮の形式に変更
  */
 test02.get('/', async (c) => {
   const sessionUserId = getCookie(c, AUTH_CONFIG.SESSION_COOKIE)
@@ -55,7 +48,6 @@ test02.get('/', async (c) => {
     ? await db.prepare('SELECT * FROM users WHERE user_id = ?').bind(sessionUserId).first<{display_name: string, email: string}>()
     : null
 
-  // 現在のパスを取得（例: /_sandbox/test02）
   const basePath = c.req.path.replace(/\/$/, '')
 
   return c.render(
@@ -67,7 +59,6 @@ test02.get('/', async (c) => {
             <p style="color: #2b9348; font-weight: bold;">✅ ログイン中: {currentUser.display_name}</p>
             <p style="font-size: 0.8rem; color: #666; margin-bottom: 20px;">Email: {currentUser.email}</p>
             <div style="display: flex; gap: 10px; justify-content: center;">
-              {/* 絶対パスに近い相対指定に修正 */}
               <a href={`${basePath}/logout`} style={STYLES.BTN_LOGOUT}>ログアウト</a>
               <button 
                 style={STYLES.BTN_DANGER} 
@@ -80,7 +71,6 @@ test02.get('/', async (c) => {
         ) : (
           <>
             <p style="color: #666;">現在は【未ログイン】です</p>
-            {/* 🌟 修正箇所: 相対パスのズレを防ぐため basePath を付与 */}
             <a href={`${basePath}/auth/google`} style={STYLES.BTN_PRIMARY}>Googleでサインイン</a>
           </>
         )}
@@ -88,10 +78,7 @@ test02.get('/', async (c) => {
 
       <div style={STYLES.MONITOR}>
         <h3 style="color: #fff; border-bottom: 1px solid #444; margin: 0 0 10px 0;">🔍 DB Monitor (users)</h3>
-        <pre style="margin: 0;">{JSON.stringify({
-          session_id: sessionUserId || 'none',
-          users_in_db: dbUsers
-        }, null, 2)}</pre>
+        <pre style="margin: 0;">{JSON.stringify({ session_id: sessionUserId || 'none', users_in_db: dbUsers }, null, 2)}</pre>
       </div>
     </div>
   )
@@ -103,15 +90,7 @@ test02.get('/', async (c) => {
 test02.get('/auth/google', (c) => {
   const origin = new URL(c.req.url).origin
   const redirectUri = `${origin}${c.req.path}/callback`
-  
-  const queryParams = new URLSearchParams({
-    client_id: c.env.GOOGLE_CLIENT_ID,
-    redirect_uri: redirectUri,
-    response_type: 'code',
-    scope: AUTH_CONFIG.SCOPES,
-    prompt: AUTH_CONFIG.PROMPT,
-  })
-  return c.redirect(`${AUTH_CONFIG.GOOGLE_AUTH_ENDPOINT}?${queryParams.toString()}`)
+  return c.redirect(googleAuth.getAuthUrl(c.env.GOOGLE_CLIENT_ID, redirectUri))
 })
 
 /**
@@ -122,42 +101,26 @@ test02.get('/auth/google/callback', async (c) => {
   const origin = new URL(c.req.url).origin
   const redirectUri = `${origin}${c.req.path}`
   const returnPath = c.req.path.replace(AUTH_CONFIG.CALLBACK_PATH, '')
-  
   const db = c.env.ALETHEIA_CAFE_DB
 
   if (!code) return c.text('Authorization code missing', 400)
 
   try {
-    const tokenRes = await fetch(AUTH_CONFIG.GOOGLE_TOKEN_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        code,
-        client_id: c.env.GOOGLE_CLIENT_ID,
-        client_secret: c.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
-      }),
-    })
+    // 認証ロジックを外部関数に委譲
+    const googleUser = await googleAuth.exchangeCodeForUser(
+      code, c.env.GOOGLE_CLIENT_ID, c.env.GOOGLE_CLIENT_SECRET, redirectUri
+    )
 
-    const tokenData = await tokenRes.json() as any
-    if (!tokenRes.ok) throw new Error(`Token Exchange Failed: ${JSON.stringify(tokenData)}`)
+    const { sub, email, name } = googleUser
+    const displayName = name || email
 
-    const userRes = await fetch(AUTH_CONFIG.GOOGLE_USERINFO_ENDPOINT, {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` },
-    })
-    const googleUser = await userRes.json() as any
-
-    const sub = googleUser.sub
-    const email = googleUser.email
-    const name = googleUser.name || email
-
+    // DB処理：ユーザーの存在確認と保存
     let user = await db.prepare('SELECT user_id FROM users WHERE user_id = ?').bind(sub).first<{user_id: string}>()
 
     if (!user) {
       await db.prepare(
         'INSERT INTO users (user_id, email, display_name, role, status, plan_id, last_login_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)'
-      ).bind(sub, email, name, 'USER', 'ACTIVE', 'free').run()
+      ).bind(sub, email, displayName, 'USER', 'ACTIVE', 'free').run()
       user = { user_id: sub }
     } else {
       await db.prepare('UPDATE users SET status = ?, deleted_at = NULL, last_login_at = CURRENT_TIMESTAMP WHERE user_id = ?')
