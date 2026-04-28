@@ -36,7 +36,8 @@ export const SearchResult: FC<{ results: any[], total: number }> = ({ results, t
 
       <div id="search-results-target">
         {results.map(row => (
-          <a href={`/cafe/${row.service_id}`} class="cafe-card">
+          // <a href={`/cafe/${row.service_id}`} class="cafe-card">
+          <a class="cafe-card">
             <span class="name">{row.title}</span>
             <span class="addr">{row.address}</span>
             {/* 2. タグ表示の追加（ここだけ） */}
