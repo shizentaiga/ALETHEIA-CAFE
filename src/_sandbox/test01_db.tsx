@@ -1,156 +1,131 @@
 import { Hono } from 'hono'
-import type { D1Database } from '@cloudflare/workers-types'
 
-/**
- * BINDING設定
- * wrangler.toml の binding = "ALETHEIA_CAFE_DB" と一致させてください。
- */
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
 }
 
 export const test01 = new Hono<{ Bindings: Bindings }>()
 
+// --- ユーティリティ: JSON属性を短いラベルに変換 ---
+const formatAttributes = (jsonStr: string) => {
+  try {
+    const attrs = JSON.parse(jsonStr || '{}')
+    // 表示したい優先キーワードと変換マップ
+    const map: Record<string, string> = {
+      wifi: 'Wi-Fi',
+      outlets: '電源',
+      smoking: '喫煙可',
+      baby: 'ベビーカー',
+      pet: 'ペット可'
+    }
+    
+    return Object.entries(attrs)
+      .filter(([_, v]) => v === true || v === 'OK' || v === 'yes') // 有効なものだけ
+      .slice(0, 3) // トップ3に制限
+      .map(([k]) => map[k] || k)
+  } catch {
+    return []
+  }
+}
+
 test01.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;
+  const rawQ = c.req.query('q') || '';
+  const q = rawQ.replace(/[\s　]/g, ''); // スペース除去
   
-  // クエリパラメータの取得
-  const rawQ = c.req.query('q') || ''; 
-  // 🌟 検索キーワードから全角・半角スペースを除去して比較用にする
-  const q = rawQ.replace(/[\s　]/g, ''); 
-  
-  const page = parseInt(c.req.query('page') || '1'); // 現在のページ番号
-  const perPage = 10; // 1ページあたりの表示件数
-  const offset = (page - 1) * perPage;
+  let searchResults: any[] = [];
+  let totalFound = 0;
 
   try {
-    // 1. 統計情報の取得（全国、主要3都府県）
-    const stats = await Promise.all([
-      db.prepare("SELECT COUNT(*) as count FROM services WHERE brand_id = 'brand_starbucks'").first<{count: number}>(),
-      db.prepare("SELECT COUNT(*) as count FROM services WHERE address LIKE '東京都%'").first<{count: number}>(),
-      db.prepare("SELECT COUNT(*) as count FROM services WHERE address LIKE '大阪府%'").first<{count: number}>(),
-      db.prepare("SELECT COUNT(*) as count FROM services WHERE address LIKE '神奈川県%'").first<{count: number}>()
-    ]);
-
-    // 検索実行用の変数
-    let searchResults: any[] = [];
-    let totalFound = 0;
-
-    // 2. 検索キーワードがある場合の処理
     if (q) {
-      /**
-       * 🌟 柔軟検索ロジック
-       * DB側の title と address からも REPLACE でスペースを除去して比較します。
-       * これにより「東京都 江戸川区」も「東京都江戸川区」でヒットするようになります。
-       */
+      // 🌟 スペースを無視した柔軟検索 & 30件上限
       const filterSql = `
         (REPLACE(REPLACE(title, '　', ''), ' ', '') LIKE ? 
          OR REPLACE(REPLACE(address, '　', ''), ' ', '') LIKE ?)
+        AND deleted_at IS NULL
       `;
 
-      // ヒットした全件数を取得
-      const countRes = await db.prepare(
-        `SELECT COUNT(*) as count FROM services WHERE ${filterSql}`
-      ).bind(`%${q}%`, `%${q}%`).first<{count: number}>();
+      // 総数取得
+      const countRes = await db.prepare(`SELECT COUNT(*) as count FROM services WHERE ${filterSql}`)
+        .bind(`%${q}%`, `%${q}%`).first<{count: number}>();
       totalFound = countRes?.count || 0;
 
-      // 現在のページに表示する10件を取得
+      // データ取得 (最大30件)
       const { results } = await db.prepare(
-        `SELECT * FROM services WHERE ${filterSql} LIMIT ? OFFSET ?`
-      )
-      .bind(`%${q}%`, `%${q}%`, perPage, offset)
-      .all();
+        `SELECT service_id, title, address, attributes_json FROM services 
+         WHERE ${filterSql} 
+         ORDER BY created_at DESC 
+         LIMIT 30`
+      ).bind(`%${q}%`, `%${q}%`).all();
+      
       searchResults = results;
     }
 
-    // 3. レンダリング
     return c.render(
-      <div style="font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px;">
-        <h2>ALETHEIA 統計 & 柔軟検索テスト</h2>
+      <div style="font-family: system-ui; max-width: 600px; margin: auto; padding: 16px; color: #334155;">
+        <header style="margin-bottom: 24px;">
+          <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a;">ALETHEIA Sandbox</h2>
+          
+          <form method="get" style="display: flex; gap: 8px; margin-top: 16px;">
+            <input 
+              type="text" 
+              name="q" 
+              value={rawQ} 
+              placeholder="店名や住所を入力..." 
+              style="flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 16px; outline: none;"
+            />
+            <button type="submit" style="padding: 10px 20px; background: #1e293b; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+              検索
+            </button>
+          </form>
+        </header>
 
-        {/* 統計セクション：全国および主要都市の件数表示 */}
-        <div style="background: #eef2f3; padding: 1rem; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 20px; font-size: 0.9rem;">
-          <div><strong>全国:</strong> {stats[0]?.count ?? 0} 件</div>
-          <div><strong>東京:</strong> {stats[1]?.count ?? 0}</div>
-          <div><strong>大阪:</strong> {stats[2]?.count ?? 0}</div>
-          <div><strong>神奈川:</strong> {stats[3]?.count ?? 0}</div>
-        </div>
-
-        {/* 検索フォーム */}
-        <form method="get" style="margin-bottom: 20px; display: flex; gap: 10px;">
-          <input 
-            type="text" 
-            name="q" 
-            value={rawQ} 
-            placeholder="東京都江戸川区、スタバ新宿など..." 
-            style="flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #ccc;"
-          />
-          {/* 新しく検索する際はページを1に戻す */}
-          <input type="hidden" name="page" value="1" />
-          <button type="submit" style="padding: 10px 20px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer;">
-            検索
-          </button>
-        </form>
-
-        {/* 検索キーワードがある場合のみ結果を表示 */}
         {q && (
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; margin-bottom: 10px;">
-              <h3>「{rawQ}」の検索結果</h3>
-              <span style="font-weight: bold; color: #d32f2f;">{totalFound} 件ヒット</span>
+          <main>
+            <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px; display: flex; justify-content: space-between;">
+              <span>「{rawQ}」の検索結果</span>
+              <span>{totalFound}件中、最大30件を表示</span>
             </div>
-            
+
             {searchResults.length > 0 ? (
-              <>
-                <ul style="list-style: none; padding: 0;">
-                  {searchResults.map((row) => (
-                    <li key={row.service_id} style="border-bottom: 1px solid #eee; padding: 15px 0;">
-                      <div style="font-weight: bold; font-size: 1.1rem;">{row.title}</div>
-                      <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">{row.address}</div>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* ページネーション（前へ / 次へ）ボタン */}
-                <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px; align-items: center;">
-                  {page > 1 && (
-                    <a 
-                      href={`?q=${encodeURIComponent(rawQ)}&page=${page - 1}`} 
-                      style="padding: 10px 20px; border: 1px solid #ccc; text-decoration: none; color: #333; border-radius: 4px;"
-                    >
-                      ← 前へ
-                    </a>
-                  )}
-                  
-                  <span style="font-size: 0.9rem; color: #666;">
-                    {page} / {Math.ceil(totalFound / perPage)} ページ
-                  </span>
-
-                  {totalFound > offset + perPage && (
-                    <a 
-                      href={`?q=${encodeURIComponent(rawQ)}&page=${page + 1}`} 
-                      style="padding: 10px 20px; background: #333; color: #fff; text-decoration: none; border-radius: 4px;"
-                    >
-                      次へ →
-                    </a>
-                  )}
-                </div>
-              </>
+              <div style="display: flex; flex-direction: column; gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                {searchResults.map((row) => {
+                  const tags = formatAttributes(row.attributes_json);
+                  return (
+                    <div key={row.service_id} style="background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 4px;">
+                      {/* 1行目: 店名 */}
+                      <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {row.title}
+                      </div>
+                      {/* 2行目: 住所 + タグ */}
+                      <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #64748b;">
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                          {row.address}
+                        </span>
+                        {tags.length > 0 && (
+                          <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                            {tags.map(tag => (
+                              <span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <p style="color: #666;">該当する店舗が見つかりませんでした。</p>
+              <div style="padding: 40px; text-align: center; color: #94a3b8; font-size: 0.9rem;">
+                該当する店舗が見つかりませんでした。
+              </div>
             )}
-          </div>
+          </main>
         )}
       </div>
     );
   } catch (e) {
-    // 接続エラーや構文エラーの表示
-    return c.render(
-      <div style="color: red; padding: 20px; border: 1px solid red; border-radius: 8px;">
-        <h3>データベースエラー</h3>
-        <pre style="white-space: pre-wrap;">{e instanceof Error ? e.message : '予期せぬエラーが発生しました'}</pre>
-        <p>wrangler.toml の BINDING名や、D1にテーブルが存在するか確認してください。</p>
-      </div>
-    );
+    return c.render(<div style="color: red; padding: 20px;">Error: {e instanceof Error ? e.message : 'Unknown error'}</div>);
   }
 })
