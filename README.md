@@ -32,30 +32,35 @@
 
 ~~~
 src/
-├── index.tsx              # エントリポイント。ルーティングとサーバー設定
+├── index.tsx              # エントリポイント。ルーティングとAPIエンドポイントの定義
 ├── renderer.tsx           # 全ページ共通の土台（HTML外枠）
 ├── style.css              # リセット CSS・全画面共通変数
 │
-├── pages/                 # 画面単位の構成要素
+├── pages/                 # 【View】画面単位の構成要素
 │   ├── TopPage.tsx        # トップページの親レイアウト（データ取得の蛇口）
 │   ├── TopHeader.tsx      # ヘッダー（ロゴ・検索窓・ログインリンク）
 │   ├── TopFooter.tsx      # フッター
 │   └── TopMain.tsx        # メイン領域のレイアウト（配置担当）
 │
-├── components/            # 機能単位のコンポーネント
-│   ├── SearchArea.tsx     # ドリルダウン検索
+├── components/            # 【UI Parts】機能単位のコンポーネント（HTMXの断片を返す）
+│   ├── SearchArea.tsx     # ドリルダウン検索（初期表示用）
 │   ├── SearchCategory.tsx # カテゴリ選択
-│   └── SearchResult.tsx   # 結果一覧リスト（HTMX更新ターゲット）
+│   ├── SearchResult.tsx   # 結果一覧リスト（HTMX更新ターゲット）
+│   └── AreaList.tsx       # ★ドリルダウン用リスト（APIから返却する小部品）
 │
-├── db/                    # データベース関連
+├── api/                   # 【Logic】HTMXから呼び出される動的エンドポイント
+│   └── area.ts            # ★ドリルダウン用の階層データを返すロジック
+│
+├── db/                    # 【Data】データベース関連
 │   ├── queries.ts         # 検索クエリ・データ整形ロジック（D1操作）
 │   ├── schema.sql         # テーブル定義
 │   └── seed/              # 初期データ投入スクリプト
 │       ├── areas/         # エリア別データ
 │       └── chains/        # チェーン店別データ
 │
-├── lib/                   # 外部連携・共通ロジック
-│   └── auth.ts            # ★ Google OAuth2.0 認証ユーティリティ
+├── lib/                   # 【Shared】共通定数・外部連携ロジック
+│   ├── constants.ts       # ★地理情報・UIラベル・マスターデータ（今回追加）
+│   └── auth.ts            # Google OAuth2.0 認証ユーティリティ
 │
 └── public/                # 静的資産
     └── (画像・favicon など)
