@@ -105,8 +105,8 @@ export const TopHeader: FC = () => {
     <header class="header-container">
       <style>{headerStyle}</style>
 
-      {/* 1. 左：ロゴ */}
-      <div class="header-logo">{CONFIG.logoText}</div>
+      {/* 1. 左：ロゴ(クリック時にトップページへ遷移) */}
+      <a href="/" class="header-logo" style="text-decoration: none;">{CONFIG.logoText}</a>
 
       {/* 2. 中央：検索窓（URL集約型 / Enterまたは🔍クリックで実行） */}
       <form 
