@@ -2,7 +2,7 @@ import { jsxRenderer } from 'hono/jsx-renderer'
 
 // --- Configuration (定数定義) ---
 const SITE_CONFIG = {
-  title: 'メインポータル | ALETHEIA',
+  title: 'ALETHEIA',
   lang: 'ja',
   charset: 'UTF-8',
   assets: {
