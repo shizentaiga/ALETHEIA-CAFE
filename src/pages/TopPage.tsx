@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { TopHeader } from './TopHeader'
 import { TopMain } from './TopMain'
 import { TopFooter } from './TopFooter'
-import { fetchServices } from '../db/queries' // 1. クエリ関数をインポート
+import { fetchServices } from '../db/queries/main' // 1. クエリ関数をインポート
 import { getCookie } from 'hono/cookie' // 追加
 
 // D1の型定義（ビルドエラー防止）

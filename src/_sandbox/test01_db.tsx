@@ -4,7 +4,7 @@
  * [特徴] ページネーション対応、属性タグ表示、住所/店名の表記揺れ検索
  */
 import { Hono } from 'hono'
-import { fetchServices, formatAttributes } from '../db/queries'
+import { fetchServices, formatAttributes } from '../db/queries/main'
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database

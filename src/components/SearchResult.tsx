@@ -1,6 +1,6 @@
 import { html } from 'hono/html'
 import type { FC } from 'hono/jsx'
-import { formatAttributes } from '../db/queries' // 1. インポート追加
+import { formatAttributes } from '../db/queries/main'
 
 /**
  * 【Design Settings】
