@@ -16,7 +16,8 @@ export const home = new Hono<{ Bindings: Bindings }>()
 // 2. async を追加して非同期化
 home.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;  // DBアクセス
-  const q = c.req.query('q') || ''; // URLのクエリパラメータ(?q=...)を取得
+  const q = c.req.query('q') || ''; // 検索キーワード(例：カフェ)
+  const area = c.req.query('area'); // 検索エリア(例：東京都)
 
   // 【追加】セッション確認
   const userId = getCookie(c, 'aletheia_session')
@@ -24,8 +25,8 @@ home.get('/', async (c) => {
     ? await db.prepare('SELECT display_name FROM users WHERE user_id = ?').bind(userId).first()
     : null
   
-  // 【修正】第2引数に空文字ではなく q を渡す
-  const { results, total } = await fetchServices(db, q, 1);
+  // 引数の順番：(db, q, page, area)
+  const { results, total } = await fetchServices(db, q, 1, area);
   
   return c.render(
     <>

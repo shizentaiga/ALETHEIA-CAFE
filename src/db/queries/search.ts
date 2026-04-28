@@ -14,12 +14,14 @@ const DEFAULT_LIMIT = 30; // 1ページあたりのデフォルト取得件数
  * @param db D1Database インスタンス
  * @param q 検索キーワード（全角半角スペースは自動除去して比較）
  * @param page 取得対象のページ番号（1始まり）
+ * @param area 対象エリア(東京都など。)
  * @param limit 取得件数（未指定時はデフォルト値を使用）
  */
 export const fetchServices = async (
   db: D1Database, 
   q: string, 
   page: number, 
+  area?: string, // ★追加：エリア引数（任意）
   limit: number = DEFAULT_LIMIT
 ) => {
   const offset = (page - 1) * limit;
@@ -34,6 +36,13 @@ export const fetchServices = async (
     // DB側と検索ワード側の両方からスペースを除去して比較（表記揺れ対策）
     conditions.push(`(${cleanSql('title')} LIKE ? OR ${cleanSql('address')} LIKE ?)`);
     params.push(`%${normalizedQ}%`, `%${normalizedQ}%`);
+  }
+
+  // 2. エリア検索（★スモールスタート：まずは完全一致）
+  if (area) {
+    // 住所のカラムに「東京都」などが含まれているか前方一致で判定
+    conditions.push(`address LIKE ?`);
+    params.push(`${area}%`); 
   }
 
   const whereSql = `WHERE ${conditions.join(' AND ')}`;
