@@ -1,5 +1,7 @@
-// エリア表示用
-
+/**
+ * [File Path] src/api/area.ts
+ * [Role] エリア選択ドリルダウンのHTML断片を返却
+ */
 import { Hono } from 'hono'
 import { html } from 'hono/html'
 import { SEARCH_MASTER, JP_REGIONS } from '../lib/constants'
@@ -47,6 +49,7 @@ areaApp.get('/', (c) => {
   const level = c.req.query('level')
   const regionName = c.req.query('region')
 
+  // メニューを閉じる処理
   if (level === 'close') return c.html(html``)
 
   let items: string[] = []
@@ -54,20 +57,27 @@ areaApp.get('/', (c) => {
     items = Object.keys(SEARCH_MASTER.region.options)
   } else if (level === 'pref' && regionName) {
     const regionEntry = Object.entries(SEARCH_MASTER.region.options).find(([name]) => name === regionName)
+    // SEARCH_MASTER の id をキーにして JP_REGIONS から都道府県リストを抽出
     items = regionEntry?.[1].id ? (JP_REGIONS as any)[regionEntry[1].id] : []
   }
 
   const listItems = items.map((name) => {
     const encodedName = encodeURIComponent(name)
     
-    // 1. 地名をクリック：即時確定（メニューを消すためのJavaScript1行を同梱）
+    /**
+     * 【修正ポイント】
+     * 1. 宛先を TopPage (/) に変更
+     * 2. クエリパラメータを fetchServices が期待する "area" に統一
+     * 3. hx-push-url="true" でブラウザの履歴とURLを更新
+     */
     const searchAttr = html`
-      hx-get="/api/search?${level === 'region' ? 'region' : 'pref'}=${encodedName}"
+      hx-get="/?area=${encodedName}"
       hx-target="#search-result-module"
+      hx-push-url="true"
       hx-on::after-request="document.getElementById('area-menu-target').innerHTML = ''"
     `
 
-    // 2. 矢印をクリック：次の階層へ（地方リストの時だけ表示）
+    // 地方リスト表示時のみ詳細展開用の矢印を表示
     const arrowBox = level === 'region' ? html`
       <div class="item-arrow" 
            hx-get="/api/area?level=pref&region=${encodedName}" 
