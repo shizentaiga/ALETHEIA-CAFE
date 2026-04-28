@@ -42,28 +42,31 @@ src/
 │   ├── TopFooter.tsx      # フッター
 │   └── TopMain.tsx        # メイン領域のレイアウト（配置担当）
 │
-├── components/            # 【UI Parts】機能単位のコンポーネント（HTMXの断片を返す）
+├── components/            # 【UI Parts】機能単位のコンポーネント
 │   ├── SearchArea.tsx     # ドリルダウン検索（初期表示用）
 │   ├── SearchCategory.tsx # カテゴリ選択
 │   ├── SearchResult.tsx   # 結果一覧リスト（HTMX更新ターゲット）
-│   └── AreaList.tsx       # ★ドリルダウン用リスト（APIから返却する小部品）
+│   └── AreaList.tsx       # ドリルダウン用リスト（HTMXで部分更新される小部品）
 │
 ├── api/                   # 【Logic】HTMXから呼び出される動的エンドポイント
-│   └── area.ts            # ★ドリルダウン用の階層データを返すロジック
+│   └── area.ts            # ドリルダウン用の階層データを返すロジック
 │
 ├── db/                    # 【Data】データベース関連
-│   ├── queries.ts         # 検索クエリ・データ整形ロジック（D1操作）
+│   ├── queries/           # ★物理分割されたクエリ層
+│   │   ├── main.ts        # 外部（API）への統合窓口
+│   │   ├── search.ts      # D1からの検索実行
+│   │   ├── transformers.ts # UI用ラベルへの整形
+│   │   └── utils.ts       # SQL補助・共通判定
 │   ├── schema.sql         # テーブル定義
 │   └── seed/              # 初期データ投入スクリプト
-│       ├── areas/         # エリア別データ
-│       └── chains/        # チェーン店別データ
+│       ├── areas/
+│       └── chains/
 │
-├── lib/                   # 【Shared】共通定数・外部連携ロジック
-│   ├── constants.ts       # ★地理情報・UIラベル・マスターデータ（今回追加）
-│   └── auth.ts            # Google OAuth2.0 認証ユーティリティ
+├── lib/                   # 【Shared】共通定数・外部連携
+│   ├── constants.ts       # 地理情報・UIラベル・マスターデータ
+│   └── auth.ts            # 認証ユーティリティ
 │
 └── public/                # 静的資産
-    └── (画像・favicon など)
 ~~~
 
 ---
