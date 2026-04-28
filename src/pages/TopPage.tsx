@@ -15,14 +15,16 @@ export const home = new Hono<{ Bindings: Bindings }>()
 // 2. async を追加して非同期化
 home.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;
-  
-  // 3. データを取得（初期状態として空文字と1ページ目を指定）
-  const { results, total } = await fetchServices(db, '', 1);
 
+  // 【追加】URLの ?q=... を取得
+  const q = c.req.query('q') || '';
+  
+// 【修正】第2引数に空文字ではなく q を渡す
+  const { results, total } = await fetchServices(db, q, 1);
+  
   return c.render(
     <>
       <TopHeader />
-      {/* 4. 取得した本物のデータを流し込む */}
       <TopMain results={results} total={total} />
       <TopFooter />
     </>

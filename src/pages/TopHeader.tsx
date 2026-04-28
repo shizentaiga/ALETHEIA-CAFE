@@ -114,7 +114,8 @@ export const TopHeader: FC = () => {
         action="/" 
         method="get"
         hx-get="/" 
-        hx-target="#search-results-target"
+        hx-target="#search-result-module" // ★ここを修正（SearchResultの最外周ID）
+        hx-select="#search-result-module" // ★ここを追加（レスポンスから抽出する範囲）
         hx-push-url="true"
       >
         <div class="header-search-input-wrapper">

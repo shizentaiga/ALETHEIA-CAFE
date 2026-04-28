@@ -42,7 +42,6 @@ export const TopMain: FC<{ results: any[], total: number }> = ({ results, total 
 
     {/* メインコンテンツ3: 検索結果 */}
     <div class="main-content-3">
-      {/* 2. SearchResultへデータを渡すよう修正 */}
       <SearchResult results={results} total={total} />
     </div>
   </section>
