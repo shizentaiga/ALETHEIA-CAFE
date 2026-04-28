@@ -57,15 +57,35 @@ export const formatAttributes = (jsonStr: string): string[] => {
       pet: 'ペット可' 
     };
 
-    return Object.entries(attrs)
-      .filter(([_, v]) => 
-        v === true ||   // JSのbooleanとしてのtrue
-        v === 1 ||      // SQLiteの真偽値(1)
-        v === 'OK' || 
-        v === 'yes'
+    const tags: string[] = [];
+
+    // 1. 支払い方法の判定（優先処理）
+    const payments = attrs.payment;
+
+    if (Array.isArray(payments) && payments.length > 0) {
+        // 判定用のフラグを事前に用意（ここが変更しやすさのポイント）
+        const isCashOnly = payments.includes('CASH_ONLY');
+        const hasPayPay = payments.includes('PayPay');
+
+        // 条件の優先順位に従ってラベルを決定
+        if (isCashOnly) {
+            tags.push('現金のみ');
+        } else if (hasPayPay) {
+            tags.push('PayPay可');
+        } else {
+            tags.push('キャッシュレス可');
+        }
+    }
+
+    // 2. その他の属性フラグ（Wi-Fi、電源など）を結合
+    const otherTags = Object.entries(attrs)
+      .filter(([k, v]) => 
+        labelMap[k] && (v === true || v === 1 || v === 'OK' || v === 'yes')
       )
-      .slice(0, 3)
-      .map(([k]) => labelMap[k] || k);
+      .map(([k]) => labelMap[k]);
+
+    // 支払い方法タグを先頭にして、合計3つまで返す
+    return [...tags, ...otherTags].slice(0, 3);
   } catch {
     return [];
   }
