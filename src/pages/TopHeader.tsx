@@ -4,7 +4,8 @@ import type { FC } from 'hono/jsx'
 const CONFIG = {
   logoText: 'ALETHEIA',
   placeholder: 'キーワードで検索...',
-  loginLabel: 'ログイン'
+  loginLabel: 'ログイン',
+  logoutLabel: 'ログアウト'
 } as const
 
 /**
@@ -100,7 +101,8 @@ const headerStyle = `
   }
 `
 
-export const TopHeader: FC = () => {
+// props に user を追加
+export const TopHeader: FC<{ user?: any }> = ({ user }) => {
   return (
     <header class="header-container">
       <style>{headerStyle}</style>
@@ -133,9 +135,15 @@ export const TopHeader: FC = () => {
 
       {/* 3. 右：最小限のログイン文字 */}
       <div class="header-auth">
-        <a href="/auth/google" class="login-link">
-          {CONFIG.loginLabel}
-        </a>
+        {user ? (
+          <span class="login-link">
+            <a href="/logout" class="login-link">
+              {CONFIG.logoutLabel} 
+            </a>
+          </span>
+        ) : (
+          <a href="/auth/google" class="login-link">{CONFIG.loginLabel}</a>
+        )}
       </div>
     </header>
   )
