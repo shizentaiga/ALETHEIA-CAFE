@@ -30,7 +30,8 @@ export const TopMain: FC<{ results: any[], total: number }> = ({ results, total 
     {/* シンプルに2つのチップを並べる */}
     <div class="search-bar-row">
       <SearchArea />
-      <SearchCategory />
+      {/* SearchCategoryは一時的に開発停止 */}
+      {/* <SearchCategory /> */}
     </div>
 
     {/* 検索結果 */}
