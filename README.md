@@ -33,22 +33,31 @@
 ~~~
 src/
 ├── index.tsx              # エントリポイント。ルーティングとサーバー設定
-├── renderer.tsx           # 全ページ共通の土台（<head>, HTMX, 共通 CSS の読み込み）
-├── style.css              # リセット CSS・全画面共通変数（変数のみを推奨）
+├── renderer.tsx           # 全ページ共通の土台
+├── style.css              # リセット CSS・全画面共通変数
 │
-├── pages/
-│   ├── TopPage.tsx        # トップページの親。Header / Main / Footer を配置
-│   ├── TopHeader.tsx      # ロゴ・透過背景ヘッダー（自己完結型）
-│   ├── TopFooter.tsx      # Sticky Footer（自己完結型）
-│   └── TopMain.tsx        # メイン領域。下記コンポーネントをレイアウトする
+├── pages/                 # 画面単位の構成要素
+│   ├── TopPage.tsx        # トップページの親レイアウト
+│   ├── TopHeader.tsx      # ヘッダーコンポーネント
+│   ├── TopFooter.tsx      # フッターコンポーネント
+│   └── TopMain.tsx        # メイン領域のレイアウト
 │
-├── components/            # ★ TopMain の中で使う「独立国家」たち
-│   ├── SearchArea.tsx     # 旧 TopMain_1：ドリルダウン（CSS / JS 内包）
-│   ├── SearchCategory.tsx # 旧 TopMain_2：カテゴリ選択（CSS / JS 内包）
-│   └── SearchResult.tsx   # 旧 TopMain_3：結果一覧リスト（CSS / JS 内包）
+├── components/            # 機能単位のコンポーネント
+│   ├── SearchArea.tsx     # ドリルダウン検索
+│   ├── SearchCategory.tsx # カテゴリ選択
+│   └── SearchResult.tsx   # 結果一覧リスト（queries.ts を利用）
 │
-└── public/
-    └── (画像・favicon などの静的資産)
+├── db/                    # データベース関連
+│   ├── queries.ts         # ★ 検索クエリ・データ整形ロジック（TypeScript）
+│   ├── schema.sql         # テーブル定義
+│   └── seed/              # 初期データ投入スクリプト
+│       ├── areas/         # エリア別データ
+│       │   └── koiwa.sql
+│       └── chains/        # チェーン店別データ
+│           └── starbucks.sql
+│
+└── public/                # 静的資産
+    └── (画像・favicon など)
 ~~~
 
 ---
