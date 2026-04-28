@@ -1,3 +1,5 @@
+// エリア表示用
+
 import { Hono } from 'hono'
 import { html } from 'hono/html'
 import { SEARCH_MASTER, JP_REGIONS } from '../lib/constants'
