@@ -30,13 +30,7 @@ const LABELS = {
   resultPrefix: "検索結果:"
 }
 
-// DB(D1)から取得を想定している検索結果のモックデータ
-const MOCK_RESULTS = [
-  { id: 1, name: "☕ テストカフェ小岩", address: "東京都江戸川区..." },
-  { id: 2, name: "☕ サンプルコーヒー葛西", address: "東京都江戸川区..." }
-]
-
-export const SearchResult: FC = () => {
+export const SearchResult: FC<{ results: any[], total: number }> = ({ results, total }) => {
   const scope = "search-result-module"
 
   return (
@@ -44,16 +38,14 @@ export const SearchResult: FC = () => {
       <style>{moduleStyle(scope)}</style>
 
       {/* 件数表示 */}
-      <div class="result-header">
-        {LABELS.resultPrefix} {MOCK_RESULTS.length}件
-      </div>
+      <div class="result-header">{LABELS.resultPrefix} {total}件</div>
 
       {/* HTMXはこの div の中身(innerHTML)だけを書き換える */}
       <div id="search-results-target">
-        {MOCK_RESULTS.map(cafe => (
-          <a href={`/cafe/${cafe.id}`} class="cafe-card">
-            <span class="name">{cafe.name}</span>
-            <span class="addr">{cafe.address}</span>
+        {results.map(row => (
+          <a href={`/cafe/${row.service_id}`} class="cafe-card">
+            <span class="name">{row.title}</span>
+            <span class="addr">{row.address}</span>
           </a>
         ))}
       </div>
@@ -61,7 +53,6 @@ export const SearchResult: FC = () => {
       {html`
         <script>
           // 将来的にはここで「無限スクロール」や「画像の遅延読み込み」を制御
-          console.log("SearchResult module loaded with ${MOCK_RESULTS.length} items");
         </script>
       `}
     </section>

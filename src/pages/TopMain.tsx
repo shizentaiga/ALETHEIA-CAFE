@@ -28,24 +28,22 @@ const layoutStyle = `
  * 3. 疎結合: 検索条件(Area/Category)の変更は、hidden input経由またはhx-includeでSearchResultへ伝播させる。
  * 4. JS管理: 要素差し替えでJSが消えるのを防ぐため、イベントはdocument等へのデリゲーションを推奨。
  */
-export const TopMain: FC = () => (
+
+export const TopMain: FC<{ results: any[], total: number }> = ({ results, total }) => (
   <section class="top-main-container">
     {/* CSS適用 */}
     <style>{layoutStyle}</style>
 
     {/* メインコンテンツ1: エリア検索（独立コンポーネント） */}
-    <div class="main-content-1">
-      <SearchArea />
-    </div>
+    <div class="main-content-1"><SearchArea /></div>
 
     {/* メインコンテンツ2: カテゴリ検索 */}
-    <div class="main-content-2">
-      <SearchCategory />
-    </div>
+    <div class="main-content-2"><SearchCategory /></div>
 
     {/* メインコンテンツ3: 検索結果 */}
     <div class="main-content-3">
-      <SearchResult />
+      {/* 2. SearchResultへデータを渡すよう修正 */}
+      <SearchResult results={results} total={total} />
     </div>
   </section>
 )
