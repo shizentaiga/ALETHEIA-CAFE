@@ -1,41 +1,46 @@
-import { html } from 'hono/html'
 import type { FC } from 'hono/jsx'
 
-/** * 【Design Settings】
- * デザイナー向け：モジュールの見た目はここを編集してください。
+/**
+ * 【Design Settings】
+ * SearchCategory と共通のトーン＆マナー
  */
 const moduleStyle = (scope: string) => `
-  #${scope} { font-family: sans-serif; }
-  #${scope} .trigger-btn { 
-    width: 100%; padding: 12px; cursor: pointer; border: 1px solid #ccc; 
-    border-radius: 8px; background: #fff; text-align: left; 
+  #${scope} {
+    width: 100%;
   }
-  #${scope} .modal { 
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.5); z-index: 1000; 
+  .trigger-button {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    text-align: left;
+    font-size: 0.9rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
-  #${scope} .modal.is-open { display: flex; justify-content: center; align-items: center; }
-  #${scope} .modal-content { 
-    background: #fff; padding: 20px; border-radius: 12px; width: 80%; max-width: 300px; 
+  .trigger-button:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
   }
-  #${scope} .item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; }
-  #${scope} .item:last-child { border-bottom: none; }
+  .trigger-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 `
 
 /**
  * 【Content & Data Settings】
- * 固定文言およびDBから取得予定のデータ定義。
  */
 const LABELS = {
-  defaultButtonText: "📍 エリアを選択"
+  defaultButtonText: "エリアを選択",
+  icon: "📍"
 }
-
-// DBから取得を想定している値（将来的に props や API 取得に置き換え）
-const MOCK_AREAS = [
-  { id: 1, name: "東京" },
-  { id: 2, name: "神奈川" },
-  { id: 3, name: "千葉" }
-]
 
 export const SearchArea: FC = () => {
   const scope = "search-area-module"
@@ -44,38 +49,16 @@ export const SearchArea: FC = () => {
     <section id={scope}>
       <style>{moduleStyle(scope)}</style>
 
-      {/* ボタン表示：初期値は LABELS から取得 */}
-      <button class="trigger-btn" onclick="toggleAreaModal(true)">
-        {LABELS.defaultButtonText}
-      </button>
-
-      {/* モーダル：リストは MOCK_AREAS からループ生成 */}
-      <div id="area-modal" class="modal" onclick="toggleAreaModal(false)">
-        <div class="modal-content" onclick="event.stopPropagation()">
-          {MOCK_AREAS.map(area => (
-            <div class="item" onclick={`selectArea('${area.name}')`}>
-              {area.name}
-            </div>
-          ))}
+      {/* 最小コード化：モーダルや複雑なJSを排除し、
+          「何を選択させるか」の入り口に特化。
+      */}
+      <button class="trigger-button" type="button">
+        <div class="trigger-label">
+          <span>{LABELS.icon}</span>
+          <span>{LABELS.defaultButtonText}</span>
         </div>
-      </div>
-
-      {html`
-        <script>
-          function toggleAreaModal(show) {
-            const modal = document.getElementById('area-modal');
-            modal.classList.toggle('is-open', show);
-          }
-          function selectArea(name) {
-            // ボタンの文言を更新
-            const btn = document.querySelector('#${scope} .trigger-btn');
-            if (btn) btn.innerText = "📍 " + name;
-            
-            toggleAreaModal(false);
-            console.log(name + " が選択されました");
-          }
-        </script>
-      `}
+        <span style="font-size: 0.8rem; color: #94a3b8;">▼</span>
+      </button>
     </section>
   )
 }
