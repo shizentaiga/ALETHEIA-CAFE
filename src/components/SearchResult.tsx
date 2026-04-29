@@ -7,7 +7,7 @@ import { formatAttributes } from '../db/queries/main'
  */
 const moduleStyle = (scope: string) => `
   #${scope} { margin-top: 10px; }
-  #${scope} .result-header { font-size: 0.8rem; color: #666; margin-bottom: 8px; }
+  #${scope} .result-header { font-size: 0.8rem; color: #555; margin-bottom: 8px; }
   #search-results-target { display: flex; flex-direction: column; gap: 8px; }
   #${scope} .cafe-card {
     display: block; text-decoration: none; color: inherit;
@@ -15,11 +15,12 @@ const moduleStyle = (scope: string) => `
     background: #fff; transition: background 0.2s;
   }
   #${scope} .cafe-card:hover { background: #fafafa; border-color: #ddd; }
-  #${scope} .name { font-weight: 700; display: block; }
-  #${scope} .addr { font-size: 0.75rem; color: #888; }
+  #${scope} .name { font-weight: 700; display: block; color: #111; }
+  #${scope} .addr { font-size: 0.75rem; color: #555; line-height: 1.4; display: block; }
+
   /* タグ用の最小スタイルを追加 */
-  .tag-box { display: flex; gap: 4px; margin-top: 4px; }
-  .tag { font-size: 0.65rem; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; color: #64748b; }
+  .tag-box { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+  .tag { font-size: 0.65rem; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; color: #334155; font-weight: 500; }
 `
 
 const LABELS = {
