@@ -6,6 +6,7 @@ import { jsxRenderer } from 'hono/jsx-renderer'
  */
 const SITE_CONFIG = {
   title: 'ALETHEIA',
+  description: '自分に最適な場所を見つけるための検索プラットフォーム',
   lang: 'ja',
   charset: 'UTF-8',
   assets: {
