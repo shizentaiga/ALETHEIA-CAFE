@@ -8,6 +8,7 @@ const SITE_CONFIG = {
   assets: {
     css: '/style.css',
     htmx: 'https://unpkg.com/htmx.org@1.9.12',
+    favicon: '/icon.svg', // 追加
   }
 } as const
 
@@ -32,6 +33,9 @@ export const renderer = jsxRenderer(({ children }) => {
         <meta charset={SITE_CONFIG.charset} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{SITE_CONFIG.title}</title>
+
+        {/* 【追加】SVGアイコンの設定 */}
+        <link rel="icon" href={SITE_CONFIG.assets.favicon} type="image/svg+xml" />
         
         {/* HTMXの読み込み */}
         <script src={SITE_CONFIG.assets.htmx} crossorigin="anonymous"></script>
