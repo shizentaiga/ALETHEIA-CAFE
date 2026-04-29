@@ -66,6 +66,8 @@ src/
 │   └── auth.ts            # Google OAuth2.0 内部処理（低レイヤー）
 │
 └── public/                # 静的資産
+    ├── style.css          # ビルド後のCSS（または直接配置）
+    └── icon.svg           # 【追加】共通アイコン（favicon / apple-touch-icon 兼用）
 ~~~
 
 ---
