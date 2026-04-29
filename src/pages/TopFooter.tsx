@@ -17,8 +17,9 @@ const STYLES = {
   },
   text: {
     fontSize: '0.82rem',
-    color: '#94a3b8',
-    margin: 0
+    color: '#64748b',
+    margin: 0,
+    fontWeight: 400
   }
 } as const
 
