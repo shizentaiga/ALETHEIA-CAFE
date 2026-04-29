@@ -72,6 +72,9 @@ export const renderer = jsxRenderer(({ children }) => {
         <meta charset={SITE_CONFIG.charset} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+        {/* SEO・検索結果表示用の説明文 */}
+        <meta name="description" content={SITE_CONFIG.description} />
+
         {/* CDNドメインへの事前接続による接続遅延の解消 */}
         <link rel="preconnect" href="https://unpkg.com" />
 
