@@ -1,7 +1,6 @@
 /**
  * [File Path] src/api/area.ts
- * [Role] Returns HTML fragments for the area selection dropdown.
- *        Supports a "click anywhere on the row" UX.
+ * [Role] API endpoint returning HTML fragments for the area selection dropdown.
  */
 import { Hono } from 'hono'
 import { html } from 'hono/html'
@@ -44,16 +43,19 @@ areaApp.get('/', (c) => {
   const level = c.req.query('level')
   const regionName = c.req.query('region')
 
-  // Close the menu
   if (level === 'close') return c.html(html``)
 
-  // 1. 現在のブラウザURLから全パラメータを取得し、土台を作る
+  /**
+   * Parse current URL parameters to persist state (e.g., search keywords 'q')
+   * during area navigation.
+   */
   const currentUrl = c.req.header('HX-Current-URL') || c.req.url
   const urlParams = new URL(currentUrl).searchParams
 
   let items: string[] = []
   const isRegion = level === 'region'
 
+  // Data fetching based on selection depth
   if (isRegion) {
     items = Object.keys(SEARCH_MASTER.region.options)
   } else if (level === 'pref' && regionName) {
@@ -62,14 +64,18 @@ areaApp.get('/', (c) => {
   }
 
   const listItems = items.map((name) => {
-    // 2. 土台をコピーして area だけを今回選んだものに上書き
+    // Clone existing params and update 'area' for the next destination
     const nextParams = new URLSearchParams(urlParams)
     nextParams.set('area', name)
     const nextHref = `/?${nextParams.toString()}`
 
     const encodedName = encodeURIComponent(name)
 
-    // 表示ロジックの分離
+    /**
+     * Render Strategy:
+     * - Regions: Use HTMX for nested menu navigation.
+     * - Prefectures: Use standard links for full page reloads.
+     */
     return isRegion ? html`
         <li class="area-dropdown-item" 
             hx-get="/api/area?level=pref&region=${encodedName}" 

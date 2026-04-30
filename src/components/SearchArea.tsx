@@ -1,9 +1,12 @@
+/**
+ * [File Path] src/components/SearchArea.tsx
+ * [Role] UI component for area selection dropdown using HTMX.
+ */
 import type { FC } from 'hono/jsx'
-import { useRequestContext } from 'hono/jsx-renderer' // ★追加
+import { useRequestContext } from 'hono/jsx-renderer'
 import { SEARCH_MASTER } from '../lib/constants'
 
 const moduleStyle = `
-  /* 階層を深くし、このコンテナ内で全てを完結させる */
   .search-area-module {
     position: relative;
     width: 100%;
@@ -40,7 +43,6 @@ const moduleStyle = `
     color: #94a3b8;
   }
 
-  /* APIから返ってくるリストの展開先 */
   #area-menu-target {
     position: absolute;
     top: 100%;
@@ -48,7 +50,6 @@ const moduleStyle = `
     width: 100%;
     z-index: 100;
     margin-top: 4px;
-    /* 初回クリックまで余計な余白を作らない */
   }
 `
 
@@ -56,24 +57,18 @@ const LABELS = {
   icon: "📍"
 }
 
-/**
- * SearchArea Component
- * Provides a self-contained dropdown for area selection.
- * Now dynamically updates its label based on the "area" URL parameter.
- */
 export const SearchArea: FC<{ class?: string }> = ({ class: className }) => {
   const c = useRequestContext()
 
   /**
-   * ⭐️ 解決の鍵：
-   * HTMXからの部分リクエスト時は `HX-Current-URL`（アドレスバーのURL）を参照し、
-   * 通常リクエスト時は `c.req.url` を参照する。
+   * Extract current area from URL.
+   * Uses HX-Current-URL for HTMX requests and c.req.url for full page loads.
    */
   const currentUrl = c.req.header('HX-Current-URL') || c.req.url
   const urlObj = new URL(currentUrl)
   const areaParam = urlObj.searchParams.get('area')
   
-  // デコードしてラベルを決定
+  // Set label based on URL parameter or default title
   const displayLabel = areaParam ? decodeURIComponent(areaParam) : SEARCH_MASTER.region.title
 
   return (
@@ -83,22 +78,18 @@ export const SearchArea: FC<{ class?: string }> = ({ class: className }) => {
       <button 
         class="search-trigger" 
         type="button"
-        hx-get="/api/area?level=region"   /* Fetch region list */
-        hx-target="#area-menu-target"    /* Target the container below */
+        hx-get="/api/area?level=region"
+        hx-target="#area-menu-target"
         hx-trigger="click"
       >
         <div class="trigger-content">
           <span>{LABELS.icon}</span>
-          {/* ⭐️ 4. ここが固定文字から、変数 displayLabel に変わりました */}
           <span>{displayLabel}</span>
         </div>
         <span class="trigger-arrow">▼</span>
       </button>
 
-      {/* 
-        The dropdown menu from the API will be injected here.
-        Because it's inside the same module, positioning is much more stable.
-      */}
+      {/* Target for HTMX dropdown injection */}
       <div id="area-menu-target"></div>
     </div>
   )

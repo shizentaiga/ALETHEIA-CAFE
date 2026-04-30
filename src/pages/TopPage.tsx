@@ -1,16 +1,15 @@
 /**
  * [File Path] src/pages/TopPage.tsx
- * [Role] Main handler for the top page. It handles both HTMX partial updates and full page loads.
+ * [Role] Main entry point for the top page.
  */
 import { Hono } from 'hono'
 import { TopHeader } from './TopHeader'
 import { TopMain } from './TopMain'
 import { TopFooter } from './TopFooter'
-// import { SearchResult } from '../components/SearchResult' // Added for partial updates
 import { fetchServices } from '../db/queries/main' 
 import { getCookie } from 'hono/cookie'
 
-// Define D1 type for the environment (prevents build errors)
+// Cloudflare D1 environment bindings
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
 }
@@ -23,27 +22,16 @@ home.get('/', async (c) => {
   const q = c.req.query('q') || '';
   const area = c.req.query('area'); 
 
-  // Check user session
+  // Retrieve user session
   const userId = getCookie(c, 'aletheia_session')
   const user = userId 
     ? await db.prepare('SELECT display_name FROM users WHERE user_id = ?').bind(userId).first()
     : null
   
-  // Get service data from database
+  // Fetch service list from database
   const { results, total } = await fetchServices(db, q, 1, area);
   
-  /**
-   * Check if the request is from HTMX.
-   * Requests from 'hx-get' include the 'HX-Request: true' header.
-   */
-  // const isHX = c.req.header('HX-Request') === 'true'
-
-  // if (isHX) {
-  //   // Return only the search results for partial update
-  //   return c.html(<SearchResult results={results} total={total} area={area} />)
-  // }
-
-  // For first access or page reload, return the full page layout
+  // Render full page layout
   return c.render(
     <>
       <TopHeader user={user} />

@@ -1,7 +1,11 @@
+/**
+ * [File Path] src/pages/TopHeader.tsx
+ * [Role] Header component with global search and authentication links.
+ */
 import type { FC } from 'hono/jsx'
-import { useRequestContext } from 'hono/jsx-renderer' // URL取得用に追加
+import { useRequestContext } from 'hono/jsx-renderer'
 
-// --- Configuration (Labels and Settings) ---
+// --- Configuration ---
 const CONFIG = {
   logoText: 'ALETHEIA',
   placeholder: 'キーワードで検索..',
@@ -10,8 +14,8 @@ const CONFIG = {
 } as const
 
 /**
- * [Design Settings]
- * For Designers: Typography and layout adjustments.
+ * [Styles] 
+ * Defines layout and responsive behavior for the header.
  */
 const headerStyle = `
   .header-container {
@@ -27,7 +31,6 @@ const headerStyle = `
     top: 0;
     z-index: 50;
   }
-  /* Logo: Serif font for a smart and clean look */
   .header-logo {
     font-family: "Times New Roman", "Georgia", serif;
     font-size: 1.2rem;
@@ -37,10 +40,9 @@ const headerStyle = `
     flex-shrink: 0;
     margin-right: 12px;
   }
-  /* Search Form: Takes up the center space */
   .header-search-form {
     flex-grow: 1;
-    max-width: 480px; /* Prevents it from getting too wide */
+    max-width: 480px;
     margin: 0 12px;
     position: relative;
   }
@@ -52,7 +54,7 @@ const headerStyle = `
   .header-search-input {
     width: 100%;
     height: 38px;
-    padding: 0 40px 0 16px; /* Space for the search icon on the right */
+    padding: 0 40px 0 16px;
     border: 1px solid #e5e7eb;
     border-radius: 20px;
     background: #f9fafb;
@@ -78,7 +80,6 @@ const headerStyle = `
     align-items: center;
     justify-content: center;
   }
-  /* Auth Link: Small and simple to reduce visual noise */
   .header-auth {
     flex-shrink: 0;
   }
@@ -95,7 +96,6 @@ const headerStyle = `
     color: #1e293b;
   }
 
-  /* Mobile: Make text smaller if space is tight */
   @media (max-width: 480px) {
     .header-logo { font-size: 1rem; letter-spacing: 0.05em; }
     .header-container { padding: 0 12px; }
@@ -105,7 +105,7 @@ const headerStyle = `
 export const TopHeader: FC<{ user?: any }> = ({ user }) => {
   const c = useRequestContext()
   
-  // 現在のURLからパラメータを取得し、フォームに初期値をセットする
+  // Sync form state with current URL parameters
   const currentUrl = c.req.header('HX-Current-URL') || c.req.url
   const urlObj = new URL(currentUrl)
   const q = urlObj.searchParams.get('q') || ''
@@ -115,10 +115,10 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
     <header class="header-container">
       <style>{headerStyle}</style>
 
-      {/* 1. Left: Logo */}
+      {/* 1. Brand Logo */}
       <a href="/" class="header-logo" style="text-decoration: none;">{CONFIG.logoText}</a>
 
-      {/* 2. Center: Search Form (HTMXを削除し、フルリロードへ) */}
+      {/* 2. Search Form (Standard full-page reload) */}
       <form 
         class="header-search-form" 
         action="/" 
@@ -133,7 +133,7 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
             placeholder={CONFIG.placeholder}
             value={q}
           />
-          {/* ⭐️ 固定パラメータの埋め込み：エリアが選択されていれば検索時に引き継ぐ */}
+          {/* Persist 'area' parameter during keyword search */}
           {area && <input type="hidden" name="area" value={area} />}
           
           <button type="submit" class="header-search-button" aria-label="Search">
@@ -142,7 +142,7 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
         </div>
       </form>
 
-      {/* 3. Right: Auth Link */}
+      {/* 3. Authentication Links */}
       <div class="header-auth">
         {user ? (
           <span class="login-link">
