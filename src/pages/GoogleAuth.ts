@@ -1,23 +1,35 @@
+/**
+ * [File Path] src/api/GoogleAuth.ts
+ * [Role] Handles Google OAuth2 authentication flow and session management.
+ */
 import { Hono } from 'hono'
 import { setCookie, deleteCookie } from 'hono/cookie'
 import { googleAuth } from '../lib/auth'
 
-// D1と環境変数の型定義
 type Bindings = {
   GOOGLE_CLIENT_ID: string
   GOOGLE_CLIENT_SECRET: string
   ALETHEIA_CAFE_DB: D1Database
+  SESSION_MAX_AGE: string
 }
 
 export const googleAuthApp = new Hono<{ Bindings: Bindings }>()
 
-// A. ログイン開始：ユーザーをGoogleへ飛ばす
+// --- Routes ---
+
+/**
+ * Step A: Login Start
+ * Redirect the user to Google's OAuth consent screen.
+ */
 googleAuthApp.get('/auth/google', (c) => {
   const redirectUri = `${new URL(c.req.url).origin}/auth/google/callback`
   return c.redirect(googleAuth.getAuthUrl(c.env.GOOGLE_CLIENT_ID, redirectUri))
 })
 
-// B. コールバック：Googleから戻ってきた時の処理
+/**
+ * Step B: Callback
+ * Exchange the auth code for user data and establish a session.
+ */
 googleAuthApp.get('/auth/google/callback', async (c) => {
   const code = c.req.query('code')
   const redirectUri = `${new URL(c.req.url).origin}/auth/google/callback`
@@ -25,12 +37,12 @@ googleAuthApp.get('/auth/google/callback', async (c) => {
   if (!code) return c.redirect('/')
 
   try {
-    // 1. コードをユーザー情報に交換
+    // 1. Exchange code for user profile data
     const gUser = await googleAuth.exchangeCodeForUser(
       code, c.env.GOOGLE_CLIENT_ID, c.env.GOOGLE_CLIENT_SECRET, redirectUri
     )
 
-    // 2. DBへ保存（UPSERT：いれば更新、いなければ挿入）
+    // 2. Persist user data in D1 (Upsert: insert new or update existing)
     await c.env.ALETHEIA_CAFE_DB.prepare(`
       INSERT INTO users (user_id, email, display_name) 
       VALUES (?, ?, ?) 
@@ -39,12 +51,15 @@ googleAuthApp.get('/auth/google/callback', async (c) => {
         status = 'ACTIVE'
     `).bind(gUser.sub, gUser.email, gUser.name || gUser.email).run()
 
-    // 3. クッキーにセッションID（Googleのsub）を保存
+    // 3. Set session cookie using Google 'sub' ID
+    // Read duration from wrangler.jsonc (fallback to 7 days if undefined)
+    const maxAge = Number(c.env.SESSION_MAX_AGE) || 60 * 60 * 24 * 7;
+
     setCookie(c, 'aletheia_session', gUser.sub, {
       path: '/',
       httpOnly: true,
       secure: true,
-      maxAge: 3600, // 1時間
+      maxAge: maxAge,
       sameSite: 'Lax'
     })
 
@@ -55,7 +70,10 @@ googleAuthApp.get('/auth/google/callback', async (c) => {
   }
 })
 
-// C. ログアウト処理
+/**
+ * Step C: Logout
+ * Terminate session and clear cookie.
+ */
 googleAuthApp.get('/logout', (c) => {
   deleteCookie(c, 'aletheia_session', { path: '/' })
   return c.redirect('/')

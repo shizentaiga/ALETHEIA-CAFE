@@ -15,7 +15,7 @@
     "ENVIRONMENT": "proto",
     "GOOGLE_CLIENT_ID": "479168082736-c0rosu4b1ptkr613g7osa8qm0a5ul3q9.apps.googleusercontent.com",
     "ADMIN_EMAIL": "tshizen2506@gmail.com",
-    "SESSION_EXPIRY": "2592000" // 30日（秒単位）: テクニカル・ガバナンスに基づく
+    "SESSION_MAX_AGE": "2592000" // 30日（秒単位）: テクニカル・ガバナンスに基づく
   }
 
 }
