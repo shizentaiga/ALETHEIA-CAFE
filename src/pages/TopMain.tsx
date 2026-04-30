@@ -3,6 +3,10 @@ import { SearchArea } from '../components/SearchArea'
 import { SearchCategory } from '../components/SearchCategory'
 import { SearchResult } from '../components/SearchResult'
 
+/**
+ * [Design Settings]
+ * Layout for the main content area.
+ */
 const layoutStyle = `
   .top-main-container {
     display: flex;
@@ -17,33 +21,36 @@ const layoutStyle = `
     gap: 12px;
     width: 100%;
   }
-  /* 直下の全要素を均等(1:1)に並べる。これが最も不具合が起きにくい指定です */
+  /* Make all children equal width (1:1). This is the most stable way to align them. */
   .search-bar-row > * {
     flex: 1;
   }
 `
 
-// props に area を追加し、SearchResult に引き継ぐ
+/**
+ * TopMain Component
+ * We add 'area' to props to pass the state to SearchResult.
+ */
 export const TopMain: FC<{ 
   results: any[], 
   total: number, 
-  area?: string // 追加
+  area?: string // Added to maintain area state
 }> = ({ results, total, area }) => (
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
-    {/* シンプルに2つのチップを並べる */}
+    {/* Display search chips (Area and Category) */}
     <div class="search-bar-row">
       <SearchArea />
-      {/* SearchCategoryは一時的に開発停止 */}
+      {/* SearchCategory is currently under development */}
       {/* <SearchCategory /> */}
     </div>
 
-    {/* 検索結果 */}
+    {/* Search Results Section */}
     <div id="search-result-module">
       {/* 
-        初回アクセス時（リロード時）のURLパラメータにあるareaを
-        SearchResult内のhidden inputへ確実に届ける
+        Pass the 'area' from the URL parameter to SearchResult.
+        This ensures the hidden input field is correctly set on page reload.
       */}
       <SearchResult results={results} total={total} area={area} />
     </div>

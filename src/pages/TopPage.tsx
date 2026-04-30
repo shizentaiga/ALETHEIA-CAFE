@@ -1,16 +1,16 @@
 /**
  * [File Path] src/pages/TopPage.tsx
- * [Role] トップページのルートハンドラ。HTMXによる部分更新と通常アクセスを振り分けます。
+ * [Role] Main handler for the top page. It handles both HTMX partial updates and full page loads.
  */
 import { Hono } from 'hono'
 import { TopHeader } from './TopHeader'
 import { TopMain } from './TopMain'
 import { TopFooter } from './TopFooter'
-import { SearchResult } from '../components/SearchResult' // ★追加：部分返却用
+import { SearchResult } from '../components/SearchResult' // Added for partial updates
 import { fetchServices } from '../db/queries/main' 
 import { getCookie } from 'hono/cookie'
 
-// D1の型定義（ビルドエラー防止）
+// Define D1 type for the environment (prevents build errors)
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
 }
@@ -23,27 +23,27 @@ home.get('/', async (c) => {
   const q = c.req.query('q') || '';
   const area = c.req.query('area'); 
 
-  // セッション確認
+  // Check user session
   const userId = getCookie(c, 'aletheia_session')
   const user = userId 
     ? await db.prepare('SELECT display_name FROM users WHERE user_id = ?').bind(userId).first()
     : null
   
-  // サービスデータの取得
+  // Get service data from database
   const { results, total } = await fetchServices(db, q, 1, area);
   
   /**
-   * ★HTMXリクエスト判定
-   * area.ts からの hx-get リクエストには 'HX-Request: true' ヘッダーが含まれます。
+   * Check if the request is from HTMX.
+   * Requests from 'hx-get' include the 'HX-Request: true' header.
    */
   const isHX = c.req.header('HX-Request') === 'true'
 
   if (isHX) {
-    // area を追加して渡す
+    // Return only the search results for partial update
     return c.html(<SearchResult results={results} total={total} area={area} />)
   }
 
-  // 初回アクセスやリロード時は、共通レイアウトを適用して全体を返却
+  // For first access or page reload, return the full page layout
   return c.render(
     <>
       <TopHeader user={user} />

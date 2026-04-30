@@ -1,16 +1,16 @@
 import type { FC } from 'hono/jsx'
 
-// --- Configuration (文言・データ設定) ---
+// --- Configuration (Labels and Settings) ---
 const CONFIG = {
   logoText: 'ALETHEIA',
-  placeholder: 'キーワードで検索...',
+  placeholder: 'キーワードで検索..',
   loginLabel: 'ログイン',
   logoutLabel: 'ログアウト'
 } as const
 
 /**
- * 【Design Settings】
- * デザイナー向け：タイポグラフィと中央配置の調整。
+ * [Design Settings]
+ * For Designers: Typography and layout adjustments.
  */
 const headerStyle = `
   .header-container {
@@ -26,7 +26,7 @@ const headerStyle = `
     top: 0;
     z-index: 50;
   }
-  /* ロゴ：セリフ体で知的な印象 */
+  /* Logo: Serif font for a smart and clean look */
   .header-logo {
     font-family: "Times New Roman", "Georgia", serif;
     font-size: 1.2rem;
@@ -36,10 +36,10 @@ const headerStyle = `
     flex-shrink: 0;
     margin-right: 12px;
   }
-  /* 検索窓：中央を広く占有 */
+  /* Search Form: Takes up the center space */
   .header-search-form {
     flex-grow: 1;
-    max-width: 480px; /* 伸びすぎ防止 */
+    max-width: 480px; /* Prevents it from getting too wide */
     margin: 0 12px;
     position: relative;
   }
@@ -51,7 +51,7 @@ const headerStyle = `
   .header-search-input {
     width: 100%;
     height: 38px;
-    padding: 0 40px 0 16px; /* 右側にボタン用の余白を確保 */
+    padding: 0 40px 0 16px; /* Space for the search icon on the right */
     border: 1px solid #e5e7eb;
     border-radius: 20px;
     background: #f9fafb;
@@ -77,7 +77,7 @@ const headerStyle = `
     align-items: center;
     justify-content: center;
   }
-  /* ログイン：極小・枠なしでノイズを消す */
+  /* Auth Link: Small and simple to reduce visual noise */
   .header-auth {
     flex-shrink: 0;
   }
@@ -94,34 +94,34 @@ const headerStyle = `
     color: #1e293b;
   }
 
-  /* モバイル対応：ロゴが邪魔な場合は文字を小さく */
+  /* Mobile: Make text smaller if space is tight */
   @media (max-width: 480px) {
     .header-logo { font-size: 1rem; letter-spacing: 0.05em; }
     .header-container { padding: 0 12px; }
   }
 `
 
-// props に user を追加
+// Receive user data via props
 export const TopHeader: FC<{ user?: any }> = ({ user }) => {
   return (
     <header class="header-container">
       <style>{headerStyle}</style>
 
-      {/* 1. 左：ロゴ(クリック時にトップページへ遷移) */}
+      {/* 1. Left: Logo (Goes to top page on click) */}
       <a href="/" class="header-logo" style="text-decoration: none;">{CONFIG.logoText}</a>
 
-      {/* 2. 中央：検索窓（URL集約型 / Enterまたは🔍クリックで実行） */}
+      {/* 2. Center: Search Form (Uses HTMX to update results) */}
       <form 
         class="header-search-form" 
         action="/" 
         method="get"
         hx-get="/" 
-        hx-target="#search-result-module" // ★ここを修正（SearchResultの最外周ID）
-        hx-include="#current-area-state" // 💡 ステップ1で作ったバケツを拾う
+        hx-target="#search-result-module" // Update only the result section
+        hx-include="#current-area-state" // Include the selected area in the request
         hx-push-url="true"
       >
         <div class="header-search-input-wrapper">
-          {/* キーワード入力 input に id を付与 */}
+          {/* Added ID to the keyword input for HTMX reference */}
           <input 
             id="q-input-header"
             type="text" 
@@ -129,13 +129,13 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
             class="header-search-input" 
             placeholder={CONFIG.placeholder}
           />
-          <button type="submit" class="header-search-button" aria-label="検索">
+          <button type="submit" class="header-search-button" aria-label="Search">
             🔍
           </button>
         </div>
       </form>
 
-      {/* 3. 右：最小限のログイン文字 */}
+      {/* 3. Right: Simple Login/Logout Link */}
       <div class="header-auth">
         {user ? (
           <span class="login-link">

@@ -1,6 +1,7 @@
 /**
  * [File Path] src/api/area.ts
- * [Role] エリア選択ドリルダウンのHTML断片を返却（UX改善・行全体クリック仕様）
+ * [Role] Returns HTML fragments for the area selection dropdown.
+ *        Supports a "click anywhere on the row" UX.
  */
 import { Hono } from 'hono'
 import { html } from 'hono/html'
@@ -43,7 +44,7 @@ areaApp.get('/', (c) => {
   const level = c.req.query('level')
   const regionName = c.req.query('region')
 
-  // メニューを閉じる処理
+  // Close the menu
   if (level === 'close') return c.html(html``)
 
   let items: string[] = []
@@ -60,9 +61,9 @@ areaApp.get('/', (c) => {
     const encodedName = encodeURIComponent(name)
     
     /**
-     * 【UX改善ポイント】
-     * 地方(region)階層：行全体クリックで「都道府県リスト」へ遷移（確定させない）
-     * 都道府県(pref)階層：行全体クリックで「検索実行・メニュー閉じる」
+     * [UX Logic]
+     * Region level: Clicking the row moves to the "Prefecture list" (does not search yet).
+     * Prefecture level: Clicking the row "triggers the search" and closes the menu.
      */
     const actionAttr = isRegion
       ? html`
@@ -72,7 +73,7 @@ areaApp.get('/', (c) => {
       : html`
           hx-get="/?area=${encodedName}"
           hx-target="#search-result-module"
-          hx-include="#q-input-header" // 💡 ステップ2でつけた入力欄のIDを拾う
+          hx-include="#q-input-header" // 💡 Get the keyword from the search input ID
           hx-push-url="true"
           hx-on::after-request="document.getElementById('area-menu-target').innerHTML = ''"
         `
