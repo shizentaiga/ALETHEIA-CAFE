@@ -1,4 +1,5 @@
 import type { FC } from 'hono/jsx'
+import { useRequestContext } from 'hono/jsx-renderer' // ★追加
 import { SEARCH_MASTER } from '../lib/constants'
 
 const moduleStyle = `
@@ -57,29 +58,45 @@ const LABELS = {
 
 /**
  * SearchArea Component
- * 階層を一段深く保持し、自己完結型のドリルダウン入り口を提供します。
+ * Provides a self-contained dropdown for area selection.
+ * Now dynamically updates its label based on the "area" URL parameter.
  */
-export const SearchArea: FC<{ class?: string }> = ({ class: className }) => (
-  <div class={`search-area-module ${className || ''}`}>
-    <style>{moduleStyle}</style>
+export const SearchArea: FC<{ class?: string }> = ({ class: className }) => {
+  
+  // ⭐️ 1. URL全体から「area」パラメータを確実に抽出する
+  const c = useRequestContext()
+  const url = new URL(c.req.url) // 現在のリクエストURLを解析
+  const areaParam = url.searchParams.get('area') // どの位置にあっても 'area' を取得
+  
+  // ⭐️ 2. エリアが存在すればデコードして表示、なければデフォルトタイトルを表示
+  // areaParam が null ではないことを判定基準にします
+  const displayLabel = areaParam ? decodeURIComponent(areaParam) : SEARCH_MASTER.region.title
 
-    <button 
-      class="search-trigger" 
-      type="button"
-      hx-get="/api/area?level=region"   /* 地方リストを取得 */
-      hx-target="#area-menu-target"    /* 直下のコンテナに出力 */
-      hx-trigger="click"
-    >
-      <div class="trigger-content">
-        <span>{LABELS.icon}</span>
-        <span>{SEARCH_MASTER.region.title}</span>
-      </div>
-      <span class="trigger-arrow">▼</span>
-    </button>
+  // ⭐️ 3. 計算が終わったので、return でHTMLを表示する（丸括弧から波括弧 { } に変わっています）
+  return (
+    <div class={`search-area-module ${className || ''}`}>
+      <style>{moduleStyle}</style>
 
-    {/* 階層を深くしたことで、ボタンのすぐ隣にターゲットが存在します。
-      APIはこの中に <ul> などのリストを直接流し込みます。
-    */}
-    <div id="area-menu-target"></div>
-  </div>
-)
+      <button 
+        class="search-trigger" 
+        type="button"
+        hx-get="/api/area?level=region"   /* Fetch region list */
+        hx-target="#area-menu-target"    /* Target the container below */
+        hx-trigger="click"
+      >
+        <div class="trigger-content">
+          <span>{LABELS.icon}</span>
+          {/* ⭐️ 4. ここが固定文字から、変数 displayLabel に変わりました */}
+          <span>{displayLabel}</span>
+        </div>
+        <span class="trigger-arrow">▼</span>
+      </button>
+
+      {/* 
+        The dropdown menu from the API will be injected here.
+        Because it's inside the same module, positioning is much more stable.
+      */}
+      <div id="area-menu-target"></div>
+    </div>
+  )
+}
