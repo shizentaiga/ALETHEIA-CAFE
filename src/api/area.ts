@@ -61,31 +61,31 @@ areaApp.get('/', (c) => {
     const encodedName = encodeURIComponent(name)
     
     /**
-     * [UX Logic]
-     * Region level: Clicking the row moves to the "Prefecture list" (does not search yet).
-     * Prefecture level: Clicking the row "triggers the search" and closes the menu.
+     * ⭐️ 修正ポイント：
+     * 都道府県(pref)レベルの時は hx-get を捨て、通常の href リンクにします。
      */
-    const actionAttr = isRegion
-      ? html`
-          hx-get="/api/area?level=pref&region=${encodedName}"
-          hx-target="#area-menu-target"
-        `
-      : html`
-          /* ⭐️ マルチターゲットを解除し、元に戻す */
-          hx-get="/?area=${encodedName}"
-          hx-target="#search-result-module"
-          hx-include="#q-input-header" // 💡 Get the keyword from the search input ID
-          hx-push-url="true"
-          hx-on::after-request="document.getElementById('area-menu-target').innerHTML = ''"
-        `
-
-    return html`
-      <li class="area-dropdown-item" ${actionAttr}>
-        <div class="item-content">
-          <span>${name}</span>
-          ${isRegion ? html`<span class="item-arrow">＞</span>` : ''}
-        </div>
-      </li>`
+    if (isRegion) {
+      // 地方選択（北海道、東北など）はまだメニュー内を遷移するので HTMX を継続
+      return html`
+        <li class="area-dropdown-item" 
+            hx-get="/api/area?level=pref&region=${encodedName}" 
+            hx-target="#area-menu-target">
+          <div class="item-content">
+            <span>${name}</span>
+            <span class="item-arrow">＞</span>
+          </div>
+        </li>`
+    } else {
+      // 都道府県選択（東京都、大阪府など）は、フルリロードでページ遷移させる
+      return html`
+        <li class="area-dropdown-item">
+          <a href="/?area=${encodedName}" style="text-decoration: none; color: inherit; display: block; width: 100%;">
+            <div class="item-content">
+              <span>${name}</span>
+            </div>
+          </a>
+        </li>`
+    }
   })
 
   return c.html(html`

@@ -62,15 +62,20 @@ const LABELS = {
  * Now dynamically updates its label based on the "area" URL parameter.
  */
 export const SearchArea: FC<{ class?: string }> = ({ class: className }) => {
-  
-  // ⭐️ 1. 元のロジックに戻す
   const c = useRequestContext()
-  const currentArea = c.req.query('area')
-  
-  // ⭐️ 2. 元の判定に戻す
-  const displayLabel = currentArea ? decodeURIComponent(currentArea) : SEARCH_MASTER.region.title
 
-  // ⭐️ 3. id="search-area-container" を削除し、以前の状態に戻す
+  /**
+   * ⭐️ 解決の鍵：
+   * HTMXからの部分リクエスト時は `HX-Current-URL`（アドレスバーのURL）を参照し、
+   * 通常リクエスト時は `c.req.url` を参照する。
+   */
+  const currentUrl = c.req.header('HX-Current-URL') || c.req.url
+  const urlObj = new URL(currentUrl)
+  const areaParam = urlObj.searchParams.get('area')
+  
+  // デコードしてラベルを決定
+  const displayLabel = areaParam ? decodeURIComponent(areaParam) : SEARCH_MASTER.region.title
+
   return (
     <div class={`search-area-module ${className || ''}`}>
       <style>{moduleStyle}</style>

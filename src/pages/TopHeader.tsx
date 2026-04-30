@@ -1,4 +1,5 @@
 import type { FC } from 'hono/jsx'
+import { useRequestContext } from 'hono/jsx-renderer' // URL取得用に追加
 
 // --- Configuration (Labels and Settings) ---
 const CONFIG = {
@@ -101,41 +102,47 @@ const headerStyle = `
   }
 `
 
-// Receive user data via props
 export const TopHeader: FC<{ user?: any }> = ({ user }) => {
+  const c = useRequestContext()
+  
+  // 現在のURLからパラメータを取得し、フォームに初期値をセットする
+  const currentUrl = c.req.header('HX-Current-URL') || c.req.url
+  const urlObj = new URL(currentUrl)
+  const q = urlObj.searchParams.get('q') || ''
+  const area = urlObj.searchParams.get('area') || ''
+
   return (
     <header class="header-container">
       <style>{headerStyle}</style>
 
-      {/* 1. Left: Logo (Goes to top page on click) */}
+      {/* 1. Left: Logo */}
       <a href="/" class="header-logo" style="text-decoration: none;">{CONFIG.logoText}</a>
 
-      {/* 2. Center: Search Form (Uses HTMX to update results) */}
+      {/* 2. Center: Search Form (HTMXを削除し、フルリロードへ) */}
       <form 
         class="header-search-form" 
         action="/" 
         method="get"
-        hx-get="/" 
-        hx-target="#search-result-module" // Update only the result section
-        hx-include="#current-area-state" // Include the selected area in the request
-        hx-push-url="true"
       >
         <div class="header-search-input-wrapper">
-          {/* Added ID to the keyword input for HTMX reference */}
           <input 
             id="q-input-header"
             type="text" 
             name="q" 
             class="header-search-input" 
             placeholder={CONFIG.placeholder}
+            value={q}
           />
+          {/* ⭐️ 固定パラメータの埋め込み：エリアが選択されていれば検索時に引き継ぐ */}
+          {area && <input type="hidden" name="area" value={area} />}
+          
           <button type="submit" class="header-search-button" aria-label="Search">
             🔍
           </button>
         </div>
       </form>
 
-      {/* 3. Right: Simple Login/Logout Link */}
+      {/* 3. Right: Auth Link */}
       <div class="header-auth">
         {user ? (
           <span class="login-link">

@@ -6,7 +6,7 @@ import { Hono } from 'hono'
 import { TopHeader } from './TopHeader'
 import { TopMain } from './TopMain'
 import { TopFooter } from './TopFooter'
-import { SearchResult } from '../components/SearchResult' // Added for partial updates
+// import { SearchResult } from '../components/SearchResult' // Added for partial updates
 import { fetchServices } from '../db/queries/main' 
 import { getCookie } from 'hono/cookie'
 
@@ -36,12 +36,12 @@ home.get('/', async (c) => {
    * Check if the request is from HTMX.
    * Requests from 'hx-get' include the 'HX-Request: true' header.
    */
-  const isHX = c.req.header('HX-Request') === 'true'
+  // const isHX = c.req.header('HX-Request') === 'true'
 
-  if (isHX) {
-    // Return only the search results for partial update
-    return c.html(<SearchResult results={results} total={total} area={area} />)
-  }
+  // if (isHX) {
+  //   // Return only the search results for partial update
+  //   return c.html(<SearchResult results={results} total={total} area={area} />)
+  // }
 
   // For first access or page reload, return the full page layout
   return c.render(
