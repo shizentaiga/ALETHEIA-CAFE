@@ -47,7 +47,7 @@ home.get('/', async (c) => {
   return c.render(
     <>
       <TopHeader user={user} />
-      <TopMain results={results} total={total} />
+      <TopMain results={results} total={total} area={area} />
       <TopFooter />
     </>
   )

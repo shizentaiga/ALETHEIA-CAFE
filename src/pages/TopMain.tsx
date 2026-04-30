@@ -23,7 +23,12 @@ const layoutStyle = `
   }
 `
 
-export const TopMain: FC<{ results: any[], total: number }> = ({ results, total }) => (
+// props に area を追加し、SearchResult に引き継ぐ
+export const TopMain: FC<{ 
+  results: any[], 
+  total: number, 
+  area?: string // 追加
+}> = ({ results, total, area }) => (
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
@@ -36,7 +41,11 @@ export const TopMain: FC<{ results: any[], total: number }> = ({ results, total 
 
     {/* 検索結果 */}
     <div id="search-result-module">
-      <SearchResult results={results} total={total} />
+      {/* 
+        初回アクセス時（リロード時）のURLパラメータにあるareaを
+        SearchResult内のhidden inputへ確実に届ける
+      */}
+      <SearchResult results={results} total={total} area={area} />
     </div>
   </section>
 )
