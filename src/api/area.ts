@@ -71,6 +71,7 @@ areaApp.get('/', (c) => {
           hx-target="#area-menu-target"
         `
       : html`
+          /* ⭐️ マルチターゲットを解除し、元に戻す */
           hx-get="/?area=${encodedName}"
           hx-target="#search-result-module"
           hx-include="#q-input-header" // 💡 Get the keyword from the search input ID

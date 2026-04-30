@@ -63,16 +63,14 @@ const LABELS = {
  */
 export const SearchArea: FC<{ class?: string }> = ({ class: className }) => {
   
-  // ⭐️ 1. URL全体から「area」パラメータを確実に抽出する
+  // ⭐️ 1. 元のロジックに戻す
   const c = useRequestContext()
-  const url = new URL(c.req.url) // 現在のリクエストURLを解析
-  const areaParam = url.searchParams.get('area') // どの位置にあっても 'area' を取得
+  const currentArea = c.req.query('area')
   
-  // ⭐️ 2. エリアが存在すればデコードして表示、なければデフォルトタイトルを表示
-  // areaParam が null ではないことを判定基準にします
-  const displayLabel = areaParam ? decodeURIComponent(areaParam) : SEARCH_MASTER.region.title
+  // ⭐️ 2. 元の判定に戻す
+  const displayLabel = currentArea ? decodeURIComponent(currentArea) : SEARCH_MASTER.region.title
 
-  // ⭐️ 3. 計算が終わったので、return でHTMLを表示する（丸括弧から波括弧 { } に変わっています）
+  // ⭐️ 3. id="search-area-container" を削除し、以前の状態に戻す
   return (
     <div class={`search-area-module ${className || ''}`}>
       <style>{moduleStyle}</style>
