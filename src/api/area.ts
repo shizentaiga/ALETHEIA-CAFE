@@ -47,6 +47,10 @@ areaApp.get('/', (c) => {
   // Close the menu
   if (level === 'close') return c.html(html``)
 
+  // 1. 現在のブラウザURLから全パラメータを取得し、土台を作る
+  const currentUrl = c.req.header('HX-Current-URL') || c.req.url
+  const urlParams = new URL(currentUrl).searchParams
+
   let items: string[] = []
   const isRegion = level === 'region'
 
@@ -58,15 +62,15 @@ areaApp.get('/', (c) => {
   }
 
   const listItems = items.map((name) => {
+    // 2. 土台をコピーして area だけを今回選んだものに上書き
+    const nextParams = new URLSearchParams(urlParams)
+    nextParams.set('area', name)
+    const nextHref = `/?${nextParams.toString()}`
+
     const encodedName = encodeURIComponent(name)
-    
-    /**
-     * ⭐️ 修正ポイント：
-     * 都道府県(pref)レベルの時は hx-get を捨て、通常の href リンクにします。
-     */
-    if (isRegion) {
-      // 地方選択（北海道、東北など）はまだメニュー内を遷移するので HTMX を継続
-      return html`
+
+    // 表示ロジックの分離
+    return isRegion ? html`
         <li class="area-dropdown-item" 
             hx-get="/api/area?level=pref&region=${encodedName}" 
             hx-target="#area-menu-target">
@@ -75,17 +79,14 @@ areaApp.get('/', (c) => {
             <span class="item-arrow">＞</span>
           </div>
         </li>`
-    } else {
-      // 都道府県選択（東京都、大阪府など）は、フルリロードでページ遷移させる
-      return html`
+      : html`
         <li class="area-dropdown-item">
-          <a href="/?area=${encodedName}" style="text-decoration: none; color: inherit; display: block; width: 100%;">
+          <a href="${nextHref}" style="text-decoration: none; color: inherit; display: block; width: 100%;">
             <div class="item-content">
               <span>${name}</span>
             </div>
           </a>
         </li>`
-    }
   })
 
   return c.html(html`
