@@ -117,11 +117,13 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
         method="get"
         hx-get="/" 
         hx-target="#search-result-module" // ★ここを修正（SearchResultの最外周ID）
-        hx-select="#search-result-module" // ★ここを追加（レスポンスから抽出する範囲）
+        hx-include="#current-area-state" // 💡 ステップ1で作ったバケツを拾う
         hx-push-url="true"
       >
         <div class="header-search-input-wrapper">
+          {/* キーワード入力 input に id を付与 */}
           <input 
+            id="q-input-header"
             type="text" 
             name="q" 
             class="header-search-input" 
