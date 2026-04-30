@@ -1,20 +1,35 @@
 import { Hono } from 'hono'
 
-import { renderer } from './renderer'       // 共通レイアウト定義
-import { home } from './pages/TopPage'    // 本番: ホーム
-import { googleAuthApp } from './pages/GoogleAuth' // Google認証用(OAuht2.0)
-import { sandboxApp } from './_sandbox/_router' // 開発: 実験場
+import { renderer } from './renderer'
+import { home } from './pages/TopPage'
+import { googleAuthApp } from './pages/GoogleAuth'
+import { sandboxApp } from './_sandbox/_router'
+import areaApp from './api/area'
 
-import areaApp from './api/area' // エリア検索用
+/**
+ * Cloudflare environment variables for c.env
+ */
+type Bindings = {
+  // Add wrangler.toml variables (e.g. DB: D1Database)
+}
 
-const app = new Hono()
+const app = new Hono<{ Bindings: Bindings }>()
 
-app.use(renderer)                  // 全ルートにレイアウト適用
+/**
+ * Global Middlewares
+ */
+app.use(renderer) // Apply common layout
 
-app.route('/', googleAuthApp)   // 認証ルートを登録
-app.route('/', home)            // メインページ
-app.route('/api/area', areaApp) // エリア検索用
+/**
+ * Route Modules
+ */
+app.route('/api/area', areaApp) // Area search API
+app.route('/', googleAuthApp)   // Google OAuth2.0
+app.route('/', home)            // Main application home
 
-app.route('/_sandbox', sandboxApp) // 開発用エンドポイント
+/**
+ * Development Only
+ */
+app.route('/_sandbox', sandboxApp) // Prototyping area
 
 export default app
