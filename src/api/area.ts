@@ -72,6 +72,7 @@ areaApp.get('/', (c) => {
       : html`
           hx-get="/?area=${encodedName}"
           hx-target="#search-result-module"
+          hx-include="#q-input-header" // 💡 ステップ2でつけた入力欄のIDを拾う
           hx-push-url="true"
           hx-on::after-request="document.getElementById('area-menu-target').innerHTML = ''"
         `
