@@ -27,11 +27,15 @@ const LABELS = {
   resultPrefix: "検索結果:"
 }
 
-export const SearchResult: FC<{ results: any[], total: number }> = ({ results, total }) => {
+// props に area を追加
+export const SearchResult: FC<{ results: any[], total: number, area?: string }> = ({ results, total, area = '' }) => {
   const scope = "search-result-module"
 
   return (
     <section id={scope}>
+      {/* 💡 隠しフィールドを設置。ここに「現在選ばれているエリア」が常に記録される */}
+      <input type="hidden" id="current-area-state" name="area" value={area} />
+      
       <style>{moduleStyle(scope)}</style>
       <div class="result-header">{LABELS.resultPrefix} {total}件</div>
 

@@ -39,8 +39,8 @@ home.get('/', async (c) => {
   const isHX = c.req.header('HX-Request') === 'true'
 
   if (isHX) {
-    // エリア選択時は、検索結果リスト（#search-result-module 内）のみを返却
-    return c.html(<SearchResult results={results} total={total} />)
+    // area を追加して渡す
+    return c.html(<SearchResult results={results} total={total} area={area} />)
   }
 
   // 初回アクセスやリロード時は、共通レイアウトを適用して全体を返却
