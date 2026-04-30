@@ -1,5 +1,5 @@
 {
-  "name": "ALETHEIA-CAFE",
+  "name": "aletheia-cafe",
   "type": "module",
   "scripts": {
     "dev": "vite",
