@@ -13,7 +13,7 @@ import { trimTrailingSlash } from 'hono/trailing-slash'
 import { test00 } from './test00_hello'
 import { test01 } from './test01_db'
 import { test02 } from './test02_oauth'
-import { test03 } from './test03_drill'
+import { test03 } from './test03_htmx'
 import { test04 } from './test04_drill2'
 
 export const sandboxApp = new Hono<{}>()
