@@ -1,4 +1,8 @@
 /**
+ * [File Path] src/lib/constants.ts
+ */
+
+/**
  * [ALETHEIA PROJECT] 共通定数定義
  * 地理情報、検索マスター、およびユーティリティ
  */
