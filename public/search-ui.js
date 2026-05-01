@@ -1,67 +1,109 @@
 /**
  * [File Path] public/search-ui.js
- * 検索窓のチップ化と同期を専門に扱うロジック
+ * [Role] Handles search query tokenization (chips) and UI synchronization.
  */
 
+// --- Configuration ---
+const SEARCH_UI_CONFIG = {
+  labels: {
+    placeholderDefault: "キーワードで検索..",
+    deleteIcon: "×"
+  },
+  selectors: {
+    input: 'q-input-header',
+    targetModule: 'search-result-module',
+    stateQ: '#current-q-state',
+    stateArea: '#current-area-state'
+  },
+  classes: {
+    chip: 'search-chip',
+    deleteBtn: 'search-chip-delete'
+  }
+};
+
 window.initSearchUI = () => {
-  // HTMX の afterSettle イベント（コンテンツが入れ替わった後）にフック
+  /**
+   * Listen for HTMX 'afterSettle' event.
+   * This triggers after the target element has been updated with new content.
+   */
   document.body.addEventListener('htmx:afterSettle', (evt) => {
-    // search-result-module が更新された時だけ実行
-    if (evt.detail.target.id !== 'search-result-module') return;
+    // Only proceed if the updated element is the search result module
+    if (evt.detail.target.id !== SEARCH_UI_CONFIG.selectors.targetModule) return;
 
     const resModule = evt.detail.target;
-    // サーバーから渡された最新の状態を hidden input 等から取得
-    const q = resModule.querySelector('#current-q-state')?.value || "";
-    const area = resModule.querySelector('#current-area-state')?.value || "";
+    
+    /**
+     * Retrieve the latest search state from hidden inputs.
+     * These values are provided by the server after normalization.
+     */
+    const q = resModule.querySelector(SEARCH_UI_CONFIG.selectors.stateQ)?.value || "";
+    const area = resModule.querySelector(SEARCH_UI_CONFIG.selectors.stateArea)?.value || "";
     
     syncSearchChips(q, area);
   });
 };
 
+/**
+ * Synchronizes the header search input with the current search query.
+ * Transforms space-separated strings into interactive UI chips.
+ */
 function syncSearchChips(q, area) {
-  const searchInput = document.getElementById('q-input-header');
+  const searchInput = document.getElementById(SEARCH_UI_CONFIG.selectors.input);
   if (!searchInput) return;
 
   const wrapper = searchInput.parentElement;
   const currentKeywords = q.split(/[\s　]+/).filter(Boolean);
 
-  // 1. 既存チップのクリア
-  wrapper.querySelectorAll('.search-chip').forEach(chip => chip.remove());
+  // 1. Remove existing chips to prepare for a fresh render
+  wrapper.querySelectorAll(`.${SEARCH_UI_CONFIG.classes.chip}`).forEach(chip => chip.remove());
 
-  // 2. チップの動的生成
+  // 2. Generate new chips dynamically based on the current keywords
   currentKeywords.forEach(word => {
     const span = document.createElement('span');
-    span.className = 'search-chip';
+    span.className = SEARCH_UI_CONFIG.classes.chip;
     span.innerText = word;
 
     const delBtn = document.createElement('span');
-    delBtn.className = 'search-chip-delete';
-    delBtn.innerText = '×';
+    delBtn.className = SEARCH_UI_CONFIG.classes.deleteBtn;
+    delBtn.innerText = SEARCH_UI_CONFIG.labels.deleteIcon;
 
-    // 削除後のクエリ構築
+    /**
+     * Construct a new query by excluding the clicked keyword.
+     * This allows users to remove specific filters from their search.
+     */
     const newQuery = currentKeywords.filter(k => k !== word).join(' ');
     let searchPath = `/?q=${encodeURIComponent(newQuery)}`;
     if (area) searchPath += `&area=${encodeURIComponent(area)}`;
 
-    // HTMX 属性のセット
+    // Set HTMX attributes for asynchronous partial updates
     delBtn.setAttribute('hx-get', searchPath);
-    delBtn.setAttribute('hx-target', '#search-result-module');
+    delBtn.setAttribute('hx-target', `#${SEARCH_UI_CONFIG.selectors.targetModule}`);
     delBtn.setAttribute('hx-push-url', 'true');
-    delBtn.setAttribute('hx-select', '#search-result-module');
+    delBtn.setAttribute('hx-select', `#${SEARCH_UI_CONFIG.selectors.targetModule}`);
 
     span.appendChild(delBtn);
     wrapper.insertBefore(span, searchInput);
   });
 
-  // 3. 入力欄の状態リセット
+  // 3. Reset the input field state
   searchInput.value = "";
-  searchInput.placeholder = currentKeywords.length > 0 ? "" : "キーワードで検索..";
+  
+  /**
+   * Toggle placeholder visibility.
+   * Hide it if chips are present to keep the UI clean.
+   */
+  searchInput.placeholder = currentKeywords.length > 0 
+    ? "" 
+    : SEARCH_UI_CONFIG.labels.placeholderDefault;
 
-  // 4. HTMX に新しい要素を認識させる
+  /**
+   * 4. Re-initialize HTMX for new elements.
+   * HTMX needs to scan the newly added DOM nodes to register the 'hx-' attributes.
+   */
   if (window.htmx) {
     htmx.process(wrapper);
   }
 }
 
-// 初回読み込み用
+// Initial call to set up the UI on page load
 window.initSearchUI();

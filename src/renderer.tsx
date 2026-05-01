@@ -1,8 +1,8 @@
 import { jsxRenderer } from 'hono/jsx-renderer'
 
 /**
- * 【Configuration】
- * サイト全体の基本設定とアセットパス
+ * [Configuration]
+ * Global site settings and asset paths.
  */
 const SITE_CONFIG = {
   title: 'ALETHEIA',
@@ -12,12 +12,13 @@ const SITE_CONFIG = {
   assets: {
     htmx: 'https://unpkg.com/htmx.org@1.9.12',
     favicon: '/icon.svg',
-    searchUi: '/search-ui.js' // 追加: 外部JSのパス
+    searchUi: '/search-ui.js' // Client-side logic for search interaction
   }
 } as const
 
 /**
- * 【Global Styles】
+ * [Global Styles]
+ * Critical CSS for initial rendering performance.
  */
 const GLOBAL_STYLE = `
   :root {
@@ -46,7 +47,7 @@ const GLOBAL_STYLE = `
   main {
     max-width: 800px;
     margin: 0 auto;
-    padding: 0; /* paddingを調整（Headerと干渉しないようレイアウトに合わせて変更） */
+    padding: 0; /* Adjust padding if necessary to avoid header overlap */
   }
 
   a {
@@ -62,8 +63,8 @@ const GLOBAL_STYLE = `
 `
 
 /**
- * 【Renderer】
- * ページ共通のHTML構造を定義するレンダラー
+ * [Renderer]
+ * Defines the common HTML structure used across all pages.
  */
 export const renderer = jsxRenderer(({ children }) => {
   return (
@@ -72,24 +73,27 @@ export const renderer = jsxRenderer(({ children }) => {
         <meta charset={SITE_CONFIG.charset} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        {/* SEO・検索結果表示用の説明文 */}
+        {/* SEO and Metadata for search engine results */}
         <meta name="description" content={SITE_CONFIG.description} />
 
-        {/* CDNドメインへの事前接続による接続遅延の解消 */}
+        {/* Resolve connection latency by preconnecting to the CDN domain */}
         <link rel="preconnect" href="https://unpkg.com" />
 
         <title>{SITE_CONFIG.title}</title>
 
-        {/* アイコン設定 */}
+        {/* Favicon configuration using a single SVG */}
         <link rel="icon" href={SITE_CONFIG.assets.favicon} type="image/svg+xml" />
         
-        {/* HTMXの読み込み */}
+        {/* 
+          Load HTMX with 'defer' to prevent blocking the initial page render.
+          Initializes the library for AJAX-driven interactions.
+        */}
         <script src={SITE_CONFIG.assets.htmx} defer crossorigin="anonymous"></script>
 
-        {/* 追加: 検索窓のチップ化・同期ロジック（外部JS） */}
+        {/* Client-side synchronization logic for search chips */}
         <script src={SITE_CONFIG.assets.searchUi} defer></script>
 
-        {/* グローバルスタイルのインライン適用 */}
+        {/* Inline global styles for optimized First Contentful Paint (FCP) */}
         <style>{GLOBAL_STYLE}</style>
       </head>
       <body>

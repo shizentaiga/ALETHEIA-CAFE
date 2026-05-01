@@ -17,10 +17,14 @@ export interface SearchResultProps {
   results: ServiceResult[];
   total: number;
   area?: string;
-  q?: string; // Normalized query from server
+  q?: string; // Normalized query string from the server
 }
 
 // --- Styles ---
+/**
+ * Scoped styles for the search result module.
+ * Using a scope ID to prevent CSS leakage to other components.
+ */
 const moduleStyle = (scope: string) => `
   #${scope} { margin-top: 10px; }
   #${scope} .result-header { font-size: 0.8rem; color: #555; margin-bottom: 8px; }
@@ -43,6 +47,7 @@ const LABELS = {
 
 /**
  * SearchResult Component
+ * Renders the list of results and embeds hidden state for client-side JS synchronization.
  */
 export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '', q = '' }) => {
   const scope = "search-result-module"
@@ -51,7 +56,7 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
     <section id={scope}>
       {/* 
         [State management for search-ui.js] 
-        外部JSがチップ生成・削除のために参照する隠しフィールド 
+        Hidden fields referenced by external JS to synchronize chips and search inputs.
       */}
       <input type="hidden" id="current-q-state" value={q} />
       <input type="hidden" id="current-area-state" value={area} />
@@ -66,6 +71,7 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
             <span class="name">{row.title}</span>
             <span class="addr">{row.address}</span>
             <div class="tag-box">
+              {/* Maps formatted attributes into individual tag badges */}
               {formatAttributes(row.attributes_json).map(tag => (
                 <span class="tag">{tag}</span>
               ))}
