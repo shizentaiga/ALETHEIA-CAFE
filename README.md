@@ -11,7 +11,8 @@
 | Framework | Hono（Vite 版） |
 | Runtime | Cloudflare Workers / Pages |
 | Language | TypeScript |
-| Database | Cloudflare D1（実装予定） |
+| Stack | Hono, HTMX, Tailwind / CSS-in-JS |
+| Database | Cloudflare D1 |
 
 ---
 
@@ -22,9 +23,9 @@
 | レイヤー | ファイル | 責務 |
 |:---|:---|:---|
 | Global Router | `src/index.tsx` | ルーティングと共通ミドルウェアの定義のみ |
-| Renderer | `src/renderer.tsx` | 全ページ共通の HTML 構造（CSS 読み込み等）を管理する「額縁」 |
-| Pages | `src/pages/` | ページ単位のロジックをカプセル化 |
-| Sandbox | `src/_sandbox/` | 本番環境を汚さずに新機能・コンポーネントを試作する実験場 |
+| Renderer | `src/renderer.tsx` | 全ページ共通の HTML 構造（額縁）を管理 |
+| Pages | `src/pages/` | ページ単位のロジックとディレクトリベースの部品管理 |
+| Sandbox | `src/_sandbox/` | 新機能・コンポーネントを試作する実験場 |
 
 ---
 
@@ -32,58 +33,47 @@
 
 ~~~
 src/
-├── index.tsx              # エントリポイント。ルーティングとAPIエンドポイントの定義
+├── index.tsx              # エントリポイント。ルーティング定義
 ├── renderer.tsx           # 全ページ共通の土台（HTML外枠）
-├── style.css              # リセット CSS・全画面共通変数
+├── style.css              # リセット CSS・共通変数
 │
-├── pages/                 # 【View & Page Controllers】画面と認証ハンドラ
+├── pages/                 # 【View & Page Controllers】
 │   ├── TopPage.tsx        # トップページの親レイアウト
-│   ├── TopHeader.tsx      # ヘッダー
-│   ├── TopFooter.tsx      # フッター
 │   ├── TopMain.tsx        # メイン領域のレイアウト
-│   └── GoogleAuth.ts      # ★認証ハンドラ（ログイン・コールバック・ログアウト）
+│   ├── TopFooter.tsx      # フッター
+│   ├── TopHeader.tsx      # ヘッダー（部品の統合窓口）
+│   ├── header/            # ヘッダー専用コンポーネント
+│   │   ├── styles.ts      # ヘッダー固有のCSS（外部変数）
+│   │   ├── HeaderSearch.tsx # 検索窓・チップ表示ロジック
+│   │   └── HeaderAuth.tsx # 認証・ログイン状態表示
+│   └── GoogleAuth.ts      # 認証ハンドラ
 │
-├── components/            # 【UI Parts】機能単位のコンポーネント
-│   ├── SearchArea.tsx     # ドリルダウン検索（初期表示用）
+├── components/            # 【UI Parts】機能単位の共通コンポーネント
+│   ├── SearchArea.tsx     # ドリルダウン検索（初期表示）
 │   ├── SearchCategory.tsx # カテゴリ選択
-│   ├── SearchResult.tsx   # 結果一覧リスト
-│   └── AreaList.tsx       # ドリルダウン用リスト（HTMX小部品）
+│   ├── SearchResult.tsx   # 結果一覧（HTMX ターゲット）
+│   └── AreaList.tsx       # 階層データ表示（HTMX 小部品）
 │
-├── api/                   # 【Logic】HTMX用動的エンドポイント
-│   └── area.ts            # ドリルダウン用階層データ返却
+├── api/                   # 【Logic】HTMX 用エンドポイント
+│   └── area.ts            # ドリルダウン階層データ返却
 │
-├── db/                    # 【Data】データベース関連
+├── db/                    # 【Data】D1 関連
 │   ├── queries/           # 物理分割されたクエリ層
 │   │   ├── main.ts        # 統合窓口
-│   │   ├── search.ts      # D1検索実行
-│   │   ├── transformers.ts # UI用整形
-│   │   └── utils.ts       # SQL補助
+│   │   └── search.ts      # D1 検索実行
 │   ├── schema.sql         # テーブル定義
 │   └── seed/              # 初期データ
 │
-└── lib/                   # 【Shared】共通定数・外部連携
-    ├── constants.ts       # 地理情報・UIテキスト（不変のデータ）
-    ├── geo.ts             # 位置情報解決（Cloudflare依存）
+└── lib/                   # 【Shared】共通定数・ロジック
+    ├── constants.ts       # 地理情報・UIテキスト
     ├── auth.ts            # 認証の低レイヤー処理
-    └── search.ts          # 検索クエリの正規化・URL同期ロジック
-~~~
-
-~~~
-・修正前メモ
-src/pages/
-
-├── TopHeader.tsx          # 3つの部品を束ねる親
-└── header/
-    ├── styles.ts     # ヘッダーのCSS
-    ├── HeaderSearch.tsx   # ★ 検索窓・チップロジック（ここがメイン）
-    └── HeaderAuth.tsx     # 認証・ログイン状態
-
+    └── search.ts          # クエリ正規化・URL同期
 ~~~
 
 ~~~
 public/
-├── icon.svg           # 共通アイコン
-└── search-ui.js       # 【追加】検索窓のチップ化・削除・HTMX同期ロジック（Client-side）
+├── icon.svg               # 共通アイコン
+└── search-ui.js           # 検索窓のチップ化・削除・HTMX同期ロジック（Client-side）
 ~~~
 
 ---
@@ -91,16 +81,13 @@ public/
 ## Design Principles
 
 ### 1. Atomic Component Separation
+各パーツ（Header / Main / Footer）を独立させ、さらに Header 等の複雑なパーツはサブディレクトリ（`header/`）でスタイルとロジックを分離。
 
-各パーツ（Header / Main / Footer）を独立したファイルとして定義し、`TopPage.tsx` で統合することで、メンテナンス性と可読性を高める。
+### 2. Zero-JS Focus (with HTMX & Vanilla)
+HTMX を活用しつつ、パフォーマンスと SEO を重視。`search-ui.js` はあくまで UI 補助とし、サーバーサイド主導の設計を維持。
 
-### 2. Sticky Footer Architecture
-
-コンテンツ量に関わらず、フッターが常に画面最下部に位置するよう、Flexbox を用いたレイアウト設計を `renderer.tsx` レベルで実装。
-
-### 3. Future Scalability
-
-現在は単一階層だが、今後 `mypage` や `shop` などの新機能が追加される際は、`pages/` 配下にサブディレクトリを作成し、同様の構成（Header / Main / Footer）を展開する設計思想。
+### 3. High Performance & Scalability
+Cloudflare D1 や Workers の特性を活かし、低コストかつ PageSpeed Insights で高得点を維持できる軽量なアーキテクチャ。
 
 ---
 
@@ -108,25 +95,17 @@ public/
 
 | コマンド | 用途 |
 |:---|:---|
-| `npm run dev` | ローカル開発サーバーの起動 |
-| `npm run deploy` | Cloudflare 本番環境（Pages）へのデプロイ |
-| `npx wrangler tail` | 本番環境のリアルタイムログ監視 |
+| `npm run dev` | ローカル開発サーバー起動 |
+| `npm run deploy` | Cloudflare Pages へのデプロイ |
+| `npx wrangler tail` | リアルタイムログ監視 |
 
 ---
 
 ## Notes
 
-- `components/` 配下の各コンポーネントは CSS / JS を内包した自己完結型として設計されています。
-- `_sandbox/` での検証を経てから `components/` へ昇格させる運用を推奨します。
+- `header/styles.ts` のように、CSS を外部変数化することで JSX 側の可読性を確保。
+- 検索窓のキーワード追加仕様については、ユーザーの絞り込み体験（AND検索）向上のため継続検討中。
 
 ---
 
 *© 2026 Taiga Shizen. ALETHEIA-CAFE is part of the shizentaiga-2026 project.*
-
----
-
-## ワンポイントアドバイス
-
-一点だけ、**`SearchResult.tsx` は早い段階で HTMX の `hx-target` / `hx-swap` の差し替え範囲を明確に決めておくことを推奨**。
-
-結果リストが肥大化した際に「どこまでサーバー側で描画し、どこから JS で操作するか」の境界が曖昧になりやすく、後から変更すると `TopMain.tsx` の構造ごと触ることになる。`<div id="search-results">` のような差し替えターゲットを早期に固定しておくと、HTMX・Vanilla JS・Hono の責務分離（SoC）が保ちやすくなる。
