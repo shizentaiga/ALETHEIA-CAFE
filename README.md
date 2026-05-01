@@ -61,15 +61,17 @@ src/
 │   ├── schema.sql         # テーブル定義
 │   └── seed/              # 初期データ
 │
-├── lib/                   # 【Shared】共通定数・外部連携
-│   ├── constants.ts       # 地理情報・UIテキスト（不変のデータ）
-│   ├── geo.ts             # 位置情報解決（Cloudflare依存）
-│   ├── auth.ts            # 認証の低レイヤー処理
-│   └── search.ts          # ★新設：検索クエリの正規化・URL同期ロジック
-│
-└── public/                # 静的資産
-    ├── style.css          # ビルド後のCSS（または直接配置）
-    └── icon.svg           # 【追加】共通アイコン（favicon / apple-touch-icon 兼用）
+└── lib/                   # 【Shared】共通定数・外部連携
+    ├── constants.ts       # 地理情報・UIテキスト（不変のデータ）
+    ├── geo.ts             # 位置情報解決（Cloudflare依存）
+    ├── auth.ts            # 認証の低レイヤー処理
+    └── search.ts          # 検索クエリの正規化・URL同期ロジック
+~~~
+
+~~~
+public/
+├── icon.svg           # 共通アイコン
+└── search-ui.js       # 【追加】検索窓のチップ化・削除・HTMX同期ロジック（Client-side）
 ~~~
 
 ---

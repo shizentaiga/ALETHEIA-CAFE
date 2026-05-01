@@ -12,12 +12,12 @@ const SITE_CONFIG = {
   assets: {
     htmx: 'https://unpkg.com/htmx.org@1.9.12',
     favicon: '/icon.svg',
+    searchUi: '/search-ui.js' // 追加: 外部JSのパス
   }
 } as const
 
 /**
  * 【Global Styles】
- * クリティカルレンダリングパス最適化のため、style.cssをインライン化
  */
 const GLOBAL_STYLE = `
   :root {
@@ -46,7 +46,7 @@ const GLOBAL_STYLE = `
   main {
     max-width: 800px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 0; /* paddingを調整（Headerと干渉しないようレイアウトに合わせて変更） */
   }
 
   a {
@@ -80,11 +80,14 @@ export const renderer = jsxRenderer(({ children }) => {
 
         <title>{SITE_CONFIG.title}</title>
 
-        {/* アイコン設定（SVG 1枚による全デバイス対応） */}
+        {/* アイコン設定 */}
         <link rel="icon" href={SITE_CONFIG.assets.favicon} type="image/svg+xml" />
         
-        {/* HTMXの読み込み（defer属性によりメインレンダリングをブロックしない） */}
+        {/* HTMXの読み込み */}
         <script src={SITE_CONFIG.assets.htmx} defer crossorigin="anonymous"></script>
+
+        {/* 追加: 検索窓のチップ化・同期ロジック（外部JS） */}
+        <script src={SITE_CONFIG.assets.searchUi} defer></script>
 
         {/* グローバルスタイルのインライン適用 */}
         <style>{GLOBAL_STYLE}</style>

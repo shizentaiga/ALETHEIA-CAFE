@@ -1,8 +1,7 @@
 /**
  * [File Path] src/components/SearchResult.tsx
- * [Role] UI component to display search results and sync input state.
+ * [Role] UI component to display search results and provide state for search-ui.js.
  */
-import { html } from 'hono/html'
 import type { FC } from 'hono/jsx'
 import { formatAttributes } from '../db/queries/main'
 
@@ -50,10 +49,15 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
 
   return (
     <section id={scope}>
-      {/* State management for HTMX */}
-      <input type="hidden" id="current-area-state" name="area" value={area} />
+      {/* 
+        [State management for search-ui.js] 
+        外部JSがチップ生成・削除のために参照する隠しフィールド 
+      */}
+      <input type="hidden" id="current-q-state" value={q} />
+      <input type="hidden" id="current-area-state" value={area} />
       
       <style>{moduleStyle(scope)}</style>
+      
       <div class="result-header">{LABELS.resultPrefix} {total}件</div>
 
       <div id="search-results-target">
@@ -69,46 +73,6 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
           </a>
         ))}
       </div>
-
-      {/* 
-        Sync the search input value with the normalized query.
-        This ensures "word word" becomes "word" in the UI after search.
-      */}
-      {html`
-        <script>
-          (function() {
-            const q = "${q}";
-            const searchInput = document.getElementById('q-input-header');
-            if (!searchInput) return;
-
-            const wrapper = searchInput.parentElement;
-            
-            // 1. 既存のチップをクリア (inputとbutton以外の.search-chipを削除)
-            const oldChips = wrapper.querySelectorAll('.search-chip');
-            oldChips.forEach(chip => chip.remove());
-
-            // 2. 正規化されたクエリがある場合、チップを再生成して挿入
-            if (q) {
-              const keywords = q.split(/[\\s　]+/).filter(Boolean);
-              keywords.forEach(word => {
-                const span = document.createElement('span');
-                span.className = 'search-chip';
-                span.innerText = word;
-                // input要素の直前に挿入することで、チップ -> 入力欄 の並びを維持
-                wrapper.insertBefore(span, searchInput);
-              });
-            }
-
-            // 3. 入力欄を空にする
-            // 確定したキーワードはチップ化されたので、inputは次の入力待ち状態にする
-            searchInput.value = "";
-            
-            // 4. プレースホルダーの制御
-            // チップがある場合は邪魔なので消し、ない場合は表示する
-            searchInput.placeholder = q ? "" : "キーワードで検索..";
-          })();
-        </script>
-      `}
     </section>
   )
 }

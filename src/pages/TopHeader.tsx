@@ -82,6 +82,26 @@ const headerStyle = `
     flex-shrink: 0;
   }
 
+  /* headerStyle の中に追加 */
+  .search-chip-delete {
+    margin-left: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    font-size: 12px;
+    line-height: 1;
+    color: #94a3b8;
+  }
+  .search-chip-delete:hover {
+    background-color: #cbd5e1;
+    color: #1e293b;
+  }
+
   /* 実際の入力欄（枠を消して透明にする） */
   .header-search-input {
     flex-grow: 1;
