@@ -121,8 +121,10 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
       {/* 2. Search Form (Standard full-page reload) */}
       <form 
         class="header-search-form" 
-        action="/" 
-        method="get"
+        hx-get="/" 
+        hx-target="#search-result-module" 
+        hx-push-url="true"
+        hx-select="#search-result-module"
       >
         <div class="header-search-input-wrapper">
           <input 
