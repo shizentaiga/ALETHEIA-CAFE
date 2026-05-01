@@ -25,7 +25,11 @@ export const PATHS = {
  * These values control API IDs and request intervals (throttling).
  */
 export const CONFIG = {
-    DB_ID: 'brand_starbucks',
+    // ブランドごとのID管理
+    BRANDS: {
+        STARBUCKS: 'brand_starbucks',
+        DOUTOR: 'brand_doutor', // ドトール用のIDを追加
+    },
     OWNER_ID: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
     WAIT_LONG: 2000,   // Wait time between large chunks (ms)
     WAIT_SHORT: 2000,  // Wait time between individual pages (ms)
