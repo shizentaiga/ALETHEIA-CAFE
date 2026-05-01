@@ -1,6 +1,6 @@
 /**
  * [File Path] src/pages/header/HeaderSearch.tsx
- * [Role] Handles search input and keyword chip rendering with SSR-based delete functionality.
+ * [Role] Handles search input and keyword chip rendering.
  */
 import type { FC } from 'hono/jsx'
 
@@ -10,10 +10,8 @@ interface HeaderSearchProps {
   area: string;
 }
 
-// --- Configuration ---
 const CONFIG = {
   target: '#search-result-module',
-  deleteIcon: '×',
   searchIcon: '🔍',
   inputId: 'q-input-header'
 } as const
@@ -28,9 +26,8 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
       hx-select={CONFIG.target}
     >
       <div class="header-search-input-wrapper">
-        {/* Render keywords as chips with SSR delete links */}
         {keywords.map(word => (
-        <span class="search-chip">{word}</span>
+          <span class="search-chip">{word}</span>
         ))}
 
         <input 
@@ -42,7 +39,6 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
           autocomplete="off"
         />
         
-        {/* Maintain 'area' context during keyword searches */}
         {area && <input type="hidden" name="area" value={area} />}
         
         <button type="submit" class="header-search-button" aria-label="Search">
