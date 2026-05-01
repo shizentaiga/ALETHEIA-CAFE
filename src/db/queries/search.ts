@@ -25,20 +25,24 @@ export const fetchServices = async (
   limit: number = DEFAULT_LIMIT
 ) => {
   const offset = (page - 1) * limit;
-  const normalizedQ = q.replace(/[\s　]/g, '');
+
+  // 1. スペースで分割してキーワードの配列を作る
+  const keywords = q.trim().split(/[\s　]+/).filter(Boolean);
 
   // 基本条件：論理削除(deleted_at)されていない有効なデータのみを対象とする
   const conditions = ["deleted_at IS NULL"];
   const params: any[] = [];
 
-  // キーワードがある場合：名称(title)と住所(address)を対象に部分一致検索
-  if (normalizedQ) {
-    // DB側と検索ワード側の両方からスペースを除去して比較（表記揺れ対策）
-    conditions.push(`(${cleanSql('title')} LIKE ? OR ${cleanSql('address')} LIKE ?)`);
-    params.push(`%${normalizedQ}%`, `%${normalizedQ}%`);
+  // 2. キーワードがある場合、各単語に対して AND 条件を生成する
+  if (keywords.length > 0) {
+    keywords.forEach(word => {
+      // 各単語が title または address のいずれかに含まれているか
+      conditions.push(`(title LIKE ? OR address LIKE ?)`);
+      params.push(`%${word}%`, `%${word}%`);
+    });
   }
 
-  // 2. エリア検索（★スモールスタート：まずは完全一致）
+  // 3. エリア検索（★スモールスタート：まずは完全一致）
   if (area) {
     // 住所のカラムに「東京都」などが含まれているか前方一致で判定
     conditions.push(`address LIKE ?`);
