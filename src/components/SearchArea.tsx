@@ -57,7 +57,7 @@ const LABELS = {
   icon: "📍"
 }
 
-// 修正：propsを受け取れるように変更
+// Updated to accept "currentArea" via props for initial state
 export const SearchArea: FC<{ class?: string, currentArea?: string }> = ({ class: className, currentArea }) => {
   const c = useRequestContext()
 
@@ -70,10 +70,10 @@ export const SearchArea: FC<{ class?: string, currentArea?: string }> = ({ class
   const areaParam = urlObj.searchParams.get('area')
   
   /**
-   * 表示ラベルの決定ロジック
-   * 1. URLパラメータがあればそれを優先（ユーザー選択）
-   * 2. なければ TopPage で判定した currentArea (CDN値) を使用
-   * 3. どちらもなければデフォルトのタイトルを表示
+   * Logic to determine the display label:
+   * 1. Prioritize URL parameters (user selection).
+   * 2. Fallback to currentArea (detected via CDN) if URL is empty.
+   * 3. Use default title as a final fallback.
    */
   const resolvedArea = areaParam ? decodeURIComponent(areaParam) : currentArea
   const displayLabel = resolvedArea || SEARCH_MASTER.region.title

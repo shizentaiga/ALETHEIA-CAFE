@@ -42,6 +42,7 @@ export const TopMain: FC<{
     {/* Display search chips (Area and Category) */}
     <div class="search-bar-row">
       <SearchArea currentArea={area} />
+      
       {/* SearchCategory is currently under development */}
       {/* <SearchCategory /> */}
     </div>

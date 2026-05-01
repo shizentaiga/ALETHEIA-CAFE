@@ -8,7 +8,7 @@ import { TopMain } from './TopMain'
 import { TopFooter } from './TopFooter'
 import { fetchServices } from '../db/queries/main' 
 import { getCookie } from 'hono/cookie'
-import { resolveDetectionArea } from '../lib/geo' // 切り出した関数をインポート
+import { resolveDetectionArea } from '../lib/geo'
 
 // Cloudflare D1 environment bindings
 type Bindings = {
@@ -21,10 +21,7 @@ export const home = new Hono<{ Bindings: Bindings }>()
 home.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;
   const q = c.req.query('q') || '';
-
-  // 位置情報
-  // const area = c.req.query('area');   // 初期値は全国
-  const area = resolveDetectionArea(c);  // 初期値はCDNの都道府県
+  const area = resolveDetectionArea(c);   // Fallback to CDN-detected region
 
   // Retrieve user session
   const userId = getCookie(c, 'aletheia_session')
