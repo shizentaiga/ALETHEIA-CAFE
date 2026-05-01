@@ -22,33 +22,33 @@ export const PATHS = {
 
 /**
  * CONFIG: Operational parameters.
- * These values control API IDs and request intervals (throttling).
+ * These values control Brand IDs, Ownership, and Request Throttling.
  */
 export const CONFIG = {
-    // ブランドごとのID管理
+    // Unique identifier for each brand
     BRANDS: {
         STARBUCKS: 'brand_starbucks',
-        DOUTOR: 'brand_doutor', // ドトール用のIDを追加
+        DOUTOR: 'brand_doutor', 
     },
     OWNER_ID: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
-    WAIT_LONG: 2000,   // Wait time between large chunks (ms)
-    WAIT_SHORT: 2000,  // Wait time between individual pages (ms)
-    CONCURRENCY: 5     // Number of parallel requests allowed
+    WAIT_LONG: 2000,   // Interval between large data chunks (ms)
+    WAIT_SHORT: 2000,  // Interval between individual pages (ms)
+    CONCURRENCY: 3     // Number of concurrent requests allowed
 };
 
 /**
- * Utility to pause execution for a specific time.
+ * Utility to pause execution for a specific duration.
  * @param ms - Milliseconds to sleep
  */
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Check if a directory exists. If not, create it.
+ * Check if a directory exists. If not, create it recursively.
  * @param dir - Target directory path
  */
 export function ensureDirectory(dir: string) {
     if (!fs.existsSync(dir)) {
-        // Create directory recursively to prevent errors
+        // Prevent errors by creating the parent directories if needed
         fs.mkdirSync(dir, { recursive: true });
     }
 }

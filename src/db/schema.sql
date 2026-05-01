@@ -1,76 +1,79 @@
--- (DB作成：初回のみ) npx wrangler d1 create ALETHEIA-CAFE-DB
--- (テーブル作成) npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/schema.sql --local
+-- =============================================================================
+-- [ COMMAND MEMO ]
+-- Create DB:       npx wrangler d1 create ALETHEIA-CAFE-DB
+-- Deploy Schema:   npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/schema.sql --local
+-- =============================================================================
 
 /**
  * =============================================================================
  * 【 ALETHEIA - Database Schema 】
- * 役割：ユーザー、地点（サービス）、およびその活動記録を管理する最小コア。
- * DB名：ALETHEIA-CAFE-DB
+ * Goal: Manage Users, Locations (Services), and Personal Activities.
+ * DB Name: ALETHEIA-CAFE-DB
  * =============================================================================
  */
 
 -- =============================================================================
--- 1. テーブルの初期化
+-- 1. Table Initialization
 -- =============================================================================
 DROP TABLE IF EXISTS user_activities;
 DROP TABLE IF EXISTS services;
 DROP TABLE IF EXISTS users;
 
 -- =============================================================================
--- 2. ユーザー管理
+-- 2. User Management
 -- =============================================================================
 CREATE TABLE users (
-    user_id       TEXT PRIMARY KEY,               -- Google Auth 連携ID
-    email         TEXT UNIQUE,                    -- 連絡用メールアドレス
-    display_name  TEXT,                           -- 表示名
-    role          TEXT DEFAULT 'USER' NOT NULL,   -- 'USER', 'ADMIN', 'OWNER'
-    status        TEXT DEFAULT 'ACTIVE' NOT NULL, -- 'ACTIVE', 'SUSPENDED', 'BANNED'
-    plan_id       TEXT DEFAULT 'free' NOT NULL,   -- 'free', 'pro', 'biz'
+    user_id       TEXT PRIMARY KEY,               -- Unique ID from Google Auth
+    email         TEXT UNIQUE,                    -- User contact email
+    display_name  TEXT,                           -- Public display name
+    role          TEXT DEFAULT 'USER' NOT NULL,   -- 'USER', 'ADMIN', or 'OWNER'
+    status        TEXT DEFAULT 'ACTIVE' NOT NULL, -- Account status
+    plan_id       TEXT DEFAULT 'free' NOT NULL,   -- 'free', 'pro', or 'biz'
     last_login_at DATETIME,
-    deleted_at    DATETIME,                       -- 退会日時（論理削除）
+    deleted_at    DATETIME,                       -- Logic delete timestamp
     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =============================================================================
--- 3. コアデータ（地点・サービス）
+-- 3. Service Locations (Core Data)
 -- =============================================================================
 CREATE TABLE services (
     service_id      TEXT PRIMARY KEY,
-    brand_id        TEXT,                         -- チェーン店管理用（任意）
-    owner_id        TEXT,                         -- ビジネスオーナーID
-    plan_id         TEXT DEFAULT 'free' NOT NULL, -- 地点のリスティングプラン
+    brand_id        TEXT,                         -- Chain brand identifier
+    owner_id        TEXT,                         -- Business owner identifier
+    plan_id         TEXT DEFAULT 'free' NOT NULL, -- Service listing plan
     
-    -- 基本情報
-    title           TEXT NOT NULL,                -- 店名・施設名
-    address         TEXT NOT NULL,                -- 住所フルテキスト
-    lat             REAL,                         -- 緯度
-    lng             REAL,                         -- 経度
+    -- Basic Information
+    title           TEXT NOT NULL,                -- Shop or Facility name
+    address         TEXT NOT NULL,                -- Full street address
+    lat             REAL,                         -- Latitude
+    lng             REAL,                         -- Longitude
 
-    -- 動的属性（Wi-Fi、電源、決済、営業時間など）
+    -- Dynamic Attributes (Wi-Fi, Power, Open Hours, etc.)
     attributes_json TEXT DEFAULT '{}',
 
-    -- メタデータ
+    -- Metadata
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
-    deleted_at      DATETIME                      -- 論理削除用
+    deleted_at      DATETIME                      -- Logic delete timestamp
 );
 
 -- =============================================================================
--- 4. ユーザーアクティビティ（パーソナルデータ）
+-- 4. User Activities (Personal Data)
 -- =============================================================================
 CREATE TABLE user_activities (
     activity_id    TEXT PRIMARY KEY,
     user_id        TEXT NOT NULL,
     service_id     TEXT NOT NULL,
     
-    -- 活動記録
-    favorited_at   DATETIME,                      -- お気に入り登録日時
-    visited_at     DATETIME,                      -- 最終訪問日時
+    -- Interaction Records
+    favorited_at   DATETIME,                      -- Timestamp for "Saved"
+    visited_at     DATETIME,                      -- Last visit timestamp
     
-    -- パーソナルメモ
-    tentative_date TEXT,                          -- 「いつか行きたい」等の予定日
-    personal_memo  TEXT,                          -- 自分専用メモ
+    -- Personal Notes
+    tentative_date TEXT,                          -- Planned visit date
+    personal_memo  TEXT,                          -- Private user notes
     
     updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, service_id)                   -- 同一地点への二重登録を防止
+    UNIQUE(user_id, service_id)                   -- Prevent duplicate entries
 );

@@ -10,15 +10,15 @@ import { PATHS, CONFIG, ensureDirectory } from './utils.js';
 
 /**
  * Normalizes strings: 
+ * - Tabs to spaces (Fixes "ambiguous characters" warning)
  * - Full-width spaces to half-width
- * - Tabs to spaces (Handling the warning you noticed)
- * - Trim whitespace
+ * - Remove newlines and trim whitespace
  */
 function cleanString(str: string) {
     if (!str) return '';
     return str
-        .replace(/\t/g, ' ')  // 紛らわしい文字（タブ）を半角スペースに置換
-        .replace(/　/g, ' ') // 全角スペースを半角に
+        .replace(/\t/g, ' ')  // Replace tabs with spaces
+        .replace(/　/g, ' ') // Replace ideographic spaces with half-width
         .replace(/\r?\n/g, ' ')
         .trim();
 }
@@ -32,36 +32,35 @@ function convertToSql(items: any[]) {
         
         // Doutor's rawLines structure:
         // [0]: Name, [1]: Address, [2]: Phone, [3~]: Business Hours
-        const rawName = lines[0] || 'ドトールコーヒーショップ';
+        const rawName = lines[0] || 'Doutor Coffee Shop';
         const rawAddress = lines[1] || '';
         const phone = lines[2] || '';
         
-        // 4番目以降の要素（営業時間）を結合して一つの文字列にする
+        // Merge remaining elements (index 3+) into a single string for business hours
         const businessHours = lines.slice(3).map((l: string) => cleanString(l)).join(' / ');
 
-        // 固有IDの生成（電話番号があれば活用、なければインデックス）
-        // ドトールの公式IDが不明なため、住所と電話番号から生成
+        // Generate Unique ID (Use phone number if available, otherwise use index)
         const storeId = phone ? phone.replace(/-/g, '') : `IDX${index.toString().padStart(5, '0')}`;
         const serviceId = `DTR_${storeId}`;
         
         const cleanAddress = cleanString(rawAddress);
         
-        // 属性オブジェクトの構築
+        // Construct attributes object
         const attributes = {
             category: "cat_cafe",
-            wifi: true, // ドトールは基本導入されているが、不明なため一旦true（適宜調整）
+            wifi: true, // Assuming Wi-Fi is available (Adjust as needed)
             phone: phone,
             ext_source: "doutor_official",
             ext_place_id: `DTR_OFFICIAL_${storeId}`,
             business_hours: businessHours
         };
 
-        // SQLセーフティ: シングルクォートのエスケープ
+        // SQL Safety: Escape single quotes
         const escapedTitle = cleanString(rawName).replace(/'/g, "''");
         const jsonString = JSON.stringify(attributes).replace(/'/g, "''");
 
-        // 緯度経度はスクレイピングデータに含まれないため、初期値はNULL
-        // 後ほど別工程でジオコーディングすることを想定
+        // Coordinates are set to NULL by default as they are not in the raw data.
+        // Geocoding is required in a separate process for map integration.
         const lat = 'NULL';
         const lng = 'NULL';
 
