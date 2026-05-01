@@ -57,7 +57,8 @@ const LABELS = {
   icon: "📍"
 }
 
-export const SearchArea: FC<{ class?: string }> = ({ class: className }) => {
+// 修正：propsを受け取れるように変更
+export const SearchArea: FC<{ class?: string, currentArea?: string }> = ({ class: className, currentArea }) => {
   const c = useRequestContext()
 
   /**
@@ -68,8 +69,14 @@ export const SearchArea: FC<{ class?: string }> = ({ class: className }) => {
   const urlObj = new URL(currentUrl)
   const areaParam = urlObj.searchParams.get('area')
   
-  // Set label based on URL parameter or default title
-  const displayLabel = areaParam ? decodeURIComponent(areaParam) : SEARCH_MASTER.region.title
+  /**
+   * 表示ラベルの決定ロジック
+   * 1. URLパラメータがあればそれを優先（ユーザー選択）
+   * 2. なければ TopPage で判定した currentArea (CDN値) を使用
+   * 3. どちらもなければデフォルトのタイトルを表示
+   */
+  const resolvedArea = areaParam ? decodeURIComponent(areaParam) : currentArea
+  const displayLabel = resolvedArea || SEARCH_MASTER.region.title
 
   return (
     <div class={`search-area-module ${className || ''}`}>

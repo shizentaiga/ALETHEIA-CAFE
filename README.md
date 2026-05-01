@@ -63,6 +63,7 @@ src/
 │
 ├── lib/                   # 【Shared】共通定数・外部連携
 │   ├── constants.ts       # 地理情報・UIラベル
+│   └── geo.ts             # ★新設：Cloudflareからの位置情報解決ロジック（純粋関数）
 │   └── auth.ts            # Google OAuth2.0 内部処理（低レイヤー）
 │
 └── public/                # 静的資産
