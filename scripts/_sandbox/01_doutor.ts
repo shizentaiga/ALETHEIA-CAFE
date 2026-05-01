@@ -32,7 +32,8 @@ async function scrapeDoutor() {
   const page = await context.newPage();
 
   try {
-    const url = 'https://shop.doutor.co.jp/doutor/spot/list?limit=50&address=47';
+    // const url = 'https://shop.doutor.co.jp/doutor/spot/list?limit=50&address=47';
+    const url = 'https://shop.doutor.co.jp/doutor/spot/list?limit=100&address=13';
     console.log(`🌐 Navigating to: ${url}`);
     
     // ページ遷移（ネットワークが静かになるまで待機）
@@ -46,7 +47,7 @@ async function scrapeDoutor() {
     const spotRows = await page.locator(targetSelector).all();
     console.log(`✅ Found ${spotRows.length} spots. Extracting top 3...`);
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 10; i++) {
       if (spotRows[i]) {
         // 店舗名などは dl > dt や dl > dd の中に構造化されている可能性が高いです
         const rawText = await spotRows[i].innerText();
