@@ -1,11 +1,11 @@
 /**
  * [File Path] src/db/queries/transformers.ts
- * [Role] データベースの生データを表示形式へ変換するロジック
+ * [Role] Logic to transform raw database data into display formats.
  */
 import { isTruthy } from './utils';
 
-// --- 設定・固定値 ---
-const MAX_TAG_DISPLAY = 3; // UIに表示するラベルの最大数
+// --- CONFIGURATION ---
+const MAX_TAG_DISPLAY = 3; // Maximum number of labels to show in the UI
 
 const LABEL_MAP: Record<string, string> = {
   wifi: 'Wi-Fi',
@@ -28,15 +28,15 @@ export interface ServiceAttributes {
 }
 
 /**
- * 属性JSONを表示用ラベルの配列に変換
- * 設定された最大数に基づき、支払い方法を優先してラベルを抽出します。
+ * Converts attribute JSON into an array of display labels.
+ * Prioritizes payment methods and extracts labels based on the display limit.
  */
 export const formatAttributes = (jsonStr: string): string[] => {
   try {
     const attrs: ServiceAttributes = JSON.parse(jsonStr || '{}');
     const tags: string[] = [];
 
-    // 1. 支払い方法の判定（優先表示）
+    // 1. Evaluate payment methods (Priority display)
     const payments = attrs.payment;
     if (Array.isArray(payments) && payments.length > 0) {
       if (payments.includes('CASH_ONLY')) {
@@ -48,14 +48,14 @@ export const formatAttributes = (jsonStr: string): string[] => {
       }
     }
 
-    // 2. 設備フラグの判定（LABEL_MAPに基づき抽出）
+    // 2. Evaluate equipment flags (Extracted via LABEL_MAP)
     const otherTags = Object.entries(attrs)
       .filter(([k, v]) => LABEL_MAP[k] && isTruthy(v))
       .map(([k]) => LABEL_MAP[k]);
 
-    // UIの美観のため、定数で定義した最大数に制限
+    // Limit to constant for UI consistency
     return [...tags, ...otherTags].slice(0, MAX_TAG_DISPLAY);
   } catch {
-    return []; // 解析失敗時は安全に空配列を返す
+    return []; // Safely return an empty array if parsing fails
   }
 };

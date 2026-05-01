@@ -1,15 +1,15 @@
 /**
  * [File Path] src/db/queries/main.ts
- * [Role] クエリ層の統合エントリーポイント
- * [Notes] 外部（API層など）はこのファイルを介して、検索やデータ変換機能を利用します。
+ * [Role] Integrated entry point for the query layer.
+ * [Notes] External layers (API, etc.) interact with the DB through this file.
  */
 
 import { fetchServices } from './search';
 import { formatAttributes } from './transformers';
 
 /**
- * dbQueries オブジェクト形式での提供
- * インポート時に `dbQueries.fetchServices` のように名前空間を分けて利用可能です。
+ * Providing dbQueries as an object.
+ * Enables namespaced access such as `dbQueries.fetchServices`.
  */
 export const dbQueries = {
   fetchServices,
@@ -17,7 +17,7 @@ export const dbQueries = {
 };
 
 /**
- * 名前付きエクスポートでの提供
- * `import { fetchServices } from './main'` のように直接的なインポートも可能です。
+ * Providing named exports.
+ * Enables direct imports such as `import { fetchServices } from './main'`.
  */
 export { fetchServices, formatAttributes };
