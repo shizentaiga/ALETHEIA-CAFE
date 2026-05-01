@@ -71,11 +71,13 @@ src/
 ~~~
 ・修正前メモ
 src/pages/
+
 ├── TopHeader.tsx          # 3つの部品を束ねる親
 └── header/
-    ├── HeaderLogo.tsx     # ロゴ（ブランド表示）
+    ├── styles.ts     # ヘッダーのCSS
     ├── HeaderSearch.tsx   # ★ 検索窓・チップロジック（ここがメイン）
     └── HeaderAuth.tsx     # 認証・ログイン状態
+
 ~~~
 
 ~~~

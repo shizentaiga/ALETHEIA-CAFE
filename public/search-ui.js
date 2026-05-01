@@ -54,10 +54,10 @@ function syncSearchChips(q, area) {
   const wrapper = searchInput.parentElement;
   const currentKeywords = q.split(/[\s　]+/).filter(Boolean);
 
-  // 1. Remove existing chips to prepare for a fresh render
+  // 1. Remove existing chips (both SSR and previous dynamic chips)
   wrapper.querySelectorAll(`.${SEARCH_UI_CONFIG.classes.chip}`).forEach(chip => chip.remove());
 
-  // 2. Generate new chips dynamically based on the current keywords
+  // 2. Generate new chips dynamically with HTMX delete functionality
   currentKeywords.forEach(word => {
     const span = document.createElement('span');
     span.className = SEARCH_UI_CONFIG.classes.chip;
@@ -69,13 +69,12 @@ function syncSearchChips(q, area) {
 
     /**
      * Construct a new query by excluding the clicked keyword.
-     * This allows users to remove specific filters from their search.
      */
     const newQuery = currentKeywords.filter(k => k !== word).join(' ');
     let searchPath = `/?q=${encodeURIComponent(newQuery)}`;
     if (area) searchPath += `&area=${encodeURIComponent(area)}`;
 
-    // Set HTMX attributes for asynchronous partial updates
+    // Re-bind HTMX attributes
     delBtn.setAttribute('hx-get', searchPath);
     delBtn.setAttribute('hx-target', `#${SEARCH_UI_CONFIG.selectors.targetModule}`);
     delBtn.setAttribute('hx-push-url', 'true');
@@ -89,16 +88,15 @@ function syncSearchChips(q, area) {
   searchInput.value = "";
   
   /**
-   * Toggle placeholder visibility.
-   * Hide it if chips are present to keep the UI clean.
+   * 4. Toggle placeholder visibility.
    */
   searchInput.placeholder = currentKeywords.length > 0 
     ? "" 
     : SEARCH_UI_CONFIG.labels.placeholderDefault;
 
   /**
-   * 4. Re-initialize HTMX for new elements.
-   * HTMX needs to scan the newly added DOM nodes to register the 'hx-' attributes.
+   * 5. Re-initialize HTMX for new elements.
+   * Required because these nodes were added via vanilla DOM API.
    */
   if (window.htmx) {
     htmx.process(wrapper);
