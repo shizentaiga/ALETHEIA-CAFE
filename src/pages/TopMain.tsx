@@ -34,8 +34,9 @@ const layoutStyle = `
 export const TopMain: FC<{ 
   results: any[], 
   total: number, 
-  area?: string // Added to maintain area state
-}> = ({ results, total, area }) => (
+  area?: string
+  q?: string // Added
+}> = ({ results, total, area, q }) => (
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
@@ -53,7 +54,7 @@ export const TopMain: FC<{
         Pass the 'area' from the URL parameter to SearchResult.
         This ensures the hidden input field is correctly set on page reload.
       */}
-      <SearchResult results={results} total={total} area={area} />
+      <SearchResult results={results} total={total} area={area} q={q} />
     </div>
   </section>
 )

@@ -2,6 +2,7 @@
  * [File Path] src/pages/TopPage.tsx
  * [Role] Main entry point for the top page.
  */
+
 import { Hono } from 'hono'
 import { TopHeader } from './TopHeader'
 import { TopMain } from './TopMain'
@@ -9,6 +10,7 @@ import { TopFooter } from './TopFooter'
 import { fetchServices } from '../db/queries/main' 
 import { getCookie } from 'hono/cookie'
 import { resolveDetectionArea } from '../lib/geo'
+import { normalizeQuery, syncUrlWithQuery } from '../lib/search'
 
 // Cloudflare D1 environment bindings
 type Bindings = {
@@ -20,8 +22,16 @@ export const home = new Hono<{ Bindings: Bindings }>()
 // --- Routes ---
 home.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;
-  const q = c.req.query('q') || '';
-  const area = resolveDetectionArea(c);   // Fallback to CDN-detected region
+
+  // 1. Get and normalize query (Remove duplicates)
+  const rawQ = c.req.query('q') || '';
+  const q = normalizeQuery(rawQ);
+
+  // 2. Reflect the cleaned query back to the browser URL via HTMX header
+  syncUrlWithQuery(c, rawQ, q);
+
+  // 3. Identify target area
+  const area = resolveDetectionArea(c);
 
   // Retrieve user session
   const userId = getCookie(c, 'aletheia_session')
@@ -36,7 +46,7 @@ home.get('/', async (c) => {
   return c.render(
     <>
       <TopHeader user={user} />
-      <TopMain results={results} total={total} area={area} />
+      <TopMain results={results} total={total} area={area} q={q}/>
       <TopFooter />
     </>
   )

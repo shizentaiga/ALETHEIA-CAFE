@@ -62,9 +62,10 @@ src/
 │   └── seed/              # 初期データ
 │
 ├── lib/                   # 【Shared】共通定数・外部連携
-│   ├── constants.ts       # 地理情報・UIラベル
-│   └── geo.ts             # ★新設：Cloudflareからの位置情報解決ロジック（純粋関数）
-│   └── auth.ts            # Google OAuth2.0 内部処理（低レイヤー）
+│   ├── constants.ts       # 地理情報・UIテキスト（不変のデータ）
+│   ├── geo.ts             # 位置情報解決（Cloudflare依存）
+│   ├── auth.ts            # 認証の低レイヤー処理
+│   └── search.ts          # ★新設：検索クエリの正規化・URL同期ロジック
 │
 └── public/                # 静的資産
     ├── style.css          # ビルド後のCSS（または直接配置）
