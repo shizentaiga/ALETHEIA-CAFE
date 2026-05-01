@@ -5,6 +5,7 @@
 import type { FC } from 'hono/jsx'
 import { useRequestContext } from 'hono/jsx-renderer'
 import { HeaderSearch } from './header/HeaderSearch'
+import { HeaderAuth } from './header/HeaderAuth'
 
 // --- Configuration ---
 const CONFIG = {
@@ -167,18 +168,12 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
         area={area} 
       />
 
-      {/* 3. Authentication Links */}
-      <div class="header-auth">
-        {user ? (
-          <span class="login-link">
-            <a href="/logout" class="login-link">
-              {CONFIG.logoutLabel} 
-            </a>
-          </span>
-        ) : (
-          <a href="/auth/google" class="login-link">{CONFIG.loginLabel}</a>
-        )}
-      </div>
+      {/* 3. Authentication Links (Extracted to component) */}
+      <HeaderAuth 
+        user={user} 
+        loginLabel={CONFIG.loginLabel} 
+        logoutLabel={CONFIG.logoutLabel} 
+      />
     </header>
   )
 }
