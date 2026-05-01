@@ -115,6 +115,6 @@ public/
 
 ## ワンポイントアドバイス
 
-`components/` の「独立国家」設計は拡張性が高く、方向性は正しい。一点だけ、**`SearchResult.tsx` は早い段階で HTMX の `hx-target` / `hx-swap` の差し替え範囲を明確に決めておくことを推奨**。
+一点だけ、**`SearchResult.tsx` は早い段階で HTMX の `hx-target` / `hx-swap` の差し替え範囲を明確に決めておくことを推奨**。
 
 結果リストが肥大化した際に「どこまでサーバー側で描画し、どこから JS で操作するか」の境界が曖昧になりやすく、後から変更すると `TopMain.tsx` の構造ごと触ることになる。`<div id="search-results">` のような差し替えターゲットを早期に固定しておくと、HTMX・Vanilla JS・Hono の責務分離（SoC）が保ちやすくなる。
