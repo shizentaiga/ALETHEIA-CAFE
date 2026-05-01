@@ -4,6 +4,7 @@
  */
 import type { FC } from 'hono/jsx'
 import { useRequestContext } from 'hono/jsx-renderer'
+import { HeaderSearch } from './header/HeaderSearch'
 
 // --- Configuration ---
 const CONFIG = {
@@ -159,35 +160,12 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
       {/* 1. Brand Logo */}
       <a href="/" class="header-logo" style="text-decoration: none;">{CONFIG.logoText}</a>
 
-      {/* 2. Search Form (AJAX-driven via HTMX) */}
-      <form 
-        class="header-search-form" 
-        hx-get="/" 
-        hx-target="#search-result-module" 
-        hx-push-url="true"
-        hx-select="#search-result-module"
-      >
-        <div class="header-search-input-wrapper">
-          {/* Render keywords as chips if present */}
-          {keywords.map(word => (
-            <span class="search-chip">{word}</span>
-          ))}
-
-          <input 
-            id="q-input-header"
-            type="text" 
-            name="q" 
-            class="header-search-input" 
-            placeholder={keywords.length > 0 ? "" : CONFIG.placeholder}
-          />
-          {/* Maintain 'area' context during keyword searches */}
-          {area && <input type="hidden" name="area" value={area} />}
-          
-          <button type="submit" class="header-search-button" aria-label="Search">
-            🔍
-          </button>
-        </div>
-      </form>
+      {/* 2. Search Form (Extracted to component) */}
+      <HeaderSearch 
+        keywords={keywords} 
+        placeholder={CONFIG.placeholder} 
+        area={area} 
+      />
 
       {/* 3. Authentication Links */}
       <div class="header-auth">
