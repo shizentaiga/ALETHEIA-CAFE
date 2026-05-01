@@ -1,10 +1,5 @@
 /**
- * Doutor Coffee Shop Data Fetcher (Scraping Mode)
- * 
- * Usage: npx tsx scripts/002_doutor_fetch.ts
- * 
- * This script uses Playwright to scrape store data from the Doutor website.
- * It handles all 47 prefectures and extracts structured text data.
+ * Doutor Coffee Shop Data Fetcher (Scraping Mode) - Revised
  */
 
 import fs from 'fs';
@@ -16,13 +11,12 @@ import { PATHS, CONFIG, sleep, ensureDirectory } from './utils.js';
 const DOUTOR_CONFIG = {
     BASE_URL: 'https://shop.doutor.co.jp/doutor/spot/list',
     SELECTOR: '.copper-list-items',
-    LIMIT: 100,
-    MAX_PAGES: 10 // Safety: Max 1,000 stores per prefecture
+    LIMIT: 50,      // Default limit for safety
+    MAX_PAGES: 20   // Safety: Max 1,000 stores per prefecture
 };
 
 /**
  * [Level 1] Low-level Browser Operation
- * Navigates to the page and waits for the specific widget to render.
  */
 async function getDoutorPageData(page: Page, prefCode: string, offset = 0): Promise<any[]> {
     const url = `${DOUTOR_CONFIG.BASE_URL}?limit=${DOUTOR_CONFIG.LIMIT}&address=${prefCode}&offset=${offset}`;
@@ -30,7 +24,8 @@ async function getDoutorPageData(page: Page, prefCode: string, offset = 0): Prom
     try {
         await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
         
-        // Wait for the store list widget to appear
+        // Wait for the store list widget
+        // 5秒待機。店舗がない県ではここでタイムアウトします。
         await page.waitForSelector(DOUTOR_CONFIG.SELECTOR, { timeout: 5000 });
         
         const spotRows = await page.locator(DOUTOR_CONFIG.SELECTOR).all();
@@ -38,7 +33,6 @@ async function getDoutorPageData(page: Page, prefCode: string, offset = 0): Prom
 
         for (const row of spotRows) {
             const rawText = await row.innerText();
-            // Clean up text into lines for easier parsing in the next step
             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
             extractedData.push({
                 rawLines: lines,
@@ -48,14 +42,18 @@ async function getDoutorPageData(page: Page, prefCode: string, offset = 0): Prom
         
         return extractedData;
     } catch (e: any) {
-        console.error(`  ⚠️  Error on Pref:${prefCode} (Offset:${offset}): ${e.message}`);
+        // 店舗が存在しない県、またはネットワークエラーのハンドリング
+        if (e.name === 'TimeoutError' || e.message.includes('timeout')) {
+            console.log(`  ℹ️  インターネットエラー もしくは 店舗が存在しない可能性があります：Pref:${prefCode} (area=${prefCode})`);
+        } else {
+            console.error(`  ⚠️  Unexpected Error on Pref:${prefCode}: ${e.message}`);
+        }
         return [];
     }
 }
 
 /**
- * [Level 2] Pagination logic for a single prefecture
- * Manages multiple pages if a prefecture has > 100 stores (e.g., Tokyo).
+ * [Level 2] Pagination logic
  */
 async function fetchPrefectureFull(context: BrowserContext, prefCode: string): Promise<any[]> {
     const page = await context.newPage();
@@ -63,21 +61,30 @@ async function fetchPrefectureFull(context: BrowserContext, prefCode: string): P
     let offset = 0;
     let hasMore = true;
     let pageCount = 0;
+    let lastFetchedCount = -1;
 
     while (hasMore && pageCount < DOUTOR_CONFIG.MAX_PAGES) {
         const data = await getDoutorPageData(page, prefCode, offset);
         
+        // データが取れなかった（またはタイムアウトした）場合は終了
         if (data.length === 0) break;
+
+        // 同じオフセットで同じ件数が連続して取れた場合、
+        // サイト側の挙動による無限ループを避けるため終了判定
+        if (data.length === lastFetchedCount && data.length > 0) {
+            // ※完全に同一データかまではチェックしていませんが、簡易的な重複回避として機能します
+            break;
+        }
 
         hitsInPref.push(...data);
         console.log(`  📍 Pref:${prefCode} - Fetched: ${data.length} (Total so far: ${hitsInPref.length})`);
 
-        // If we fetched fewer than the limit, it's the last page
         if (data.length < DOUTOR_CONFIG.LIMIT) {
             hasMore = false;
         } else {
             offset += DOUTOR_CONFIG.LIMIT;
             pageCount++;
+            lastFetchedCount = data.length;
             await sleep(CONFIG.WAIT_SHORT);
         }
     }
@@ -90,9 +97,8 @@ async function fetchPrefectureFull(context: BrowserContext, prefCode: string): P
  * [Level 3] Main orchestrator
  */
 async function main() {
-    console.log("🚀 Starting Doutor Data Fetch (Playwright Mode)...");
+    console.log("🚀 Starting Doutor Data Fetch (Optimized Playwright Mode)...");
 
-    // Launch browser once
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0'
@@ -101,7 +107,6 @@ async function main() {
     const prefList = Array.from({ length: 47 }, (_, i) => (i + 1).toString().padStart(2, '0'));
     const allHits: any[] = [];
 
-    // Process in batches (Lower concurrency for Browser instances compared to API)
     const BATCH_SIZE = Math.min(CONFIG.CONCURRENCY, 3); 
 
     for (let i = 0; i < prefList.length; i += BATCH_SIZE) {
@@ -120,9 +125,6 @@ async function main() {
     saveResults(allHits);
 }
 
-/**
- * Helper to save raw data
- */
 function saveResults(data: any[]) {
     ensureDirectory(PATHS.RAW_DATA);
     const savePath = path.join(PATHS.RAW_DATA, '002_doutor.json');
