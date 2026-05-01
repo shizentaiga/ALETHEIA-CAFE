@@ -5,6 +5,7 @@
 
 ## 📁 ディレクトリ構成
 
+~~~
 scripts/
 ├── 001_starbucks_fetch.ts     # PlaywrightによるHTML/APIデータの生取得
 ├── 001_starbucks_convert.ts   # 保存済み生データからのJSON抽出・整形
@@ -15,6 +16,7 @@ scripts/
 └── data/                      # 成果物
     ├── raw/                   # fetchスクリプトが出力する未加工データ (.html / .json)
     └── json/                  # convertスクリプトが出力する最終フォーマット (.json)
+~~~
 
 ## 🛠 ワークフロー
 
