@@ -3,15 +3,7 @@
  * 【 ALETHEIA - Starbucks API Sync & Transformer (v1.3.0) 】
  * =============================================================================
  * 役割：公式サイト API から最新の店舗 JSON を取得し、D1 用シード SQL を自動生成する。
- * * ■ プロジェクト構造 (Work-tree)
- * root/
- * ├── src/db/seed/chains/           # [OUTPUT 1] 本番用シード配置先
- * │   └── starbucks.sql             # apply_seeds.sh が参照する本体
- * └── scripts/                      # 作業用ワークスペース
- * ├── fetch_and_convert_stb.js  # [MAIN] 本スクリプト
- * └── logs/                     # [OUTPUT 2] 作業ログ・一時保存
- * ├── st_all_raw.json       # 取得した全県分の生JSON（デバッグ用）
-
+ 
 * * ■ 設計思想 & 処理フロー (Data Pipeline)
  * 1. 【API連携】pref_code (01-47) をループし、ヘッダー偽装を用いて JSON を一括取得。
  * 2. 【ページネーション】'found' 値に基づき、100件超の店舗も漏れなく自動巡回。
