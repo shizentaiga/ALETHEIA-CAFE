@@ -77,11 +77,35 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
       {html`
         <script>
           (function() {
-            const searchInput = document.querySelector('input[name="q"]');
-            const cleanQuery = "${q}";
-            if (searchInput && searchInput.value !== cleanQuery) {
-              searchInput.value = cleanQuery;
+            const q = "${q}";
+            const searchInput = document.getElementById('q-input-header');
+            if (!searchInput) return;
+
+            const wrapper = searchInput.parentElement;
+            
+            // 1. 既存のチップをクリア (inputとbutton以外の.search-chipを削除)
+            const oldChips = wrapper.querySelectorAll('.search-chip');
+            oldChips.forEach(chip => chip.remove());
+
+            // 2. 正規化されたクエリがある場合、チップを再生成して挿入
+            if (q) {
+              const keywords = q.split(/[\\s　]+/).filter(Boolean);
+              keywords.forEach(word => {
+                const span = document.createElement('span');
+                span.className = 'search-chip';
+                span.innerText = word;
+                // input要素の直前に挿入することで、チップ -> 入力欄 の並びを維持
+                wrapper.insertBefore(span, searchInput);
+              });
             }
+
+            // 3. 入力欄を空にする
+            // 確定したキーワードはチップ化されたので、inputは次の入力待ち状態にする
+            searchInput.value = "";
+            
+            // 4. プレースホルダーの制御
+            // チップがある場合は邪魔なので消し、ない場合は表示する
+            searchInput.placeholder = q ? "" : "キーワードで検索..";
           })();
         </script>
       `}

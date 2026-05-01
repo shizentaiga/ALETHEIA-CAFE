@@ -44,45 +44,68 @@ const headerStyle = `
     flex-grow: 1;
     max-width: 480px;
     margin: 0 12px;
-    position: relative;
   }
+
+  /* 入力欄全体を包む疑似的な入力ボックス */
   .header-search-input-wrapper {
-    position: relative;
     display: flex;
     align-items: center;
-  }
-  .header-search-input {
-    width: 100%;
-    height: 38px;
-    padding: 0 40px 0 16px;
+    flex-wrap: nowrap; /* チップが増えても1行を維持 */
+    overflow-x: auto;   /* チップが多い場合は横スクロール */
+    padding: 4px 12px;
     border: 1px solid #e5e7eb;
     border-radius: 20px;
     background: #f9fafb;
-    font-size: 0.9rem;
-    outline: none;
     transition: all 0.2s ease;
+    scrollbar-width: none; /* Firefoxスクロールバー隠し */
   }
-  .header-search-input:focus {
+  .header-search-input-wrapper::-webkit-scrollbar { display: none; } /* Chrome隠し */
+
+  .header-search-input-wrapper:focus-within {
     background: #fff;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
+
+  /* 検索チップのスタイル */
+  .search-chip {
+    display: flex;
+    align-items: center;
+    background: #eee;
+    color: #333;
+    padding: 2px 10px;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* 実際の入力欄（枠を消して透明にする） */
+  .header-search-input {
+    flex-grow: 1;
+    min-width: 80px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    font-size: 0.9rem;
+    outline: none;
+  }
+
   .header-search-button {
-    position: absolute;
-    right: 12px;
     background: none;
     border: none;
     cursor: pointer;
     font-size: 0.9rem;
     color: #64748b;
-    padding: 4px;
+    padding: 0 4px;
     display: flex;
     align-items: center;
-    justify-content: center;
-  }
-  .header-auth {
     flex-shrink: 0;
   }
+  
+  .header-auth { flex-shrink: 0; }
   .login-link {
     font-size: 0.75rem;
     font-weight: 600;
@@ -90,15 +113,11 @@ const headerStyle = `
     text-decoration: none;
     padding: 8px 4px;
     letter-spacing: 0.05em;
-    transition: color 0.2s;
-  }
-  .login-link:hover {
-    color: #1e293b;
   }
 
   @media (max-width: 480px) {
-    .header-logo { font-size: 1rem; letter-spacing: 0.05em; }
-    .header-container { padding: 0 12px; }
+    .header-logo { font-size: 1rem; }
+    .header-container { padding: 0 8px; }
   }
 `
 
@@ -110,6 +129,9 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
   const urlObj = new URL(currentUrl)
   const q = urlObj.searchParams.get('q') || ''
   const area = urlObj.searchParams.get('area') || ''
+
+  // クエリをスペースで分割してチップ化（入力中の文字と分けるために、URLから取得したqを利用）
+  const keywords = q.split(/[\s　]+/).filter(Boolean)
 
   return (
     <header class="header-container">
@@ -127,13 +149,17 @@ export const TopHeader: FC<{ user?: any }> = ({ user }) => {
         hx-select="#search-result-module"
       >
         <div class="header-search-input-wrapper">
+          {/* キーワードがある場合にチップとして表示 */}
+          {keywords.map(word => (
+            <span class="search-chip">{word}</span>
+          ))}
+
           <input 
             id="q-input-header"
             type="text" 
             name="q" 
             class="header-search-input" 
-            placeholder={CONFIG.placeholder}
-            value={q}
+            placeholder={keywords.length > 0 ? "" : CONFIG.placeholder}
           />
           {/* Persist 'area' parameter during keyword search */}
           {area && <input type="hidden" name="area" value={area} />}
