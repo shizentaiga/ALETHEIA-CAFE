@@ -18,79 +18,71 @@ const DOUTOR_CONFIG = {
 /**
  * [Level 1] Low-level Browser Operation
  */
-async function getDoutorPageData(page: Page, prefCode: string, offset = 0): Promise<any[]> {
-    const url = `${DOUTOR_CONFIG.BASE_URL}?limit=${DOUTOR_CONFIG.LIMIT}&address=${prefCode}&offset=${offset}`;
+async function getDoutorPrefectureData(page: Page, prefCode: string): Promise<any[]> {
+    const url = `${DOUTOR_CONFIG.BASE_URL}?address=${prefCode}`;
+    // 「もっと見る」ボタンのセレクタ（テキスト指定の方が安定する場合があります）
+    const LOAD_MORE_SELECTOR = '.copper-list-more-button'; 
     
     try {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+        await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
         
-        // Wait for the store list widget
-        // 5秒待機。店舗がない県ではここでタイムアウトします。
-        await page.waitForSelector(DOUTOR_CONFIG.SELECTOR, { timeout: 5000 });
-        
+        let safetyCounter = 0;
+
+        // --- 1. 「もっと見る」を押し切るフェーズ ---
+        while (safetyCounter < DOUTOR_CONFIG.MAX_PAGES) {
+            const loadMoreButton = page.locator(LOAD_MORE_SELECTOR);
+            
+            // ボタンが存在し、かつ表示されているかチェック
+            const isBtnVisible = await loadMoreButton.isVisible();
+            
+            if (isBtnVisible) {
+                // ボタンまでスクロール（これを入れないとクリックできない場合があります）
+                await loadMoreButton.scrollIntoViewIfNeeded();
+                await loadMoreButton.click();
+                
+                // 新しい店舗が追加されるのを待機
+                await page.waitForTimeout(1500); 
+                safetyCounter++;
+            } else {
+                // ボタンが見つからない ＝ 全件表示完了
+                break;
+            }
+        }
+
+        // --- 2. 一括取得 ---
         const spotRows = await page.locator(DOUTOR_CONFIG.SELECTOR).all();
         const extractedData = [];
+
+        console.log(`  📊 Pref:${prefCode} - Final DOM count: ${spotRows.length}`);
 
         for (const row of spotRows) {
             const rawText = await row.innerText();
             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
-            extractedData.push({
-                rawLines: lines,
-                fetchedAt: new Date().toISOString()
-            });
+            if (lines.length > 0) {
+                extractedData.push({
+                    rawLines: lines,
+                    fetchedAt: new Date().toISOString()
+                });
+            }
         }
         
         return extractedData;
+
     } catch (e: any) {
-        // 店舗が存在しない県、またはネットワークエラーのハンドリング
-        if (e.name === 'TimeoutError' || e.message.includes('timeout')) {
-            console.log(`  ℹ️  インターネットエラー もしくは 店舗が存在しない可能性があります：Pref:${prefCode} (area=${prefCode})`);
-        } else {
-            console.error(`  ⚠️  Unexpected Error on Pref:${prefCode}: ${e.message}`);
-        }
+        console.log(`  ℹ️  店舗が存在しないか、読み込みに失敗しました：Pref:${prefCode}`);
         return [];
     }
 }
 
 /**
  * [Level 2] Pagination logic
+ * 合算表示仕様のため、offset管理が不要になり、1県1回の呼び出しで済むようになります。
  */
 async function fetchPrefectureFull(context: BrowserContext, prefCode: string): Promise<any[]> {
     const page = await context.newPage();
-    const hitsInPref: any[] = [];
-    let offset = 0;
-    let hasMore = true;
-    let pageCount = 0;
-    let lastFetchedCount = -1;
-
-    while (hasMore && pageCount < DOUTOR_CONFIG.MAX_PAGES) {
-        const data = await getDoutorPageData(page, prefCode, offset);
-        
-        // データが取れなかった（またはタイムアウトした）場合は終了
-        if (data.length === 0) break;
-
-        // 同じオフセットで同じ件数が連続して取れた場合、
-        // サイト側の挙動による無限ループを避けるため終了判定
-        if (data.length === lastFetchedCount && data.length > 0) {
-            // ※完全に同一データかまではチェックしていませんが、簡易的な重複回避として機能します
-            break;
-        }
-
-        hitsInPref.push(...data);
-        console.log(`  📍 Pref:${prefCode} - Fetched: ${data.length} (Total so far: ${hitsInPref.length})`);
-
-        if (data.length < DOUTOR_CONFIG.LIMIT) {
-            hasMore = false;
-        } else {
-            offset += DOUTOR_CONFIG.LIMIT;
-            pageCount++;
-            lastFetchedCount = data.length;
-            await sleep(CONFIG.WAIT_SHORT);
-        }
-    }
-
+    const data = await getDoutorPrefectureData(page, prefCode);
     await page.close();
-    return hitsInPref;
+    return data;
 }
 
 /**
