@@ -26,9 +26,11 @@ export const fetchServices = async (
 ) => {
   const offset = (page - 1) * limit;
 
-  // 1. Split query into an array of keywords
-  const keywords = q.trim().split(/[\s　]+/).filter(Boolean);
-
+  // 1. Split query and remove duplicate keywords
+  // Using Set ensures unique search terms and optimizes the DB query.
+  const rawKeywords = q.trim().split(/[\s　]+/).filter(Boolean);
+  const keywords = [...new Set(rawKeywords)];
+  
   // Base Condition: Target only active data (not soft-deleted)
   const conditions = ["deleted_at IS NULL"];
   const params: any[] = [];
