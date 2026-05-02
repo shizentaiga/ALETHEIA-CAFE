@@ -46,6 +46,8 @@ CREATE TABLE services (
     -- Basic Information
     title           TEXT NOT NULL,                -- Shop or Facility name
     address         TEXT NOT NULL,                -- Full street address
+    pref            TEXT,                         -- Prefecture (e.g., '東京都')
+    city            TEXT,                         -- Municipality/City (e.g., '新宿区', '札幌市中央区')
     lat             REAL,                         -- Latitude
     lng             REAL,                         -- Longitude
 
@@ -57,6 +59,9 @@ CREATE TABLE services (
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     deleted_at      DATETIME                      -- Logic delete timestamp
 );
+
+-- Index for high-speed area-based searches
+CREATE INDEX idx_services_pref_city ON services(pref, city);
 
 -- =============================================================================
 -- 4. User Activities (Personal Data)
