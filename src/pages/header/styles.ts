@@ -1,157 +1,159 @@
-/**
- * [File Path] src/pages/header/styles.ts
- * [Role] Styles for the header components (Mercari-inspired wide search bar).
- */
 export const headerStyle = `
   .header-container {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0 16px;
-    height: 60px;
-    border-bottom: 1px solid #f1f1f1;
-    background: rgba(255, 255, 255, 0.95);
+    padding: 0 20px;
+    height: 64px;
+    border-bottom: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(8px);
     position: sticky;
     top: 0;
     z-index: 50;
-    gap: 12px; /* 要素間のゆとりを確保 */
+    gap: 16px;
   }
 
+  /* ロゴ：現状維持＋少しだけ締める */
   .header-logo {
     font-family: "Times New Roman", "Georgia", serif;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 500;
-    letter-spacing: 0.1em;
-    color: #1a1a1a;
+    letter-spacing: 0.08em;
+    color: #111827;
     flex-shrink: 0;
     text-decoration: none;
   }
 
+  /* 検索フォーム：横幅をしっかり確保 */
   .header-search-form {
-    flex-grow: 1;
-    /* 検索窓をメルカリのように広げる (最大800px) */
-    max-width: 800px;
-    margin: 0 4px;
+    flex: 1;
+    max-width: 900px;
   }
 
-  /* Pseudo-input box that wraps chips and the actual input field */
+  /* 🔑 メイン：静かなワイド検索ボックス */
   .header-search-input-wrapper {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 0 12px;
+    padding: 0 14px;
+    height: 44px;
     border: 1px solid #e5e7eb;
-    border-radius: 20px;
-    background: #f2f2f2; /* 少しグレーを強めて入力エリアを強調 */
-    transition: all 0.2s ease;
-    scrollbar-width: none;
-    height: 40px; /* 高さを少し出してリッチに */
-    box-sizing: border-box;
-  }
-    
-  /* 2. 【追加】キーワード（チップ）が含まれている場合、背景を白にする */
-  .header-search-input-wrapper:has(.search-chip) {
+    border-radius: 999px;
     background: #ffffff;
+    transition: all 0.15s ease;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
-  .header-search-input-wrapper::-webkit-scrollbar { display: none; }
+  .header-search-input-wrapper::-webkit-scrollbar {
+    display: none;
+  }
 
+  /* フォーカス時も控えめ */
   .header-search-input-wrapper:focus-within {
-    background: #fff;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #d1d5db;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
 
-  /* Styles for the keyword chips */
+  /* チップ：目立たせすぎない */
   .search-chip {
     display: inline-flex;
     align-items: center;
-    background: #e5e7eb;
+    background: #f3f4f6;
     color: #374151;
-    padding: 2px 10px;
-    border-radius: 14px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
     margin-right: 6px;
     white-space: nowrap;
     flex-shrink: 0;
-    line-height: 1.5;
   }
 
-  /* 削除ボタンを a タグ (フルリロード用) に最適化 */
   .search-chip-delete {
     text-decoration: none;
-    color: #94a3b8;
+    color: #9ca3af;
     margin-left: 6px;
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    transition: all 0.2s;
-  }
-  .search-chip-delete:hover {
-    background-color: #cbd5e1;
-    color: #1e293b;
+    transition: background 0.15s;
   }
 
-  /* Transparent input field within the wrapper */
+  .search-chip-delete:hover {
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  /* 入力欄：主役だが静か */
   .header-search-input {
-    flex-grow: 1;
-    min-width: 100px;
-    height: 100%;
+    flex: 1;
+    min-width: 120px;
     border: none;
     background: transparent;
     font-size: 0.95rem;
     outline: none;
-    color: #1a1a1a;
+    color: #111827;
   }
 
+  .header-search-input::placeholder {
+    color: #9ca3af;
+  }
+
+  /* 検索ボタン：存在感を消す */
   .header-search-button {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1.1rem;
-    color: #64748b;
+    color: #9ca3af;
+    font-size: 1rem;
     padding-left: 8px;
     display: flex;
     align-items: center;
-    flex-shrink: 0;
   }
 
-  .header-auth { 
-    flex-shrink: 0; 
+  .header-search-button:hover {
+    color: #6b7280;
+  }
+
+  /* 右側：ログインは完全に脇役 */
+  .header-auth {
+    flex-shrink: 0;
     display: flex;
-    gap: 8px;
+    align-items: center;
+    margin-left: auto;
   }
 
   .login-link {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #4b5563;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
     text-decoration: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    transition: background 0.2s;
-  }
-  .login-link:hover {
-    background: #f3f4f6;
+    padding: 6px 4px;
+    transition: color 0.15s;
   }
 
-  /* モバイル対応の調整 */
+  .login-link:hover {
+    color: #111827;
+  }
+
+  /* モバイル */
   @media (max-width: 640px) {
-    .header-logo { font-size: 1.1rem; }
-    .header-search-form { margin: 0; }
-    .header-container { padding: 0 10px; }
+    .header-container {
+      padding: 0 12px;
+      gap: 10px;
+    }
+    .header-logo {
+      font-size: 1rem;
+    }
   }
 
   @media (max-width: 480px) {
-    .header-logo { display: none; } /* 極小画面ではロゴを隠して検索窓を優先 */
-    .header-search-form { max-width: none; }
+    .header-logo {
+      display: none;
+    }
   }
-`;
+`
