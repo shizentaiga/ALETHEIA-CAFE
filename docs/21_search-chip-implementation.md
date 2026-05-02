@@ -1,10 +1,10 @@
-# マルチキーワード・チップ検索：本番実装計画書 (v1.1)
+# マルチキーワード・チップ検索：本番実装計画書 (v1.2)
 
 ---
 
 ## 1. 実装の要約
 
-URL クエリパラメータを **唯一の正解（Single Source of Truth）** とし、チップの追加・削除・検索結果の更新を、クライアントサイドの状態管理（React State 等）なしに HTMX と Hono のサーバーサイドロジックのみで完結させる。
+URL クエリパラメータを **唯一の正解（Single Source of Truth）** とし、チップの追加・削除・検索結果の更新を、クライアントサイドの状態管理（React State 等）なしにサーバーサイドロジックのみで完結させる。当初は HTMX による部分更新を計画したが、再帰的なスワップ処理の複雑性を回避し、堅牢性を最優先するため、標準的なブラウザ挙動である **フルリロード方式** を採用した。
 
 ---
 
@@ -13,7 +13,7 @@ URL クエリパラメータを **唯一の正解（Single Source of Truth）** 
 | 技術概念 | 説明 |
 |:---|:---|
 | Query-Array Normalization | 複数 `q` パラメータのクレンジングと上限設定 |
-| OOB (Out-of-Band) Swaps | メイン更新範囲外のヘッダー要素等を個別に自動更新 |
+| SSR Search Consistency | サーバーサイドでの一貫した検索条件（チップ）の描画 |
 | Param-Safety Encoding | `URLSearchParams` による安全なクエリ生成 |
 | State Persistence | 0件ヒット時でも検索条件（チップ）を維持するサーバーサイド設計 |
 
@@ -21,72 +21,71 @@ URL クエリパラメータを **唯一の正解（Single Source of Truth）** 
 
 ## 3. 影響範囲と修正内容
 
-### ① Logic 層：`lib/search.ts`
+### ① Logic 層：`src/lib/searchUtils.ts`
 
 **正規化関数** `getNormalizedKeywords(queries: string | string[])`
 - `filter(Boolean)` を徹底し、空文字（空の入力窓からの送信）を完全に除外。
 - 重複排除（Set）を行い、順序に依存しない純粋な文字列配列を返す。
-- **[追加仕様]** `slice(0, 5)` により、DB 負荷保護のためキーワードを最大 5 つに制限する。
+- **[追加仕様]** `slice(0, 5)` により、DB 負荷保護のためキーワードを最大 5 つに制限。
 
 **URL 生成関数** `createSearchUrl(keywords: string[])`
 - `URLSearchParams` を使用し、スペースや特殊文字を安全にエンコードした `?q=...` 文字列を生成。
-- チップ削除時のリンク生成および `hx-push-url` 用に共用する。
+- チップ削除時のリンク（`<a>` タグ）生成に利用。
 
-### ② View 層：`pages/header/HeaderSearch.tsx`
+### ② View 層：`src/pages/header/HeaderSearch.tsx`
 
 **コンポーネント構造**
 - チップと入力窓を一つの `<form>` に収容。
-- `hx-get=""`（空文字指定）により、現在のエンドポイント（`/_sandbox/test06` 等）を維持したままリクエストを送信。
-- **[安定化対策]** ヘッダー自身の更新には `hx-swap-oob="true"` を付与した ID 指定要素を使用し、検索結果エリア（メインターゲット）との同時更新を確実にする。
+- 入力確定時（Enter または検索ボタン押下）に `GET` メソッドでフルリロードを実行。
+- **[UI 調整]** 検索ワードが存在する場合、検索ボックスの背景を「白」にし、グレーのチップとコントラストを付けて視認性を向上。
 
-### ③ Data 層：`db/queries/search.ts`
+### ③ Data 層：`src/db/queries/searchQuery.ts`
 
 **動的 SQL 生成**
 - キーワード配列が空の場合：デフォルトの「全件」または「初期表示」を返す。
-- キーワード配列がある場合（最大 5 つ）：各キーワードに対して `LIKE` 句を生成し、`INTERSECT`（積集合）または `AND` 条件で結合する。
+- キーワード配列がある場合（最大 5 つ）：各キーワードに対して `LIKE` 句を生成し、`INTERSECT`（積集合）または `AND` 条件で結合。
 
-### ④ Controller 層：`pages/TopHeader.tsx` 各エンドポイント
+### ④ Controller 層：`src/pages/TopHeader.tsx`
 
 **ステート維持とレスポンス構成**
-- 検索結果が 0 件であっても、TopHeader はクエリに基づいた「チップ付き検索窓」を再生成する。
-- レスポンスには「検索結果 HTML」と「OOB 指定されたヘッダー HTML」を両方含めて返却する。
+- 検索実行後、クエリに基づいた「チップ付き検索窓」を SSR で再生成。
+- `:has(.search-chip)` CSS セレクタにより、キーワードの有無に応じたスタイル切り替えを実装。
 
 ---
 
-## 4. 実装ステップ（リスク最小化手順）
+## 4. 発生した問題と対策（HTMX からフルリロードへの転換）
 
-### Step 1：環境固定とロジックの実装（`lib/` & `renderer.tsx`）
-- `renderer.tsx` の HTMX タグを `v1.9.12` に固定。
-- `lib/search.ts` で正規化（最大 5 語制限含む）とエンコード関数を実装。
+当初の HTMX (OOB Swaps) 計画からフルリロード方式へ変更した経緯は以下の通り。
 
-### Step 2：OOB Swaps の検証（View 層）
-- `hx-select` による複数指定ではなく、`hx-swap-oob="true"` を使ってヘッダー内のチップが検索結果と連動して更新されるか確認する。
-
-### Step 3：0件ヒット時の UI 維持テスト（DB 層）
-- ヒットしないワードを入力し、結果エリアに「0件」と表示されつつ、ヘッダーのチップから削除（× ボタン）による「条件の緩和」が可能であることを確認する。
+| 発生した問題 | 根本原因 | 対策（実装結果） |
+|:---|:---|:---|
+| **無限再帰スワップ** | 検索窓が OOB 指定されている場合、検索実行のトリガー自体がスワップ対象に含まれ、イベントループや二重送信のリスクが発生した。 | 複雑な HTMX 属性（`hx-swap-oob`等）を排除し、標準的な `<form>` 送信によるフルリロードへ移行。 |
+| **入力窓のフォーカス喪失** | HTMX スワップ後に DOM が置換される際、入力フォーカスの維持に JS による手動制御が必要となった。 | フルリロード方式にすることで、ブラウザの標準的な挙動に任せ、JS Overhead を最小化。 |
+| **デバッグの複雑化** | HTMX の部分更新と履歴管理、スクロール復元の組み合わせが、マルチキーワードの動的増減と相性が悪かった。 | SSR で常に「URL クエリに応じた正しい HTML」を返すシンプルな構成に倒し、保守性を確保。 |
 
 ---
 
-## 5. 注意点と対策
+## 5. 注意点と対策（最新版）
 
 | 項目 | 対策 |
 |:---|:---|
-| HTMX バージョン | **v1.9.12 (安定版)** を使用。将来的な v2 系移行を見据え OOB 記法を優先 |
-| キーワード上限 | **最大 5 つ**。`lib/search.ts` にて強制スライスし、DB 負荷を一定に保つ |
-| 二重送信対策 | `c.req.queries('q')` 取得直後に必ず正規化関数を通す |
-| 入力窓クリア | `hx-on="htmx:afterRequest: this.value = ''"` で実装 |
-| スクロール復元 | `renderer.tsx` にて `htmx.config.historyEnabled = true` を確認 |
+| 検索窓の視認性 | キーワード（チップ）がある場合、ボックス背景を白にする CSS (`:has`) を採用 |
+| キーワード上限 | **最大 5 つ**。`searchUtils.ts` にて強制スライスし、DB 負荷を一定に保つ |
+| 入力操作性 | チップが増えても検索窓が潰れないよう `min-width` と `overflow-x: auto` を設定 |
+| レイアウト固定 | ヘッダー右側の認証リンク（`.header-auth`）は `margin-left: auto` で右端に固定 |
 
 ---
 
-## 6. ファイル修正サマリー
+## 6. ファイル修正サマリー (Renamed)
 
-| ファイル | 修正のポイント |
-|:---|:---|
-| `lib/search.ts` | 正規化（5 語制限）＋安全な URL エンコード関数の追加 |
-| `HeaderSearch.tsx` | フォーム構成の変更、`hx-swap-oob` 属性の付与 |
-| `search.ts`（DB） | 最大 5 語までの動的 `LIKE` クエリの実装 |
-| `renderer.tsx` | HTMX バージョン固定（1.9.12）と履歴・スクロール設定 |
+ファイル名の一意性を確保し、役割を明確化するため以下の通りリネームを実施。
+
+| 新ファイル名 | 旧ファイル名 | 修正のポイント |
+|:---|:---|:---|
+| `src/lib/searchUtils.ts` | `lib/search.ts` | 正規化ロジックと安全な URL 生成。 |
+| `src/db/queries/searchQuery.ts` | `db/queries/search.ts` | D1 向けの動的 SQL 生成ロジック。 |
+| `src/pages/header/headerStyle.ts` | `pages/header/styles.ts` | 検索窓のワイド化、チップ・ボックスの背景色制御。 |
+| `src/api/areaHandler.ts` | `api/area.ts` | Hono エンドポイント（API 役割）の明確化。 |
 
 ---
-*document version: v1.1 — updated: 2026-05 (Taiga Tshizen)*
+*document version: v1.2 — updated: 2026-05 (Taiga Tshizen)*
