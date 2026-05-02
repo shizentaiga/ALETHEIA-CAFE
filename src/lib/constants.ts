@@ -115,3 +115,13 @@ export const getPrefectureName = (region: string | undefined): string => {
   if (!region) return "";
   return PREFECTURE_MASTER[region] || "";
 };
+
+/**
+ * 6. 検索履歴設定 (PWA用ローカルストレージ)
+ * 最大5件、1件20文字以内のキーワードをFIFO形式で管理
+ */
+export const SEARCH_HISTORY_CONFIG = {
+  KEY: 'aletheia_search_history',
+  MAX_COUNT: 5,
+  MAX_CHARS: 20,
+} as const;
