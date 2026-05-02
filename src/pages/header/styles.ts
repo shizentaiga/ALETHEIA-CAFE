@@ -155,5 +155,9 @@ export const headerStyle = `
     .header-logo {
       display: none;
     }
+    /* モバイルでも右端を維持 */
+    .header-auth {
+      margin-left: auto;
+    }
   }
 `
