@@ -82,6 +82,8 @@ export const renderer = jsxRenderer(({ children }) => {
 
         {/* Favicon configuration using a single SVG */}
         <link rel="icon" href={SITE_CONFIG.assets.favicon} type="image/svg+xml" />
+
+        <script src={SITE_CONFIG.assets.htmx}></script>
         
         {/* Inline global styles for optimized First Contentful Paint (FCP) */}
         <style>{GLOBAL_STYLE}</style>

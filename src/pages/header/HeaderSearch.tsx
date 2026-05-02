@@ -65,8 +65,6 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
             autocomplete="off"
           />
           
-          {area && <input type="hidden" name="area" value={area} />}
-          
           <button 
             type="submit" 
             class="header-search-button" 
