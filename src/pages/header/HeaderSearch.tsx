@@ -33,6 +33,11 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
         onsubmit="window.saveKeyword()"
       >
         <div class="header-search-input-wrapper">
+          {/* --- ここから追加 --- */}
+          {/* 現在のエリア情報を維持する（URLパラメータ area=... に対応） */}
+          {area && <input type="hidden" name="area" value={area} />}
+          {/* --- ここまで追加 --- */}
+          
           {/* 1. 既存キーワードの維持 */}
           {keywords.map(word => (
             <input type="hidden" name="q" value={word} />
