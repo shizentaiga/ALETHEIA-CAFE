@@ -11,8 +11,7 @@ const SITE_CONFIG = {
   charset: 'UTF-8',
   assets: {
     htmx: 'https://unpkg.com/htmx.org@1.9.12',
-    favicon: '/icon.svg',
-    searchUi: '/search-ui.js' // Client-side logic for search interaction
+    favicon: '/icon.svg'
   }
 } as const
 
@@ -84,15 +83,6 @@ export const renderer = jsxRenderer(({ children }) => {
         {/* Favicon configuration using a single SVG */}
         <link rel="icon" href={SITE_CONFIG.assets.favicon} type="image/svg+xml" />
         
-        {/* 
-          Load HTMX with 'defer' to prevent blocking the initial page render.
-          Initializes the library for AJAX-driven interactions.
-        */}
-        <script src={SITE_CONFIG.assets.htmx} defer crossorigin="anonymous"></script>
-
-        {/* Client-side synchronization logic for search chips */}
-        <script src={SITE_CONFIG.assets.searchUi} defer></script>
-
         {/* Inline global styles for optimized First Contentful Paint (FCP) */}
         <style>{GLOBAL_STYLE}</style>
       </head>

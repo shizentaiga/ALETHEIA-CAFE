@@ -72,8 +72,7 @@ src/
 
 ~~~
 public/
-├── icon.svg               # 共通アイコン
-└── search-ui.js           # 検索窓のチップ化・削除・HTMX同期ロジック（Client-side）
+└── icon.svg               # 共通アイコン
 ~~~
 
 ---
@@ -84,7 +83,7 @@ public/
 各パーツ（Header / Main / Footer）を独立させ、さらに Header 等の複雑なパーツはサブディレクトリ（`header/`）でスタイルとロジックを分離。
 
 ### 2. Zero-JS Focus (with HTMX & Vanilla)
-HTMX を活用しつつ、パフォーマンスと SEO を重視。`search-ui.js` はあくまで UI 補助とし、サーバーサイド主導の設計を維持。
+HTMX を活用しつつ、パフォーマンスと SEO を重視。
 
 ### 3. High Performance & Scalability
 Cloudflare D1 や Workers の特性を活かし、低コストかつ PageSpeed Insights で高得点を維持できる軽量なアーキテクチャ。

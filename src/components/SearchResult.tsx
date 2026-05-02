@@ -1,6 +1,5 @@
 /**
  * [File Path] src/components/SearchResult.tsx
- * [Role] UI component to display search results and provide state for search-ui.js.
  */
 import type { FC } from 'hono/jsx'
 import { formatAttributes } from '../db/queries/main'
@@ -54,13 +53,6 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
 
   return (
     <section id={scope}>
-      {/* 
-        [State management for search-ui.js] 
-        Hidden fields referenced by external JS to synchronize chips and search inputs.
-      */}
-      <input type="hidden" id="current-q-state" value={q} />
-      <input type="hidden" id="current-area-state" value={area} />
-      
       <style>{moduleStyle(scope)}</style>
       
       <div class="result-header">{LABELS.resultPrefix} {total}件</div>
