@@ -4,6 +4,7 @@
  */
 import type { FC } from 'hono/jsx'
 import { createSearchUrl } from '../../lib/search'
+import { headerStyle } from './styles'
 
 interface HeaderSearchProps {
   keywords: string[];
@@ -20,6 +21,8 @@ const CONFIG = {
 export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, area }) => {
   return (
     <nav id={CONFIG.headerId}>
+      <style>{headerStyle}</style>
+      
       <form 
         class="header-search-form" 
         method="get" 

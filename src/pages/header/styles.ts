@@ -1,6 +1,6 @@
 /**
  * [File Path] src/pages/header/styles.ts
- * [Role] Styles for the header components.
+ * [Role] Styles for the header components (Mercari-inspired wide search bar).
  */
 export const headerStyle = `
   .header-container {
@@ -15,7 +15,9 @@ export const headerStyle = `
     position: sticky;
     top: 0;
     z-index: 50;
+    gap: 12px; /* 要素間のゆとりを確保 */
   }
+
   .header-logo {
     font-family: "Times New Roman", "Georgia", serif;
     font-size: 1.2rem;
@@ -23,28 +25,38 @@ export const headerStyle = `
     letter-spacing: 0.1em;
     color: #1a1a1a;
     flex-shrink: 0;
-    margin-right: 12px;
+    text-decoration: none;
   }
+
   .header-search-form {
     flex-grow: 1;
-    max-width: 480px;
-    margin: 0 12px;
+    /* 検索窓をメルカリのように広げる (最大800px) */
+    max-width: 800px;
+    margin: 0 4px;
   }
 
   /* Pseudo-input box that wraps chips and the actual input field */
   .header-search-input-wrapper {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap; /* Maintain a single line even as chips increase */
-    overflow-x: auto;  /* Allow horizontal scrolling for many chips */
-    padding: 4px 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0 12px;
     border: 1px solid #e5e7eb;
     border-radius: 20px;
-    background: #f9fafb;
+    background: #f2f2f2; /* 少しグレーを強めて入力エリアを強調 */
     transition: all 0.2s ease;
-    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    scrollbar-width: none;
+    height: 40px; /* 高さを少し出してリッチに */
+    box-sizing: border-box;
   }
-  .header-search-input-wrapper::-webkit-scrollbar { display: none; } /* Hide scrollbar for Chrome/Safari */
+    
+  /* 2. 【追加】キーワード（チップ）が含まれている場合、背景を白にする */
+  .header-search-input-wrapper:has(.search-chip) {
+    background: #ffffff;
+  }
+
+  .header-search-input-wrapper::-webkit-scrollbar { display: none; }
 
   .header-search-input-wrapper:focus-within {
     background: #fff;
@@ -56,8 +68,8 @@ export const headerStyle = `
   .search-chip {
     display: inline-flex;
     align-items: center;
-    background: #eee;
-    color: #333;
+    background: #e5e7eb;
+    color: #374151;
     padding: 2px 10px;
     border-radius: 14px;
     font-size: 0.8rem;
@@ -68,26 +80,20 @@ export const headerStyle = `
     line-height: 1.5;
   }
 
+  /* 削除ボタンを a タグ (フルリロード用) に最適化 */
   .search-chip-delete {
-    /* Reset default button styles */
-    appearance: none;
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin: 0 0 0 6px;
-    
-    cursor: pointer;
+    text-decoration: none;
+    color: #94a3b8;
+    margin-left: 6px;
+    font-size: 16px;
+    font-weight: bold;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     transition: all 0.2s;
-    font-size: 14px; /* Increased slightly for better visibility */
-    line-height: 1;
-    color: #94a3b8;
-    flex-shrink: 0;
   }
   .search-chip-delete:hover {
     background-color: #cbd5e1;
@@ -97,11 +103,11 @@ export const headerStyle = `
   /* Transparent input field within the wrapper */
   .header-search-input {
     flex-grow: 1;
-    min-width: 80px;
-    height: 30px;
+    min-width: 100px;
+    height: 100%;
     border: none;
     background: transparent;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     outline: none;
     color: #1a1a1a;
   }
@@ -110,27 +116,42 @@ export const headerStyle = `
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     color: #64748b;
-    padding: 0 4px;
+    padding-left: 8px;
     display: flex;
     align-items: center;
     flex-shrink: 0;
   }
-  
-  .header-auth { flex-shrink: 0; }
+
+  .header-auth { 
+    flex-shrink: 0; 
+    display: flex;
+    gap: 8px;
+  }
+
   .login-link {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: #64748b;
+    color: #4b5563;
     text-decoration: none;
-    padding: 8px 4px;
-    letter-spacing: 0.05em;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .login-link:hover {
+    background: #f3f4f6;
+  }
+
+  /* モバイル対応の調整 */
+  @media (max-width: 640px) {
+    .header-logo { font-size: 1.1rem; }
+    .header-search-form { margin: 0; }
+    .header-container { padding: 0 10px; }
   }
 
   @media (max-width: 480px) {
-    .header-logo { font-size: 1rem; }
-    .header-container { padding: 0 8px; }
-    .header-search-form { margin: 0 8px; }
+    .header-logo { display: none; } /* 極小画面ではロゴを隠して検索窓を優先 */
+    .header-search-form { max-width: none; }
   }
-`
+`;
