@@ -20,7 +20,6 @@ const CONFIG = {
 export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, area }) => {
   return (
     <nav id={CONFIG.headerId}>
-      {/* 修正ポイント: method="get" (小文字) に変更 */}
       <form 
         class="header-search-form" 
         method="get" 
