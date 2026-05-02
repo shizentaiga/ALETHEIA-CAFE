@@ -4,7 +4,7 @@ import { renderer } from './renderer'
 import { home } from './pages/TopPage'
 import { googleAuthApp } from './pages/GoogleAuth'
 import { sandboxApp } from './_sandbox/_router'
-import areaApp from './api/area'
+import areaApp from './api/areaHandler'
 
 /**
  * Cloudflare environment variables for c.env

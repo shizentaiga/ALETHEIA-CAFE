@@ -3,8 +3,8 @@
  * [Role] UI for multi-keyword search with chips.
  */
 import type { FC } from 'hono/jsx'
-import { createSearchUrl } from '../../lib/search'
-import { headerStyle } from './styles'
+import { createSearchUrl } from '../../lib/searchUtils'
+import { headerStyle } from './headerStyle'
 
 interface HeaderSearchProps {
   keywords: string[];

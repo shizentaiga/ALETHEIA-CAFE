@@ -1,5 +1,5 @@
 /**
- * [File Path] src/api/area.ts
+ * [File Path] src/api/areaHandler.ts
  * [Role] API endpoint returning HTML fragments for the area selection dropdown.
  */
 import { Hono } from 'hono'

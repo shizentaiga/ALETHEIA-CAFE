@@ -1,5 +1,5 @@
 /**
- * [File Path] src/lib/search.ts
+ * [File Path] src/lib/searchUtils.ts
  * [Role] Logic for search query normalization and URL state synchronization.
  */
 import { Context } from 'hono'

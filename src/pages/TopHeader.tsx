@@ -7,8 +7,8 @@ import type { FC } from 'hono/jsx'
 import { useRequestContext } from 'hono/jsx-renderer'
 import { HeaderSearch } from './header/HeaderSearch'
 import { HeaderAuth } from './header/HeaderAuth'
-import { headerStyle } from './header/styles'
-import { getNormalizedKeywords } from '../lib/search'
+import { headerStyle } from './header/headerStyle'
+import { getNormalizedKeywords } from '../lib/searchUtils'
 
 import { SearchResult } from '../components/SearchResult'
 

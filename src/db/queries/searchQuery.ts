@@ -1,9 +1,9 @@
 /**
- * [File Path] src/db/queries/search.ts
+ * [File Path] src/db/queries/searchQuery.ts
  * [Role] Build search conditions and execute queries against D1.
  * [Notes] Handles multi-keyword search, soft-deletion, and pagination.
  */
-import { getNormalizedKeywords } from '../../lib/search';
+import { getNormalizedKeywords } from '../../lib/searchUtils';
 // import { cleanSql } from './utils'; // 必要に応じて有効化
 
 // --- CONFIGURATION ---

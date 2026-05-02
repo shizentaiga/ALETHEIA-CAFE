@@ -4,7 +4,7 @@
  * [Notes] External layers (API, etc.) interact with the DB through this file.
  */
 
-import { fetchServices } from './search';
+import { fetchServices } from './searchQuery';
 import { formatAttributes } from './transformers';
 
 /**

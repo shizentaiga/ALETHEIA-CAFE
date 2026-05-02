@@ -10,7 +10,7 @@ import { TopFooter } from './TopFooter'
 import { fetchServices } from '../db/queries/main' 
 import { getCookie } from 'hono/cookie'
 import { resolveDetectionArea } from '../lib/geo'
-import { getNormalizedKeywords, joinKeywords } from '../lib/search'
+import { getNormalizedKeywords, joinKeywords } from '../lib/searchUtils'
 
 // Cloudflare D1 environment bindings
 type Bindings = {
