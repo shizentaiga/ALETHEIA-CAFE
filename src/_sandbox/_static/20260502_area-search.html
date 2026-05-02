@@ -4,13 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="自分に最適な場所を見つけるための検索プラットフォーム" />
-  <link rel="preconnect" href="https://unpkg.com" />
   <title>ALETHEIA</title>
-  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   <style>
     :root {
       --bg-color: #ffffff;
-      --text-color: #333333;
+      --text-color: #111827;
+      --sub-text-color: #64748b;
       --accent-color: #0070f3;
       --border-color: #e5e7eb;
     }
@@ -18,11 +17,10 @@
     body {
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: var(--text-color);
       background-color: var(--bg-color);
       line-height: 1.6;
-      min-height: 100vh;
     }
 
     * { box-sizing: border-box; }
@@ -32,7 +30,7 @@
       margin: 0 auto;
     }
 
-    /* Header Styles (現状維持) */
+    /* Header Styles */
     .header-container {
       display: flex;
       align-items: center;
@@ -52,7 +50,7 @@
       font-size: 1.15rem;
       font-weight: 500;
       letter-spacing: 0.08em;
-      color: #111827;
+      color: var(--text-color);
       text-decoration: none;
     }
 
@@ -75,26 +73,22 @@
       font-size: 0.9rem;
     }
 
-    /* Main Container Styles */
+    /* Main Content */
     .top-main-container {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 24px;
       padding: 20px;
     }
 
-    /* 🔑 ここが今回のポイント：横並びの行 */
+    /* 操作エリア：エリア選択 & 現在地ボタン */
     .search-bar-row {
       display: flex;
       gap: 12px;
       width: 100%;
     }
 
-    /* エリア選択ドリルダウン（リサイズ後） */
-    .search-area-module {
-      flex: 1; /* 50%幅 */
-      position: relative;
-    }
+    .search-area-module { flex: 1; }
 
     .search-trigger {
       width: 100%;
@@ -105,21 +99,19 @@
       background: #fff;
       text-align: left;
       font-size: 0.9rem;
-      color: #111827;
+      color: var(--text-color);
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    /* 現在地ボタン（リサイズ後） */
     .geo-button {
-      flex: 1; /* 50%幅 */
+      flex: 1;
       height: 48px;
-      padding: 0 16px;
       border-radius: 12px;
-      border: 1px solid #0070f333; /* 控えめなアクセント境界 */
-      background: #0070f308; /* 非常に薄い青 */
+      border: 1px solid #0070f333;
+      background: #0070f308;
       color: var(--accent-color);
       font-size: 0.9rem;
       font-weight: 600;
@@ -136,19 +128,51 @@
       border-color: var(--accent-color);
     }
 
-    /* 結果リスト（現状維持） */
+    /* 🔑 指摘反映：結果メタ情報エリア */
+    .result-info-box {
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 12px;
+    }
+
+    .result-meta {
+      font-size: 0.75rem;
+      color: var(--sub-text-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .result-count {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-color);
+    }
+
+    /* カードリスト */
+    .search-results-target {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     .cafe-card {
       display: block;
       text-decoration: none;
       padding: 16px;
-      border: 1px solid #eee;
-      border-radius: 10px;
-      margin-bottom: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
       background: #fff;
+      transition: transform 0.1s ease, border-color 0.2s;
     }
 
-    .name { font-weight: 700; color: #111; display: block; }
-    .addr { font-size: 0.75rem; color: #555; }
+    .cafe-card:hover {
+      border-color: #d1d5db;
+      background: #fafafa;
+    }
+
+    .name { font-weight: 700; color: #111; display: block; margin-bottom: 4px;}
+    .addr { font-size: 0.75rem; color: var(--sub-text-color); }
   </style>
 </head>
 <body>
@@ -165,26 +189,32 @@
   <main>
     <section class="top-main-container">
       
-      <!-- 修正ポイント：エリア選択と現在地ボタンの横並び -->
+      <!-- エリア操作 -->
       <div class="search-bar-row">
-        <!-- ドリルダウン（半分サイズ） -->
         <div class="search-area-module">
           <button class="search-trigger" type="button">
             <span>📍 神奈川県</span>
             <span style="color: #94a3b8; font-size: 0.8rem;">▼</span>
           </button>
         </div>
-
-        <!-- 現在地反映ボタン（半分サイズ） -->
         <button class="geo-button" type="button">
           <span>🎯</span>
           <span>現在地を反映</span>
         </button>
       </div>
 
-      <!-- 検索結果（サンプル） -->
-      <div id="search-result-module">
-        <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">検索結果: 316件</div>
+      <!-- 🔑 改善：検索条件の可視化（result-info-box） -->
+      <div class="result-info-box">
+        <div class="result-meta">
+          <span>📍 神奈川県</span>
+          <span style="color:#e2e8f0;">|</span>
+          <span>キーワード: なし</span>
+        </div>
+        <div class="result-count">316件の結果</div>
+      </div>
+
+      <!-- 結果リスト -->
+      <div class="search-results-target">
         <a class="cafe-card">
           <span class="name">ドトールコーヒーショップ 関内仲通り店</span>
           <span class="addr">神奈川県横浜市中区 住吉町 ２‐２２</span>
@@ -193,12 +223,16 @@
           <span class="name">ドトールコーヒーショップ 横浜ジョイナス店</span>
           <span class="addr">神奈川県横浜市西区 南幸 １‐４‐Ｂ１号</span>
         </a>
+        <a class="cafe-card">
+          <span class="name">ドトールコーヒーショップ 石川町店</span>
+          <span class="addr">神奈川県横浜市中区 石川町 １‐３</span>
+        </a>
       </div>
 
     </section>
   </main>
 
-  <footer style="padding:24px 0; text-align:center; border-top:1px solid #eee;">
+  <footer style="padding:32px 0; text-align:center; border-top:1px solid #f1f5f9; margin-top: 40px;">
     <p style="font-size:0.8rem; color:#94a3b8;">© 2026 ALETHEIA</p>
   </footer>
 </body>
