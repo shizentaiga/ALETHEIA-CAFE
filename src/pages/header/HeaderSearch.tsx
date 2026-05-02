@@ -7,26 +7,6 @@ import { createSearchUrl } from '../../lib/searchUtils'
 import { headerStyle } from './headerStyle'
 import { headerSearchHistory } from './headerSearchHistory'
 
-// --- Future Style Exports (将来的に headerStyle.ts に移動可能なCSS) ---
-const historyUIStyle = `
-  .search-history-controls {
-    margin-top: 4px;
-    padding-left: 16px;
-    height: 18px; /* 高さを固定して表示/非表示時のガタつきを抑える */
-  }
-  .search-history-clear-link {
-    font-size: 11px;
-    color: #9ca3af;
-    text-decoration: none;
-    cursor: pointer;
-    display: none; /* 初期状態は非表示 (JSで制御) */
-  }
-  .search-history-clear-link:hover {
-    color: #6b7280;
-    text-decoration: underline;
-  }
-`;
-
 interface HeaderSearchProps {
   keywords: string[];
   placeholder: string;
@@ -38,7 +18,6 @@ const CONFIG = {
   searchIcon: '🔍',
   inputId: 'q-input-header',
   listId: 'searchHistoryList',
-  clearLinkId: 'searchHistoryClearLink'
 } as const
 
 export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, area }) => {
@@ -46,7 +25,6 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
     <nav id={CONFIG.headerId}>
       {/* 既存のスタイル + 履歴用スタイル */}
       <style>{headerStyle}</style>
-      <style>{historyUIStyle}</style>
       
       <form 
         class="header-search-form" 

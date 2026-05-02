@@ -12,12 +12,10 @@ export const headerSearchHistory = `
     const config = ${JSON.stringify(SEARCH_HISTORY_CONFIG)};
     const INPUT_ID = 'q-input-header';
     const LIST_ID = 'searchHistoryList';
-    const CLEAR_LINK_ID = 'searchHistoryClearLink';
 
     // --- 1. 描画ロジック ---
     window.renderHistory = function() {
       const datalist = document.getElementById(LIST_ID);
-      const clearLink = document.getElementById(CLEAR_LINK_ID);
       if (!datalist) return;
 
       const history = JSON.parse(localStorage.getItem(config.KEY) || '[]');
@@ -27,10 +25,6 @@ export const headerSearchHistory = `
         .map(word => '<option value="' + word + '">')
         .join('');
 
-      // 履歴がある時だけ削除リンクを表示
-      if (clearLink) {
-        clearLink.style.display = history.length > 0 ? 'inline-block' : 'none';
-      }
     };
 
     // --- 2. 保存ロジック ---
@@ -52,15 +46,6 @@ export const headerSearchHistory = `
       localStorage.setItem(config.KEY, JSON.stringify(history));
       window.renderHistory();
     };
-
-    // --- 3. 一括削除ロジック ---
-    // window.clearAllHistory = function(e) {
-    //   if (e) e.preventDefault(); // リンクの遷移を防止
-    //   if (confirm('検索履歴をすべて削除しますか？')) {
-    //     localStorage.removeItem(config.KEY);
-    //     window.renderHistory();
-    //   }
-    // };
 
     // --- 4. ライフサイクル管理 (HTMX対応) ---
     function init() {
