@@ -54,7 +54,7 @@ export const headerStyle = `
 
   /* Styles for the keyword chips */
   .search-chip {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     background: #eee;
     color: #333;
@@ -65,10 +65,17 @@ export const headerStyle = `
     margin-right: 6px;
     white-space: nowrap;
     flex-shrink: 0;
+    line-height: 1.5;
   }
 
   .search-chip-delete {
-    margin-left: 6px;
+    /* Reset default button styles */
+    appearance: none;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0 0 0 6px;
+    
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -76,10 +83,11 @@ export const headerStyle = `
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    transition: background-color 0.2s;
-    font-size: 12px;
+    transition: all 0.2s;
+    font-size: 14px; /* Increased slightly for better visibility */
     line-height: 1;
     color: #94a3b8;
+    flex-shrink: 0;
   }
   .search-chip-delete:hover {
     background-color: #cbd5e1;
@@ -95,6 +103,7 @@ export const headerStyle = `
     background: transparent;
     font-size: 0.9rem;
     outline: none;
+    color: #1a1a1a;
   }
 
   .header-search-button {
@@ -122,5 +131,6 @@ export const headerStyle = `
   @media (max-width: 480px) {
     .header-logo { font-size: 1rem; }
     .header-container { padding: 0 8px; }
+    .header-search-form { margin: 0 8px; }
   }
 `

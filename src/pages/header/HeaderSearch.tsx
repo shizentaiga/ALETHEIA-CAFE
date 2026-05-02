@@ -1,6 +1,5 @@
 /**
  * [File Path] src/pages/header/HeaderSearch.tsx
- * [Role] Handles search input and keyword chip rendering.
  */
 import type { FC } from 'hono/jsx'
 
@@ -26,9 +25,33 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
       hx-select={CONFIG.target}
     >
       <div class="header-search-input-wrapper">
+        {/* AND Search: Hidden inputs to keep existing keywords */}
         {keywords.map(word => (
-          <span class="search-chip">{word}</span>
+          <input type="hidden" name="q" value={word} />
         ))}
+
+        {/* Chips with HTMX delete functionality */}
+        {keywords.map(word => {
+          // Calculate URL without 'this' keyword
+          const otherWords = keywords.filter(k => k !== word).join(' ');
+          const deleteUrl = `/?q=${encodeURIComponent(otherWords)}${area ? `&area=${encodeURIComponent(area)}` : ''}`;
+
+          return (
+            <span class="search-chip">
+              {word}
+              <button 
+                type="button"
+                class="search-chip-delete"
+                hx-get={deleteUrl}
+                hx-target={CONFIG.target}
+                hx-push-url="true"
+                hx-select={CONFIG.target}
+              >
+                ×
+              </button>
+            </span>
+          );
+        })}
 
         <input 
           id={CONFIG.inputId}

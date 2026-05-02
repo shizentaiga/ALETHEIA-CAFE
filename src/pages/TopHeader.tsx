@@ -24,14 +24,20 @@ const CONFIG = {
 export const TopHeader: FC<{ user?: any }> = ({ user }) => {
   const c = useRequestContext()
   
-  // Sync form state with current URL parameters for both standard and HTMX requests
-  const currentUrl = c.req.header('HX-Current-URL') || c.req.url
-  const urlObj = new URL(currentUrl)
-  const q = urlObj.searchParams.get('q') || ''
-  const area = urlObj.searchParams.get('area') || ''
+  /**
+   * [Fix] Use c.req.queries() to get multiple 'q' parameters as an array.
+   * This ensures /?q=word1&q=word2 correctly returns ['word1', 'word2'].
+   */
+  const qParams = c.req.queries('q') || []
+  const area = c.req.query('area') || ''
 
-  // Split query into individual keywords to render as interactive chips
-  const keywords = q.split(/[\s　]+/).filter(Boolean)
+  /**
+   * If keywords exist, they are already an array. 
+   * If someone typed "word1 word2" in a single input, we split them just in case.
+   */
+  const keywords = qParams
+    .flatMap(q => q.split(/[\s　]+/))
+    .filter(Boolean)
 
   return (
     <header class="header-container">
