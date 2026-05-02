@@ -33,7 +33,7 @@ export const TopHeader: FC<{
    * [HTMX Check]
    * Detect if the request is from HTMX.
    */
-  const isHtmx = c.req.header('HX-Request') === 'true'
+  // const isHtmx = c.req.header('HX-Request') === 'true'
 
   /**
    * [Logic] Normalize keywords and area.
@@ -46,21 +46,21 @@ export const TopHeader: FC<{
   const area = propsArea || c.req.query('area') || ''
 
   // --- Render Fragment for HTMX ---
-  if (isHtmx) {
-    return (
-      <>
-        {/* 1. メインターゲット (#search-result-module) に流し込む検索結果 */}
-        <SearchResult results={results} total={total} area={area} q={q} />
+  // if (isHtmx) {
+  //   return (
+  //     <>
+  //       {/* 1. メインターゲット (#search-result-module) に流し込む検索結果 */}
+  //       <SearchResult results={results} total={total} area={area} q={q} />
 
-        {/* 2. OOB (Out-of-Band) でヘッダー内のチップのみを更新する */}
-        <HeaderSearch 
-          keywords={keywords} 
-          placeholder={CONFIG.placeholder} 
-          area={area} 
-        />
-      </>
-    )
-  }  
+  //       {/* 2. OOB (Out-of-Band) でヘッダー内のチップのみを更新する */}
+  //       <HeaderSearch 
+  //         keywords={keywords} 
+  //         placeholder={CONFIG.placeholder} 
+  //         area={area} 
+  //       />
+  //     </>
+  //   )
+  // }  
 
   // --- Render Full Header for Initial Page Load ---
   return (

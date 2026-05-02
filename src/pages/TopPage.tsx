@@ -10,7 +10,9 @@ import { TopFooter } from './TopFooter'
 import { fetchServices } from '../db/queries/main' 
 import { getCookie } from 'hono/cookie'
 import { resolveDetectionArea } from '../lib/geo'
+
 import { normalizeQuery, syncUrlWithQuery } from '../lib/search'
+import { getNormalizedKeywords, joinKeywords } from '../lib/search'
 
 // Cloudflare D1 environment bindings
 type Bindings = {
@@ -25,7 +27,8 @@ home.get('/', async (c) => {
 
   // 1. Get and normalize query (Remove duplicates)
   const rawQ = c.req.query('q') || '';
-  const q = normalizeQuery(rawQ);
+  // const q = normalizeQuery(rawQ);
+  const q = joinKeywords(getNormalizedKeywords(c.req.queries('q')));
 
   // 2. Reflect the cleaned query back to the browser URL via HTMX header
   syncUrlWithQuery(c, rawQ, q);
