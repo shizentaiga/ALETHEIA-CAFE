@@ -43,7 +43,7 @@ src/
 │   ├── TopFooter.tsx      # フッター
 │   ├── TopHeader.tsx      # ヘッダー（部品の統合窓口）
 │   ├── header/            # ヘッダー専用コンポーネント
-│   │   ├── styles.ts      # ヘッダー固有のCSS（外部変数）
+│   │   ├── headerStyle.ts      # ヘッダー固有のCSS（外部変数）
 │   │   ├── HeaderSearch.tsx # 検索窓・チップ表示ロジック
 │   │   └── HeaderAuth.tsx # 認証・ログイン状態表示
 │   └── GoogleAuth.ts      # 認証ハンドラ
@@ -55,19 +55,19 @@ src/
 │   └── AreaList.tsx       # 階層データ表示（HTMX 小部品）
 │
 ├── api/                   # 【Logic】HTMX 用エンドポイント
-│   └── area.ts            # ドリルダウン階層データ返却
+│   └── areaHandler.ts            # ドリルダウン階層データ返却
 │
 ├── db/                    # 【Data】D1 関連
 │   ├── queries/           # 物理分割されたクエリ層
 │   │   ├── main.ts        # 統合窓口
-│   │   └── search.ts      # D1 検索実行
+│   │   └── searchQuery.ts      # D1 検索実行
 │   ├── schema.sql         # テーブル定義
 │   └── seed/              # 初期データ
 │
 └── lib/                   # 【Shared】共通定数・ロジック
     ├── constants.ts       # 地理情報・UIテキスト
     ├── auth.ts            # 認証の低レイヤー処理
-    └── search.ts          # クエリ正規化・URL同期
+    └── searchUtils.ts          # クエリ正規化・URL同期
 ~~~
 
 ~~~
