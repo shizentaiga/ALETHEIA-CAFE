@@ -41,11 +41,12 @@ home.get('/', async (c) => {
   
   // Fetch service list from database
   const { results, total } = await fetchServices(db, q, 1, area);
+
   
   // Render full page layout
   return c.render(
     <>
-      <TopHeader user={user} />
+      <TopHeader user={user} results={results} total={total} area={area} q={q} />
       <TopMain results={results} total={total} area={area} q={q}/>
       <TopFooter />
     </>

@@ -5,19 +5,21 @@
 import { Context } from 'hono'
 
 /**
- * Normalize the search query by removing duplicate keywords and extra spaces.
- * Returns a clean string for DB queries and UI display.
+ * ==========================================
+ * 1. 既存コード (互換性維持のため残す)
+ * ==========================================
+ */
+
+/**
+ * @deprecated 新しい実装では getNormalizedKeywords を使用してください
  */
 export const normalizeQuery = (q: string): string => {
-  // Split by whitespace (half-width and full-width), filter out empty strings
   const rawKeywords = q.trim().split(/[\s　]+/).filter(Boolean);
-  // Use Set to remove duplicates and join back into a single string
   return [...new Set(rawKeywords)].join(' ');
 };
 
 /**
- * Synchronize the browser URL with the normalized query.
- * Only triggers during HTMX requests to keep the address bar clean.
+ * @deprecated 新しい実装では createSearchUrl と HTMX の属性ベースの遷移を使用してください
  */
 export const syncUrlWithQuery = (c: Context, rawQ: string, cleanQ: string) => {
   const isHtmx = c.req.header('HX-Request');
@@ -29,7 +31,52 @@ export const syncUrlWithQuery = (c: Context, rawQ: string, cleanQ: string) => {
     } else {
       url.searchParams.delete('q');
     }
-    // Instruct HTMX to update the browser URL
     c.header('HX-Push-Url', url.pathname + url.search);
   }
+};
+
+/**
+ * ==========================================
+ * 2. 新規コード (計画書 v1.1 に基づく新ロジック)
+ * ==========================================
+ */
+
+/**
+ * URLクエリパラメータ(q)からキーワード配列を正規化して抽出する
+ * - 配列/文字列の両方に対応
+ * - 最大5件制限
+ */
+export const getNormalizedKeywords = (queries: string | string[] | undefined): string[] => {
+  if (!queries) return [];
+  const rawArray = Array.isArray(queries) ? queries : [queries];
+
+  const keywords = [
+    ...new Set(
+      rawArray
+        .flatMap((v) => v.split(/[\s　]+/))
+        .map((v) => v.trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  return keywords.slice(0, 5); // DB負荷保護のため5件上限
+};
+
+/**
+ * キーワード配列から安全にエンコードされた検索URLを生成する
+ */
+export const createSearchUrl = (keywords: string[], baseUrl: string = ''): string => {
+  const params = new URLSearchParams();
+  keywords.forEach((kw) => params.append('q', kw));
+  
+  const queryString = params.toString();
+  // クエリが空なら baseUrl または現在のディレクトリを返す
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl || './';
+};
+
+/**
+ * 配列をスペース区切りの文字列へ変換 (DBクエリや表示用)
+ */
+export const joinKeywords = (keywords: string[]): string => {
+  return keywords.join(' ');
 };

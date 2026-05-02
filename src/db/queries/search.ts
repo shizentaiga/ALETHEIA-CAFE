@@ -3,7 +3,8 @@
  * [Role] Build search conditions and execute queries against D1.
  * [Notes] Handles multi-keyword search, soft-deletion, and pagination.
  */
-import { cleanSql } from './utils';
+import { getNormalizedKeywords } from '../../lib/search';
+// import { cleanSql } from './utils'; // 必要に応じて有効化
 
 // --- CONFIGURATION ---
 const DEFAULT_LIMIT = 30; // Default records per page
@@ -12,39 +13,44 @@ const DEFAULT_LIMIT = 30; // Default records per page
 /**
  * Main service search function.
  * @param db - D1Database instance
- * @param q - Search keywords (Split by spaces for AND search)
+ * @param q - Search keywords (Accepts both string and string array for compatibility)
  * @param page - Target page number (1-based)
  * @param area - Target area (Optional)
  * @param limit - Max records to fetch
  */
 export const fetchServices = async (
   db: D1Database, 
-  q: string, 
+  q: string | string[], // 互換性維持のため string も許容
   page: number, 
   area?: string, 
   limit: number = DEFAULT_LIMIT
 ) => {
   const offset = (page - 1) * limit;
 
-  // 1. Split query and remove duplicate keywords
-  // Using Set ensures unique search terms and optimizes the DB query.
-  const rawKeywords = q.trim().split(/[\s　]+/).filter(Boolean);
-  const keywords = [...new Set(rawKeywords)];
+  /**
+   * 1. 計画書 v1.1 に基づくキーワードの正規化
+   * lib/search.ts の getNormalizedKeywords を使用することで、
+   * 文字列・配列のどちらが来ても「重複なし・空文字なし・最大5件」の配列に変換されます。
+   */
+  const keywords = getNormalizedKeywords(q);
   
-  // Base Condition: Target only active data (not soft-deleted)
+  // Base Condition: 有効なデータのみ（論理削除済みを除外）
   const conditions = ["deleted_at IS NULL"];
   const params: any[] = [];
 
-  // 2. Generate AND conditions for each keyword if provided
+  /**
+   * 2. 動的 SQL 生成 (AND 条件)
+   * INTERSECT ではなく、パフォーマンスと汎用性の高い AND 結合を採用。
+   * 各キーワードに対して title または address のいずれかにヒットすることを条件化。
+   */
   if (keywords.length > 0) {
     keywords.forEach(word => {
-      // Search across both title and address
       conditions.push(`(title LIKE ? OR address LIKE ?)`);
       params.push(`%${word}%`, `%${word}%`);
     });
   }
 
-  // 3. Area search (Starts with match)
+  // 3. エリア検索 (前方一致)
   if (area) {
     conditions.push(`address LIKE ?`);
     params.push(`${area}%`); 
@@ -52,12 +58,17 @@ export const fetchServices = async (
 
   const whereSql = `WHERE ${conditions.join(' AND ')}`;
 
-  // 1. Get total hit count for pagination calculations
+  /**
+   * 1. 全件数の取得 (ページネーション用)
+   */
   const countRes = await db.prepare(`SELECT COUNT(*) as count FROM services ${whereSql}`)
     .bind(...params)
     .first<{count: number}>();
   
-  // 2. Fetch actual data (Ordered by latest, clipped by LIMIT/OFFSET)
+  /**
+   * 2. 実データの取得 (最新順、LIMIT/OFFSET適用)
+   * 既存のデータ構造 (service_id, title, address, attributes_json) を維持。
+   */
   const { results } = await db.prepare(
     `SELECT service_id, title, address, attributes_json FROM services 
      ${whereSql} 
@@ -65,9 +76,11 @@ export const fetchServices = async (
      LIMIT ? OFFSET ?`
   ).bind(...params, limit, offset).all();
 
-  // Return raw results to maintain compatibility with view components
+  // 既存の View コンポーネントとの互換性を保つため、同じオブジェクト形式で返却
   return {
     results: results || [],
-    total: countRes?.count || 0
+    total: countRes?.count || 0,
+    currentPage: page,
+    limit: limit
   };
 };
