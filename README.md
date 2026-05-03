@@ -44,8 +44,8 @@ src/
 │   ├── TopHeader.tsx      # ヘッダー（部品の統合窓口）
 │   ├── header/            # ヘッダー専用コンポーネント
 │   │   ├── headerStyle.ts      # ヘッダー固有のCSS（外部変数）
-│   │   ├── HeaderSearch.tsx # 検索窓・チップ表示ロジック
-│   │   └── HeaderAuth.tsx # 認証・ログイン状態表示
+│   │   ├── HeaderSearch.tsx    # 検索窓・チップ表示ロジック
+│   │   └── HeaderAuth.tsx      # 認証・ログイン状態表示
 │   └── GoogleAuth.ts      # 認証ハンドラ
 │
 ├── components/            # 【UI Parts】機能単位の共通コンポーネント
@@ -55,7 +55,7 @@ src/
 │   └── AreaList.tsx       # 階層データ表示（HTMX 小部品）
 │
 ├── api/                   # 【Logic】HTMX 用エンドポイント
-│   └── areaHandler.ts            # ドリルダウン階層データ返却
+│   └── areaHandler.ts          # ドリルダウン階層データ返却
 │
 ├── db/                    # 【Data】D1 関連
 │   ├── queries/           # 物理分割されたクエリ層
@@ -90,6 +90,19 @@ Cloudflare D1 や Workers の特性を活かし、低コストかつ PageSpeed I
 
 ---
 
+## Documentation System
+
+プロジェクトの理解とメンテナンスを容易にするため、以下の順序でドキュメントを参照することを推奨する。
+
+| 順序 | 書類名 | ファイルパス | 内容 |
+|:---|:---|:---|:---|
+| 1 | **README** | `README.md` | 本資料。プロジェクトの概要と全体像。 |
+| 2 | **システム設計書** | `docs/01_system-design.md` | コンポーネント間連携と HTMX 状態遷移の定義。 |
+| 3 | **データベース設計書** | `docs/02_db-schema.md` | `area_id` 階層管理を含むテーブル定義とデータ構造。 |
+| 4 | **移行計画書** | `docs/03_migration-plan.md` | `pref/city` から `area_id` への移行手順と整合性担保。 |
+
+---
+
 ## Development & Ops
 
 | コマンド | 用途 |
@@ -104,6 +117,7 @@ Cloudflare D1 や Workers の特性を活かし、低コストかつ PageSpeed I
 
 - `header/styles.ts` のように、CSS を外部変数化することで JSX 側の可読性を確保。
 - 検索窓のキーワード追加仕様については、ユーザーの絞り込み体験（AND検索）向上のため継続検討中。
+- エリア検索は `area_id` による前方一致検索を採用し、北海道等の複雑な階層構造に対応。
 
 ---
 
