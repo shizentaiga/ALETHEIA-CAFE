@@ -11,10 +11,10 @@ export const resolveDetectionArea = (c: Context): string | undefined => {
   if (queryArea) return queryArea
 
   // 2. Fallback to CDN (Cloudflare Workers) geolocation data
-  const cf = (c.req.raw as any).cf
-  if (cf?.country === 'JP' && cf.regionCode) {
-    return getPrefectureName(cf.regionCode) || undefined
-  }
+  // const cf = (c.req.raw as any).cf
+  // if (cf?.country === 'JP' && cf.regionCode) {
+  //   return getPrefectureName(cf.regionCode) || undefined
+  // }
 
   return undefined
 }
