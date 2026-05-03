@@ -1,122 +1,115 @@
 /**
- * Doutor Data Converter (SQL Generator)
+ * Doutor Data Converter (SQL Generator with D1 Area Lookup)
  * 
  * Usage: npx tsx scripts/002_doutor_convert.ts
  */
 
 import fs from 'fs';
 import path from 'path';
-import { normalize } from '@geolonia/normalize-japanese-addresses';
+import { Miniflare } from "miniflare";
 import { PATHS, CONFIG, ensureDirectory } from './utils.js';
+import { normalizeAddress } from '../src/lib/searchUtils.js';
 
-// --- CONFIGURATION ---
-const MAX_PROCESS_COUNT = 1500; // 安全のための実行制限（本番は1300に変更）
-const SLEEP_MS = 200;        // ジオコーディング時の待機時間（負荷対策）
-// ---------------------
+interface AreaMaster {
+    area_id: string;
+    name: string;
+    normalizedName: string;
+}
 
 /**
- * キャッシュ用マップ
- * Key: 市区町村までの住所文字列 (例: "北海道伊達市")
- * Value: { pref: "北海道", city: "伊達市" }
+ * 住所のクリーニング（最小限）
  */
-const cityCache: Map<string, { pref: string; city: string }> = new Map();
-
-function cleanString(str: string) {
+function cleanDisplayAddress(str: string) {
     if (!str) return '';
+    // タブ、全角スペースを半角に変換し、改行を除去
     return str.replace(/\t/g, ' ').replace(/　/g, ' ').replace(/\r?\n/g, ' ').trim();
 }
 
-/**
- * 擬似ジオコーディング関数（テスト用）
- * 実際にはここで外部API（Google Maps等）を叩く想定
- */
-async function getLatLng(address: string): Promise<{ lat: number | string; lng: number | string }> {
-    // 今回はテストのため、ランダムな座標を返すか、本番実装時はここにAPIコールを記述
-    // 負荷が強すぎる場合は NULL を返すように切り替え可能
-    return { lat: 'NULL', lng: 'NULL' }; 
-}
-
-async function convertToSql(items: any[]) {
-    const results: string[] = [];
-    // MAX_PROCESS_COUNT で制限
-    const targetItems = items.slice(0, MAX_PROCESS_COUNT);
-
-    for (let i = 0; i < targetItems.length; i++) {
-        const item = targetItems[i];
-        const lines = item.rawLines;
-        const rawName = lines[0] || 'Doutor Coffee Shop';
-        const rawAddress = cleanString(lines[1] || '');
+function convertToSql(items: any[], areas: AreaMaster[]) {
+    return items.map((item, index) => {
+        const lines = item.rawLines || [];
+        const rawName = lines[0] || 'ドトールコーヒーショップ';
+        const rawAddr = lines[1] || '';
         const phone = lines[2] || '';
-        const businessHours = lines.slice(3).map((l: string) => cleanString(l)).join(' / ');
-
-        const storeId = phone ? phone.replace(/-/g, '') : `IDX${i.toString().padStart(5, '0')}`;
-        const serviceId = `DTR_${storeId}`;
-
-        // --- 都道府県・市区町村の分離ロジック ---
-        let pref = '';
-        let city = '';
         
-        // 住所の冒頭から「市・区・町・村」あたりまでをキーにしてキャッシュ確認
-        // 簡易的に「最初の7文字」程度をキーにするか、正規化後の結果を保存
-        const possibleCityKey = rawAddress.substring(0, 8); 
+        // 保存用の整形住所
+        const displayAddress = cleanDisplayAddress(rawAddr);
+        // 突合用の正規化住所
+        const comparisonAddress = normalizeAddress(rawAddr);
 
-        if (cityCache.has(possibleCityKey)) {
-            const cached = cityCache.get(possibleCityKey)!;
-            pref = cached.pref;
-            city = cached.city;
-        } else {
-            // キャッシュにない場合のみ normalize を実行
-            const normalized = await normalize(rawAddress);
-            pref = normalized.pref ?? '';
-            city = normalized.city ?? '';
-            cityCache.set(possibleCityKey, { pref, city });
-            console.log(`[Cache Miss] Normalized: ${pref}${city}`);
-        }
+        // --- 全文スキャンによるArea判定 ---
+        const matchedArea = areas.find(area => comparisonAddress.includes(area.normalizedName));
+        const areaId = matchedArea ? `'${matchedArea.area_id}'` : 'NULL';
 
-        // 緯度経度の取得 (テスト)
-        const coords = await getLatLng(rawAddress);
-        if (coords.lat !== 'NULL') await new Promise(resolve => setTimeout(resolve, SLEEP_MS));
+        // 営業時間のパース（配列の3番目以降を結合）
+        const businessHours = lines.slice(3).map((l: string) => cleanDisplayAddress(l)).join(' / ');
+
+        // ID生成（電話番号があれば使用、なければインデックス）
+        const storeId = phone ? phone.replace(/-/g, '') : `IDX${index.toString().padStart(5, '0')}`;
+        const serviceId = `DTR_${storeId}`;
 
         const attributes = {
             category: "cat_cafe",
-            wifi: true,
+            wifi: true, // ドトールは基本提供前提（必要に応じて調整）
             phone: phone,
             ext_source: "doutor_official",
             ext_place_id: `DTR_OFFICIAL_${storeId}`,
-            business_hours: businessHours
+            business_hours: businessHours || null
         };
 
-        const escapedTitle = cleanString(rawName).replace(/'/g, "''");
-        const escapedAddr = rawAddress.replace(/'/g, "''");
+        const escapedTitle = rawName.replace(/'/g, "''");
+        const escapedAddr = displayAddress.replace(/'/g, "''");
         const jsonString = JSON.stringify(attributes).replace(/'/g, "''");
 
-        results.push(`INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, title, address, pref, city, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.DOUTOR}', '${CONFIG.OWNER_ID}', 'free', '${escapedTitle}', '${escapedAddr}', '${pref}', '${city}', ${coords.lat}, ${coords.lng}, '${jsonString}');`);
-        
-        if ((i + 1) % 5 === 0) console.log(`⏳ Processed ${i + 1} / ${targetItems.length}...`);
-    }
-    return results.join('\n');
+        // pref, city は NULL。area_id で管理。
+        return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, pref, city, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.DOUTOR}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddr}', NULL, NULL, NULL, NULL, '${jsonString}');`;
+    }).join('\n');
 }
 
 async function main() {
-    console.log(`🛠 Converting Doutor Data (Limit: ${MAX_PROCESS_COUNT})...`);
+    console.log("🛠 Starting Doutor Conversion with D1 Area Lookup...");
+
+    const mf = new Miniflare({
+        d1Databases: { ALETHEIA_CAFE_DB: "70ed05d4-20d7-484d-bdc1-3a5e9ea63086" },
+        modules: true,
+        script: `export default { fetch: () => new Response("ok") }`,
+        d1Persist: ".wrangler/state/v3/d1",
+    });
+
+    let areas: AreaMaster[] = [];
+    try {
+        const db = await mf.getD1Database("ALETHEIA_CAFE_DB");
+        const res = await db.prepare("SELECT area_id, name FROM areas WHERE area_level = 3").all();
+        
+        areas = (res.results || []).map((a: any) => ({
+            area_id: a.area_id,
+            name: a.name,
+            normalizedName: normalizeAddress(a.name)
+        })).sort((a, b) => b.name.length - a.name.length); // 長い名前（詳細な市町村）から順にマッチング
+        
+        console.log(`✅ Loaded ${areas.length} areas.`);
+    } catch (error) {
+        console.error("❌ Failed to fetch Area Master.");
+        process.exit(1);
+    }
+
     const rawPath = path.join(PATHS.RAW_DATA, '002_doutor.json');
-    
     if (!fs.existsSync(rawPath)) {
         console.error("❌ Raw data not found.");
         return;
     }
 
     const rawData = JSON.parse(fs.readFileSync(rawPath, 'utf-8'));
-    let totalSql = "-- ALETHEIA Doutor Nationwide Generated Seeds\n\n";
     
-    totalSql += await convertToSql(rawData);
+    let totalSql = "-- ALETHEIA Doutor Seed (Area-ID Pre-Mapped)\n\n";
+    totalSql += convertToSql(rawData, areas);
 
     ensureDirectory(PATHS.DB_SEED);
     const outputPath = path.join(PATHS.DB_SEED, 'doutor.sql');
     fs.writeFileSync(outputPath, totalSql);
 
     console.log(`\n✨ SQL Seed generated at: ${outputPath}`);
-    console.log(`📊 Cache size (Cities): ${cityCache.size}`);
+    await mf.dispose();
 }
 
-main();
+main().catch(console.error);
