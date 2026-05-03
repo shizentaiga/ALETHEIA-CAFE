@@ -64,8 +64,22 @@ import path from 'path';
 import { JP_REGIONS, PREFECTURE_MASTER } from '../src/lib/constants';
 
 const OUTPUT_PATH = 'src/db/seed/00_master/areas.sql';
-// 座標と市区町村名を同時に取得するため getTowns を使用
-const API_BASE_URL = 'https://geoapi.heartrails.com/api/json?method=getTowns';
+const API_CITIES = 'https://geoapi.heartrails.com/api/json?method=getCities';
+const API_TOWNS = 'https://geoapi.heartrails.com/api/json?method=getTowns';
+
+/**
+ * HeartRails API Response Type Definitions
+ */
+interface HeartRailsResponse {
+  response: {
+    location?: Array<{
+      city?: string;
+      x?: number;
+      y?: number;
+    }>;
+    error?: string;
+  };
+}
 
 const REGION_DEFINITIONS = [
   { id: '01', name: '北海道', key: 'hokkaido' },
@@ -79,116 +93,119 @@ const REGION_DEFINITIONS = [
 ];
 
 /**
- * 4. 北海道の「市区町村名」→「仮想エリアID」マッピング
+ * 北海道の仮想エリア（道央・道南・道北・道東）への振り分けロジック
  */
 const getHokkaidoVirtualId = (cityName: string): string => {
-  // 振興局に基づくグルーピング（主要な市町村での簡易判定例）
-  const dooh = ['札幌市', '江別市', '千歳市', '恵庭市', '北広島市', '石狩市', '小樽市', '岩見沢市', '夕張市'];
-  const donan = ['函館市', '北斗市', '松前郡', '亀田郡', '上磯郡'];
-  const dooku = ['旭川市', '留萌市', '稚内市', '士別市', '名寄市', '富良野市'];
+  const dooh = ['札幌', '江別', '千歳', '恵庭', '北広島', '石狩', '小樽', '岩見沢', '夕張', '空知', '石狩', '後志', '胆振', '日高'];
+  const donan = ['函館', '北斗', '渡島', '檜山'];
+  const dooku = ['旭川', '留萌', '稚内', '士別', '名寄', '富良野', '上川', '宗谷'];
   
-  if (dooh.some(s => cityName.includes(s))) return '01-V10'; // 道央
-  if (donan.some(s => cityName.includes(s))) return '01-V20'; // 道南
-  if (dooku.some(s => cityName.includes(s))) return '01-V30'; // 道北
-  return '01-V40'; // 道東（その他）
+  if (dooh.some(s => cityName.includes(s))) return '01-V10';
+  if (donan.some(s => cityName.includes(s))) return '01-V20';
+  if (dooku.some(s => cityName.includes(s))) return '01-V30';
+  return '01-V40';
 };
 
-const fetchTowns = async (prefName: string) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}&prefecture=${encodeURIComponent(prefName)}`);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json() as any;
-    return data.response.location || [];
-  } catch (error) {
-    console.error(`❌ Failed to fetch ${prefName}:`, error);
-    return [];
+/**
+ * 型安全なリトライ付きFetch
+ */
+const fetchWithRetry = async (url: string, retries = 3): Promise<HeartRailsResponse['response'] | null> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url);
+      if (response.status === 429) {
+        await new Promise(r => setTimeout(r, 5000 * (i + 1)));
+        continue;
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      // 型アサーションにより unknown 型エラーを回避
+      const data = (await response.json()) as HeartRailsResponse;
+      return data.response;
+    } catch (error) {
+      if (i === retries - 1) return null;
+      await new Promise(r => setTimeout(r, 2000));
+    }
   }
+  return null;
 };
 
 const main = async () => {
-  let sql = `-- ALETHEIA Areas Master Data (Auto Generated)\n`;
-  sql += `-- Generated at: ${new Date().toLocaleString()}\n`;
-  sql += `DELETE FROM areas;\n\n`;
+  let sql = `-- ALETHEIA Areas Master Data\n-- Source: HeartRails GeoAPI\n-- Generated: ${new Date().toLocaleString()}\nDELETE FROM areas;\n\n`;
 
-  // --- Step 1 & 2: Level 1 (Regions) & Level 2 (Prefectures) ---
+  console.log("🚀 Starting Precise Area Generation...");
+
+  // --- L1 (Region) & L2 (Prefecture) の静的生成 ---
   for (const region of REGION_DEFINITIONS) {
     sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level) VALUES ('${region.id}', '${region.name}', 1);\n`;
-
     if (region.key === 'hokkaido') {
-      const vAreas = [
-        { id: '01-V10', name: '道央' }, { id: '01-V20', name: '道南' },
-        { id: '01-V30', name: '道北' }, { id: '01-V40', name: '道東' },
-      ];
-      for (const va of vAreas) {
-        sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level) VALUES ('${va.id}', '${va.name}', 2);\n`;
-      }
+      ['道央', '道南', '道北', '道東'].forEach((name, i) => {
+        sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level) VALUES ('01-V${(i+1)*10}', '${name}', 2);\n`;
+      });
     } else {
-      const prefsInRegion = JP_REGIONS[region.key as keyof typeof JP_REGIONS] || [];
-      for (const prefName of prefsInRegion) {
-        const jisCode = Object.entries(PREFECTURE_MASTER).find(
-          ([key, value]) => value === prefName && /^\d{2}$/.test(key)
-        )?.[0];
-        if (jisCode) {
-          sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level) VALUES ('${region.id}-${jisCode}', '${prefName}', 2);\n`;
-        }
+      const prefs = JP_REGIONS[region.key as keyof typeof JP_REGIONS] || [];
+      for (const prefName of prefs) {
+        const jisCode = Object.entries(PREFECTURE_MASTER).find(([k, v]) => v === prefName && /^\d{2}$/.test(k))?.[0];
+        if (jisCode) sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level) VALUES ('${region.id}-${jisCode}', '${prefName}', 2);\n`;
       }
     }
   }
 
-  // --- Step 3: Level 3 (Cities) ---
-  sql += `\n-- Level 3: Cities (HeartRails API with A-Code)\n`;
+  // --- L3 (City) の動的生成 ---
+  let totalCities = 0;
 
   for (const region of REGION_DEFINITIONS) {
-    const prefsInRegion = JP_REGIONS[region.key as keyof typeof JP_REGIONS] || [];
-    console.log(`📡 Start fetching Region: ${region.name}`);
+    const prefs = JP_REGIONS[region.key as keyof typeof JP_REGIONS] || [];
 
-    for (const prefName of prefsInRegion) {
-      const rawTowns = await fetchTowns(prefName);
+    for (const prefName of prefs) {
+      console.log(`📡 Fetching Cities: ${prefName}...`);
+      const response = await fetchWithRetry(`${API_CITIES}&prefecture=${encodeURIComponent(prefName)}`);
       
-      // 1段目: 市区町村単位でユニーク化 (名前をキーに座標を保持)
-      const cityMap = new Map<string, { x: number, y: number }>();
-      for (const t of rawTowns) {
-        if (!cityMap.has(t.city)) {
-          cityMap.set(t.city, { x: t.x, y: t.y });
-        }
+      const locations = response?.location || [];
+      const cityNames = locations.map(loc => loc.city).filter((c): c is string => !!c);
+
+      if (cityNames.length === 0) {
+        console.warn(`   ⚠️ No cities found for ${prefName}.`);
+        continue;
       }
 
-      console.log(`   - ${prefName}: ${cityMap.size} cities identified.`);
-
-      // 2段目: 独自コード(A001...)を採番してSQL生成
+      const jisCode = Object.entries(PREFECTURE_MASTER).find(([k, v]) => v === prefName && /^\d{2}$/.test(k))?.[0];
       let cityCounter = 1;
-      const jisCode = Object.entries(PREFECTURE_MASTER).find(
-        ([key, value]) => value === prefName && /^\d{2}$/.test(key)
-      )?.[0];
 
-      for (const [cityName, coords] of cityMap.entries()) {
-        const aCode = `A${String(cityCounter).padStart(3, '0')}`;
-        let parentId = `${region.id}-${jisCode}`;
+      for (const cityName of cityNames) {
+        // 各自治体の代表座標を取得
+        const townRes = await fetchWithRetry(`${API_TOWNS}&prefecture=${encodeURIComponent(prefName)}&city=${encodeURIComponent(cityName)}`);
+        const firstTown = townRes?.location?.[0];
 
-        if (region.key === 'hokkaido') {
-          parentId = getHokkaidoVirtualId(cityName);
+        if (firstTown && firstTown.x !== undefined && firstTown.y !== undefined) {
+          const aCode = `A${String(cityCounter).padStart(3, '0')}`;
+          const parentId = region.key === 'hokkaido' ? getHokkaidoVirtualId(cityName) : `${region.id}-${jisCode}`;
+          const areaId = `${parentId}-${aCode}`;
+
+          sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('${areaId}', '${cityName.replace(/'/g, "''")}', 3, ${firstTown.y}, ${firstTown.x});\n`;
+          cityCounter++;
+          totalCities++;
         }
-
-        const areaId = `${parentId}-${aCode}`;
-        const escapedCityName = cityName.replace(/'/g, "''");
-
-        sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('${areaId}', '${escapedCityName}', 3, ${coords.y}, ${coords.x});\n`;
-        cityCounter++;
+        
+        // 自治体ごとの待機（API制限回避）
+        await new Promise(r => setTimeout(r, 200));
       }
-      
-      // API負荷軽減
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log(`   ✅ ${prefName}: ${cityCounter - 1} cities added.`);
+      // 都道府県ごとの待機
+      await new Promise(r => setTimeout(r, 1000));
     }
   }
 
+  // 保存処理
   const dir = path.dirname(OUTPUT_PATH);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(OUTPUT_PATH, sql);
 
-  console.log(`\n✅ Successfully generated SQL at: ${OUTPUT_PATH}`);
+  console.log(`\n==================================================`);
+  console.log(`🎉 COMPLETED!`);
+  console.log(`Total Level 3 Cities: ${totalCities}`);
+  console.log(`File saved to: ${OUTPUT_PATH}`);
+  console.log(`==================================================`);
 };
 
-main().catch(err => {
-  console.error("❌ Error during SQL generation:", err);
-  process.exit(1);
-});
+main().catch(console.error);
