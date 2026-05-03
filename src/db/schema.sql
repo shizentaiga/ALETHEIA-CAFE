@@ -23,17 +23,19 @@ DROP TABLE IF EXISTS areas; -- Added for new schema
 -- =============================================================================
 -- 2. Area Management (Hierarchy & Navigation)
 -- =============================================================================
+-- area_id convention:
+-- L1 (Region): '10', '20' ...
+-- L2 (Pref/Virtual): '10-13' (Tokyo), '01-V10' (Central Hokkaido)
+-- L3 (City/Local): '10-13-A001' (A-code for city), '01-V10-A001' (Local area in Virtual)
+-- =============================================================================
 CREATE TABLE areas (
-    area_id    TEXT PRIMARY KEY,      -- e.g., '10', '10-13', '10-01-V10'
+    area_id    TEXT PRIMARY KEY,      -- e.g., '10', '10-08', '10-08-A001'
     name       TEXT NOT NULL,         -- e.g., '関東', '東京都', '道央'
     area_level INTEGER NOT NULL,      -- 1:大エリア, 2:中エリア(都道府県), 3:小エリア(市区町村/仮想)
-    lat        REAL,                  -- Representative Latitude
-    lng        REAL,                  -- Representative Longitude
+    lat        REAL,                  -- Representative Latitude (from HeartRails)
+    lng        REAL,                  -- Representative Longitude (from HeartRails)
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
-
--- Index for high-speed prefix search (LIKE '10-13-%')
-CREATE INDEX idx_areas_id_lookup ON areas(area_id);
 
 -- =============================================================================
 -- 3. User Management
