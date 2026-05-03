@@ -15,9 +15,9 @@
 -- =============================================================================
 -- 1. Table Initialization
 -- =============================================================================
-DROP TABLE IF EXISTS user_activities;
+-- DROP TABLE IF EXISTS user_activities;
 DROP TABLE IF EXISTS services;
-DROP TABLE IF EXISTS users;
+-- DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS areas; -- Added for new schema
 
 -- =============================================================================
@@ -39,18 +39,19 @@ CREATE TABLE areas (
 
 -- =============================================================================
 -- 3. User Management
+-- 　[ Disabled to prevent accidental data loss. ]
 -- ============================================================================
-CREATE TABLE users (
-    user_id       TEXT PRIMARY KEY,               -- Unique ID from Google Auth
-    email         TEXT UNIQUE,                    -- User contact email
-    display_name  TEXT,                           -- Public display name
-    role          TEXT DEFAULT 'USER' NOT NULL,   -- 'USER', 'ADMIN', or 'OWNER'
-    status        TEXT DEFAULT 'ACTIVE' NOT NULL, -- Account status
-    plan_id       TEXT DEFAULT 'free' NOT NULL,   -- 'free', 'pro', or 'biz'
-    last_login_at DATETIME,
-    deleted_at    DATETIME,                       -- Logic delete timestamp
-    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+-- CREATE TABLE IF NOT EXISTS users (
+--     user_id       TEXT PRIMARY KEY,               -- Unique ID from Google Auth
+--     email         TEXT UNIQUE,                    -- User contact email
+--     display_name  TEXT,                           -- Public display name
+--     role          TEXT DEFAULT 'USER' NOT NULL,   -- 'USER', 'ADMIN', or 'OWNER'
+--     status        TEXT DEFAULT 'ACTIVE' NOT NULL, -- Account status
+--     plan_id       TEXT DEFAULT 'free' NOT NULL,   -- 'free', 'pro', or 'biz'
+--     last_login_at DATETIME,
+--     deleted_at    DATETIME,                       -- Logic delete timestamp
+--     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+-- );
 
 -- =============================================================================
 -- 4. Service Locations (Core Data)
@@ -89,20 +90,21 @@ CREATE INDEX idx_services_pref_city ON services(pref, city); -- Legacy support
 
 -- =============================================================================
 -- 4. User Activities (Personal Data)
+-- 　[ Disabled to prevent accidental data loss. ]
 -- =============================================================================
-CREATE TABLE user_activities (
-    activity_id    TEXT PRIMARY KEY,
-    user_id        TEXT NOT NULL,
-    service_id     TEXT NOT NULL,
+-- CREATE TABLE IF NOT EXISTS user_activities (
+--     activity_id    TEXT PRIMARY KEY,
+--     user_id        TEXT NOT NULL,
+--     service_id     TEXT NOT NULL,
     
-    -- Interaction Records
-    favorited_at   DATETIME,                      -- Timestamp for "Saved"
-    visited_at     DATETIME,                      -- Last visit timestamp
+--     -- Interaction Records
+--     favorited_at   DATETIME,                      -- Timestamp for "Saved"
+--     visited_at     DATETIME,                      -- Last visit timestamp
     
-    -- Personal Notes
-    tentative_date TEXT,                          -- Planned visit date
-    personal_memo  TEXT,                          -- Private user notes
+--     -- Personal Notes
+--     tentative_date TEXT,                          -- Planned visit date
+--     personal_memo  TEXT,                          -- Private user notes
     
-    updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, service_id)                   -- Prevent duplicate entries
-);
+--     updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+--     UNIQUE(user_id, service_id)                   -- Prevent duplicate entries
+-- );
