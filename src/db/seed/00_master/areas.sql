@@ -1,3 +1,5 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/areas.sql --local
+
 -- ALETHEIA Areas Master Data
 -- Source: HeartRails GeoAPI
 -- Generated: 2026/5/4 3:05:04
