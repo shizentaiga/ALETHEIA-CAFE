@@ -5,43 +5,6 @@
 import { Context } from 'hono'
 
 /**
- * ==========================================
- * 1. 既存コード (互換性維持のため残す)
- * ==========================================
- */
-
-/**
- * @deprecated 新しい実装では getNormalizedKeywords を使用してください
- */
-export const normalizeQuery = (q: string): string => {
-  const rawKeywords = q.trim().split(/[\s　]+/).filter(Boolean);
-  return [...new Set(rawKeywords)].join(' ');
-};
-
-/**
- * @deprecated 新しい実装では createSearchUrl と HTMX の属性ベースの遷移を使用してください
- */
-export const syncUrlWithQuery = (c: Context, rawQ: string, cleanQ: string) => {
-  const isHtmx = c.req.header('HX-Request');
-  
-  if (isHtmx && rawQ !== cleanQ) {
-    const url = new URL(c.req.url);
-    if (cleanQ) {
-      url.searchParams.set('q', cleanQ);
-    } else {
-      url.searchParams.delete('q');
-    }
-    c.header('HX-Push-Url', url.pathname + url.search);
-  }
-};
-
-/**
- * ==========================================
- * 2. 新規コード (計画書 v1.1 に基づく新ロジック)
- * ==========================================
- */
-
-/**
  * URLクエリパラメータ(q)からキーワード配列を正規化して抽出する
  * - 配列/文字列の両方に対応
  * - 最大5件制限
@@ -79,4 +42,18 @@ export const createSearchUrl = (keywords: string[], baseUrl: string = ''): strin
  */
 export const joinKeywords = (keywords: string[]): string => {
   return keywords.join(' ');
+};
+
+/**
+ * 住所の表記揺れを吸収するための正規化関数
+ * 突合（比較）用に使用し、表示用データは書き換えない
+ */
+export const normalizeAddress = (address: string): string => {
+  if (!address) return '';
+
+  return address
+    .replace(/[！-～]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xfee0)) // 全角英数→半角
+    .replace(/\s+/g, '')                                                   // 空白削除
+    .replace(/[ー－―‐－]/g, '-')                                           // ハイフン類の統一
+    .replace(/ヶ/g, 'ケ')                                                   // ヶ/ケの統一
 };
