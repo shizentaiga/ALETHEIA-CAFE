@@ -19,6 +19,7 @@ import { test05 } from './test05_cdn'
 import { test06 } from './test06_keyword'
 import { test07 } from './test07_geo'
 import { test08 } from './test08_history'
+import { test09 } from './test09_heartrails'
 
 export const sandboxApp = new Hono<{}>()
 
@@ -42,5 +43,4 @@ sandboxApp.route('/test05', test05)
 sandboxApp.route('/test06', test06)
 sandboxApp.route('/test07', test07)
 sandboxApp.route('/test08', test08)
-
-
+sandboxApp.route('/test09', test09)
