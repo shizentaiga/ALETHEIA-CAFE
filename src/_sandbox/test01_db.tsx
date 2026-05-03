@@ -20,7 +20,7 @@ test01.get('/', async (c) => {
 
   try {
     // 外部化したクエリ関数でデータを取得
-    const { results, total } = await fetchServices(db, q, page, perPage);
+    const { results, total } = await fetchServices(db, q, page);
 
     return c.render(
       <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: auto; padding: 16px; color: #334155;">
