@@ -18,10 +18,26 @@
 DROP TABLE IF EXISTS user_activities;
 DROP TABLE IF EXISTS services;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS areas; -- Added for new schema
 
 -- =============================================================================
--- 2. User Management
+-- 2. Area Management (Hierarchy & Navigation)
 -- =============================================================================
+CREATE TABLE areas (
+    area_id    TEXT PRIMARY KEY,      -- e.g., '10', '10-13', '10-01-V10'
+    name       TEXT NOT NULL,         -- e.g., '関東', '東京都', '道央'
+    area_level INTEGER NOT NULL,      -- 1:大エリア, 2:中エリア(都道府県), 3:小エリア(市区町村/仮想)
+    lat        REAL,                  -- Representative Latitude
+    lng        REAL,                  -- Representative Longitude
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index for high-speed prefix search (LIKE '10-13-%')
+CREATE INDEX idx_areas_id_lookup ON areas(area_id);
+
+-- =============================================================================
+-- 3. User Management
+-- ============================================================================
 CREATE TABLE users (
     user_id       TEXT PRIMARY KEY,               -- Unique ID from Google Auth
     email         TEXT UNIQUE,                    -- User contact email
@@ -35,13 +51,16 @@ CREATE TABLE users (
 );
 
 -- =============================================================================
--- 3. Service Locations (Core Data)
+-- 4. Service Locations (Core Data)
 -- =============================================================================
 CREATE TABLE services (
     service_id      TEXT PRIMARY KEY,
     brand_id        TEXT,                         -- Chain brand identifier
     owner_id        TEXT,                         -- Business owner identifier
     plan_id         TEXT DEFAULT 'free' NOT NULL, -- Service listing plan
+
+    -- New Hierarchy Identifier (Migration Bridge)
+    area_id         TEXT,                         -- FK-like logic link to areas.area_id
     
     -- Basic Information
     title           TEXT NOT NULL,                -- Shop or Facility name
@@ -60,8 +79,11 @@ CREATE TABLE services (
     deleted_at      DATETIME                      -- Logic delete timestamp
 );
 
--- Index for high-speed area-based searches
-CREATE INDEX idx_services_pref_city ON services(pref, city);
+-- Essential indices for search performance
+CREATE INDEX idx_services_area_id ON services(area_id);
+CREATE INDEX idx_services_geo ON services(lat, lng);         -- For proximity search
+
+CREATE INDEX idx_services_pref_city ON services(pref, city); -- Legacy support
 
 -- =============================================================================
 -- 4. User Activities (Personal Data)
