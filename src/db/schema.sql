@@ -67,8 +67,8 @@ CREATE TABLE services (
     -- Basic Information
     title           TEXT NOT NULL,                -- Shop or Facility name
     address         TEXT NOT NULL,                -- Full street address
-    pref            TEXT,                         -- Prefecture (e.g., '東京都')
-    city            TEXT,                         -- Municipality/City (e.g., '新宿区', '札幌市中央区')
+    pref            TEXT,                         -- @deprecated: Prefecture (e.g., '東京都')
+    city            TEXT,                         -- @deprecated: Municipality/City (e.g., '新宿区', '札幌市中央区')
     lat             REAL,                         -- Latitude
     lng             REAL,                         -- Longitude
 
