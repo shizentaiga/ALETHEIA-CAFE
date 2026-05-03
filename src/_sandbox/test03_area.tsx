@@ -6,135 +6,110 @@ export const test03 = new Hono<{ Bindings: { ALETHEIA_CAFE_DB: D1Database } }>()
  * --- API: ドリルダウン用の部分HTMLを返す ---
  */
 test03.get('/api/areas', async (c) => {
-  const regionId = c.req.query('region');
-  const prefId = c.req.query('pref');
+  const parentId = c.req.query('parent');
   const level = Number(c.req.query('level'));
-
-  const parentId = regionId || prefId;
   const nextLevel = level + 1;
+
+  // デバッグ用ログ（ターミナルに表示されます）
+  console.log(`[API] parentId: ${parentId}, nextLevel: ${nextLevel}`);
 
   if (!parentId) return c.html(<option value="">選択してください</option>);
 
-  const { results } = await c.env.ALETHEIA_CAFE_DB.prepare(`
-    SELECT area_id, name FROM areas 
-    WHERE area_id LIKE ? || '-%' 
-    AND area_level = ?
-    ORDER BY area_id ASC
-  `).bind(parentId, nextLevel).all();
+  try {
+    // 1. 次の階層のリストを取得
+    // 例：parentId='10' (関東) なら '10-%' かつ level=2 を探す
+    const { results } = await c.env.ALETHEIA_CAFE_DB.prepare(`
+      SELECT area_id, name FROM areas 
+      WHERE area_id LIKE ? || '-%' 
+      AND area_level = ?
+      ORDER BY area_id ASC
+    `).bind(parentId, nextLevel).all();
 
-  return c.html(
-    <>
-      <option value="">選択してください</option>
-      {results.map((area: any) => (
-        <option value={area.area_id}>{area.name}</option>
-      ))}
-    </>
-  );
+    // 2. 「すべて」オプション用に親の名前を取得
+    const parentArea = await c.env.ALETHEIA_CAFE_DB.prepare(`
+      SELECT name FROM areas WHERE area_id = ?
+    `).bind(parentId).first<{ name: string }>();
+
+    return c.html(
+      <>
+        <option value="">選択してください</option>
+        {/* 都道府県が選ばれた時（次はLevel 3）に「東京都すべて」を出す */}
+        {nextLevel === 3 && parentArea && (
+          <option value={parentId} style="font-weight: bold; color: #007bff;">
+            {parentArea.name} すべて
+          </option>
+        )}
+        {results.map((area: any) => (
+          <option value={area.area_id} key={area.area_id}>{area.name}</option>
+        ))}
+      </>
+    );
+  } catch (e: any) {
+    console.error(e.message);
+    return c.html(<option>Error</option>, 500);
+  }
 });
 
 /**
  * --- Main Page ---
  */
 test03.get('/', async (c) => {
-  // 現在のベースパスを取得（/_sandbox/test03）
-  // これにより、環境が変わっても自動で追従します
   const baseUrl = c.req.path.endsWith('/') ? c.req.path : `${c.req.path}/`;
 
-  const [regions, stats] = await Promise.all([
-    c.env.ALETHEIA_CAFE_DB.prepare(`SELECT area_id, name FROM areas WHERE area_level = 1 ORDER BY area_id ASC`).all(),
-    c.env.ALETHEIA_CAFE_DB.prepare(`
-      SELECT 
-        substr(area_id, 1, 2) as region_code,
-        (SELECT name FROM areas WHERE area_id = substr(a.area_id, 1, 2)) as region_name,
-        count(*) as city_count
-      FROM areas a
-      WHERE area_level = 3
-      GROUP BY region_code
-    `).all()
-  ]);
+  // 初期表示（Level 1）の取得
+  const { results: regions } = await c.env.ALETHEIA_CAFE_DB.prepare(
+    `SELECT area_id, name FROM areas WHERE area_level = 1 ORDER BY area_id ASC`
+  ).all();
 
   return c.render(
     <div style="padding: 20px; font-family: sans-serif; max-width: 800px; margin: auto;">
-      
-      <header style="margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
-        {/* href を baseUrl に固定することで確実に test03 のトップへ戻します */}
-        <a href={baseUrl} style="text-decoration: none; color: #333;">
-          <h1 style="margin: 0; cursor: pointer; display: inline-block;">
-            ALETHEIA Area Master
-          </h1>
-        </a>
-        <p style="font-size: 0.8em; color: #999; margin-top: 5px;">Base: {baseUrl}</p>
+      <header style="margin-bottom: 20px; border-bottom: 2px solid #333;">
+        <h1>ALETHEIA Area Master</h1>
       </header>
 
-      <section style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+      <section style="background: #f4f4f4; padding: 20px; border-radius: 8px;">
         <h2 style="margin-top: 0;">🔍 エリアドリルダウン</h2>
         <div style="display: flex; gap: 10px;">
           
-          {/* 
-             相対パス指定を "api/areas" に変更（./を抜く）
-             または `${baseUrl}api/areas` と書くと最も確実です 
-          */}
+          {/* 1. 地方選択 */}
           <select 
-            name="region" 
+            name="parent"
             hx-get={`${baseUrl}api/areas?level=1`} 
             hx-trigger="change"
             hx-target="#select-pref"
-            hx-push-url="true"
-            style="padding: 10px; flex: 1; cursor: pointer;"
+            style="padding: 10px; flex: 1;"
           >
             <option value="">大エリアを選択</option>
-            {regions.results.map((r: any) => (
-              <option value={r.area_id}>{r.name}</option>
+            {regions.map((r: any) => (
+              <option value={r.area_id} key={r.area_id}>{r.name}</option>
             ))}
           </select>
 
+          {/* 2. 都道府県選択 */}
           <select 
             id="select-pref" 
-            name="pref" 
+            name="parent"
             hx-get={`${baseUrl}api/areas?level=2`} 
             hx-trigger="change"
             hx-target="#select-city"
-            hx-push-url="true"
-            style="padding: 10px; flex: 1; cursor: pointer;"
+            style="padding: 10px; flex: 1;"
           >
             <option value="">都道府県を選択</option>
           </select>
 
+          {/* 3. 市区町村選択 */}
           <select 
             id="select-city" 
-            name="city" 
-            hx-push-url="true"
-            style="padding: 10px; flex: 1; cursor: pointer;"
+            name="area_id" 
+            style="padding: 10px; flex: 1;"
           >
             <option value="">市区町村を選択</option>
           </select>
         </div>
       </section>
 
-      <section>
-        <h2>📊 大エリア別 登録状況</h2>
-        <table style="width: 100%; border-collapse: collapse; background: #fff;">
-          <thead>
-            <tr style="background: #333; color: #fff;">
-              <th style="padding: 12px; text-align: left;">Region ID</th>
-              <th style="padding: 12px; text-align: left;">エリア名</th>
-              <th style="padding: 12px; text-align: right;">市区町村数</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.results.map((r: any) => (
-              <tr key={r.region_code} style="border-bottom: 1px solid #eee;">
-                <td style="padding: 12px; font-family: monospace;">{r.region_code}</td>
-                <td style="padding: 12px; font-weight: bold;">{r.region_name}</td>
-                <td style="padding: 12px; text-align: right; color: #007bff;">{r.city_count} 件</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <footer style="margin-top: 50px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-        <a href={baseUrl} style="color: #666; font-size: 0.9em;">Reset Search</a>
+      <footer style="margin-top: 40px; text-align: center;">
+        <a href={baseUrl} style="color: #666;">リセット</a>
       </footer>
     </div>
   )
