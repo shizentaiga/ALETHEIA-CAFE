@@ -12,17 +12,16 @@
 # DB名（wrangler.tomlで設定した名前）
 DB_NAME="ALETHEIA_CAFE_DB"
 
-# 実行モードの確認（--remote があれば本番、なければローカル）
-MODE=$1
-FLAGS="--local"
-
-if [ "$MODE" == "remote" ]; then
-  FLAGS=""
-  echo "⚠️  REMOTE データベースに対して実行します..."
+# 第1引数が "remote" かどうかでフラグを切り替える
+if [ "$1" == "remote" ]; then
+  FLAGS="--remote"
+  echo "⚠️  【REMOTE】Cloudflare上の本番DBに対して実行します..."
 else
-  echo "🏠 LOCAL データベースに対して実行します..."
+  FLAGS="--local"
+  echo "🏠 【LOCAL】ローカル環境のDBに対して実行します..."
 fi
 
+# 各SQLファイルの実行
 echo "--- 1. Schema の適用 ---"
 npx wrangler d1 execute $DB_NAME --file=./src/db/schema.sql $FLAGS -y
 
@@ -36,4 +35,4 @@ npx wrangler d1 execute $DB_NAME --file=./src/db/seed/chains/doutor.sql $FLAGS -
 echo "--- 4. Shops (Individual) のインポート ---"
 npx wrangler d1 execute $DB_NAME --file=./src/db/seed/shops/koiwa.sql $FLAGS -y
 
-echo "✅ 全ての SQL 実行が完了しました。"
+echo "✅ $FLAGS での全ての SQL 実行が完了しました。"
