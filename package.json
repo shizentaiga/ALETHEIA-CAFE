@@ -17,6 +17,7 @@
     "@cloudflare/vite-plugin": "^1.2.3",
     "@cloudflare/workers-types": "^4.20260426.1",
     "@types/node": "^25.6.0",
+    "miniflare": "^4.20260430.0",
     "tsx": "^4.21.0",
     "vite": "^6.3.5",
     "vite-ssr-components": "^0.5.2",
