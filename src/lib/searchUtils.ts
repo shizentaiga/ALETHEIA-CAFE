@@ -2,7 +2,6 @@
  * [File Path] src/lib/searchUtils.ts
  * [Role] Logic for search query normalization and URL state synchronization.
  */
-import { Context } from 'hono'
 
 /**
  * URLクエリパラメータ(q)からキーワード配列を正規化して抽出する
