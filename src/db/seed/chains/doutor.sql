@@ -1,3 +1,5 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/chains/doutor.sql --local
+
 -- ALETHEIA Doutor Seed (Area-ID Pre-Mapped)
 
 INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, pref, city, lat, lng, attributes_json) VALUES ('DTR_0142212626', 'brand_doutor', '01ARZ3NDEKTSV4RRFFQ69G5FAV', 'free', '01-V40-A041', 'ドトールコーヒーショップ 伊達店', '北海道伊達市 梅本町 ３９‐３０', NULL, NULL, NULL, NULL, '{"category":"cat_cafe","wifi":true,"phone":"0142-21-2626","ext_source":"doutor_official","ext_place_id":"DTR_OFFICIAL_0142212626","business_hours":"平日営業時間 09:00-19:00 / 土曜営業時間 09:00-19:00 / 日祝営業時間 09:00-19:00"}');

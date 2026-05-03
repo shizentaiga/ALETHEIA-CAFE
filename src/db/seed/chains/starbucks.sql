@@ -1,3 +1,5 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/chains/starbucks.sql --local
+
 -- ALETHEIA Starbucks Seed (Area-ID Pre-Mapped)
 -- Note: address is display-friendly, area_id is matched using normalization.
 
