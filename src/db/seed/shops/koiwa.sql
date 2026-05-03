@@ -4,7 +4,7 @@
  * カラム構成: pref, city を独立させ、attributes_json を軽量化
  */
 
---  npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/areas/koiwa.sql --local
+--  npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/shops/koiwa.sql --local
 
 -- 1. アヤスカフェ小岩
 INSERT OR REPLACE INTO services (
