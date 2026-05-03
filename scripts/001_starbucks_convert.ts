@@ -28,12 +28,18 @@ function convertToSql(hits: any[], areas: AreaMaster[]) {
         const storeId = f.store_id;
         const serviceId = `STB_${storeId}`;
         
-        // 住所の正規化
-        const cleanAddress = normalizeAddress(f.address_5 || '');
+        // 1. DB保存用の住所 (表示用データは元データを尊重)
+        // 全角スペースを半角にする程度の最小限の整形のみ行う
+        const rawAddress = f.address_5 || '';
+        const displayAddress = rawAddress.replace(/　/g, ' ').trim();
+
+        // 2. 比較（突合）用の正規化住所
+        // これを基準にエリア判定を行うが、SQLには出力しない
+        const comparisonAddress = normalizeAddress(rawAddress);
         
         // --- 全文スキャンによるArea判定 ---
-        // エリア名が長い順にソート済みなので、最長一致で判定される
-        const matchedArea = areas.find(area => cleanAddress.includes(area.normalizedName));
+        // 比較用データ (comparisonAddress) を使用して判定
+        const matchedArea = areas.find(area => comparisonAddress.includes(area.normalizedName));
         const areaId = matchedArea ? `'${matchedArea.area_id}'` : 'NULL';
         
         // 座標
@@ -49,11 +55,10 @@ function convertToSql(hits: any[], areas: AreaMaster[]) {
         };
 
         const escapedTitle = `スターバックス コーヒー ${f.name}`.replace(/'/g, "''");
-        const escapedAddress = cleanAddress.replace(/'/g, "''");
+        const escapedAddress = displayAddress.replace(/'/g, "''"); // 保存にはdisplayAddressを使用
         const jsonString = JSON.stringify(attributes).replace(/'/g, "''");
 
         // pref, city は NULL (固定) で出力
-        // area_id カラムを追加
         return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, pref, city, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.STARBUCKS}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddress}', NULL, NULL, ${lat}, ${lng}, '${jsonString}');`;
     }).join('\n');
 }
@@ -78,12 +83,12 @@ async function main() {
         areas = (res.results || []).map((a: any) => ({
             area_id: a.area_id,
             name: a.name,
-            normalizedName: normalizeAddress(a.name)
-        })).sort((a, b) => b.name.length - a.name.length); // 長い名前を優先して誤判定を防止
+            normalizedName: normalizeAddress(a.name) // エリア名も比較用に正規化
+        })).sort((a, b) => b.name.length - a.name.length);
         
         console.log(`✅ Loaded ${areas.length} areas.`);
     } catch (error) {
-        console.error("❌ Failed to access D1. Check if Miniflare can find your state directory.");
+        console.error("❌ Failed to access D1.");
         process.exit(1);
     }
 
@@ -98,7 +103,7 @@ async function main() {
 
     // 3. SQL生成
     let totalSql = "-- ALETHEIA Starbucks Seed (Area-ID Pre-Mapped)\n";
-    totalSql += "-- Note: pref/city columns are intentionally set to NULL.\n\n";
+    totalSql += "-- Note: address is display-friendly, area_id is matched using normalization.\n\n";
     totalSql += convertToSql(rawData, areas);
 
     ensureDirectory(PATHS.DB_SEED);
