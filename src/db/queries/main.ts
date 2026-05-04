@@ -7,6 +7,8 @@
 import { fetchServices } from './searchQuery';
 import { formatAttributes } from './transformers';
 
+export * from './areaQuery';   // 新規：エリアマスタ関連
+
 /**
  * Providing dbQueries as an object.
  * Enables namespaced access such as `dbQueries.fetchServices`.
