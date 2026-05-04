@@ -10,16 +10,17 @@ import * as areaQueries from './areaQuery';
 
 /**
  * Providing dbQueries as an object.
- * Enables namespaced access such as `dbQueries.fetchServices`.
+ * Enables namespaced access such as `dbQueries.fetchServices` or `dbQueries.getSubAreas`.
  */
 export const dbQueries = {
   fetchServices,
   formatAttributes,
+  ...areaQueries, // areaQuery.ts 内の全ての関数を展開して統合
 };
 
 /**
  * Providing named exports.
- * Enables direct imports such as `import { fetchServices } from './main'`.
+ * Enables direct imports such as `import { fetchServices, getSubAreas } from './main'`.
  */
 export { fetchServices, formatAttributes };
 export * from './areaQuery';
