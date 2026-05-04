@@ -6,8 +6,7 @@
 
 import { fetchServices } from './searchQuery';
 import { formatAttributes } from './transformers';
-
-export * from './areaQuery';   // 新規：エリアマスタ関連
+import * as areaQueries from './areaQuery';
 
 /**
  * Providing dbQueries as an object.
@@ -23,3 +22,4 @@ export const dbQueries = {
  * Enables direct imports such as `import { fetchServices } from './main'`.
  */
 export { fetchServices, formatAttributes };
+export * from './areaQuery';
