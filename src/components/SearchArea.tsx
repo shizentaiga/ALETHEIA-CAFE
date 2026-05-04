@@ -8,7 +8,7 @@ export const SearchArea: FC = () => {
     <div class="search-area-module">
       <style>{`
         .search-area-module { 
-          width: 100%; 
+          width: 50%; 
         }
         
         .search-trigger {
@@ -25,10 +25,13 @@ export const SearchArea: FC = () => {
         #area-drilldown-root {
           width: 100%;
           background: #fff; 
-          border: 1px solid #e5e7eb; 
           border-radius: 12px;
           overflow: hidden;
           margin-bottom: 8px; 
+        }
+
+        #area-drilldown-root:has(.area-list-container) {
+          border: 1px solid #e5e7eb;
         }
       `}</style>
 
@@ -47,6 +50,8 @@ export const SearchArea: FC = () => {
           <span class="trigger-arrow">▼</span>
         </button>
       </div>
+
+      
 
       {/* 💡 デザインに一切影響を与えないスクリプトを追加 */}
       <script dangerouslySetInnerHTML={{ __html: `
