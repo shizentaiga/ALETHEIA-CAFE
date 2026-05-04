@@ -56,3 +56,47 @@ export const normalizeAddress = (address: string): string => {
     .replace(/[ー－―‐－]/g, '-')                                           // ハイフン類の統一
     .replace(/ヶ/g, 'ケ')                                                   // ヶ/ケの統一
 };
+
+/**
+ * area_id の形式から現在のエリアレベルを判定する
+ * 0: "00" (全国)
+ * 1: "10" (地方)
+ * 2: "10-13" (都道府県)
+ * 3: "10-13-A001" (市区町村)
+ */
+export const getAreaLevel = (areaId: string | null | undefined): number => {
+  if (!areaId) return 0;
+  const hyphenCount = (areaId.match(/-/g) || []).length;
+  return hyphenCount + 1;
+};
+
+/**
+ * 検索用の LIKE パターンを生成する
+ * 
+ * @param areaId - 選択されたエリアID
+ * @returns SQL の LIKE 句に渡す文字列、または全国検索用の空文字
+ */
+export const generateAreaLikePattern = (areaId: string | null | undefined): string => {
+  const level = getAreaLevel(areaId);
+
+  // 1. 全国 (Level 0) の場合
+  // 全件ヒットさせるために '%' を返す（SQL側で LIKE '%' となる）
+  if (level === 0) return '%';
+
+  // 2. 市区町村 (Level 3) の場合
+  // 完全一致を期待するため、ワイルドカードを付けずにそのまま返す
+  if (level === 3) return areaId as string;
+
+  // 3. 地方・都道府県 (Level 1, 2) の場合
+  // そのエリア配下をすべて含めるため末尾に '-%' を付与
+  return `${areaId}-%`;
+};
+
+/**
+ * UI表示用のラベル生成ヘルパー
+ * 「東京都」→「東京都すべて」のような変換に使用
+ */
+export const getAreaAllLabel = (name: string, level: number): string => {
+  if (level === 0) return "全国";
+  return `${name} すべて`;
+};
