@@ -4,7 +4,8 @@ import { renderer } from './renderer'
 import { home } from './pages/TopPage'
 import { googleAuthApp } from './pages/GoogleAuth'
 import { sandboxApp } from './_sandbox/_router'
-import areaApp from './api/areaHandler'
+// import areaApp from './api/areaHandler'
+import areaApi from './api/areaDrilldown'
 
 /**
  * Cloudflare environment variables for c.env
@@ -23,7 +24,8 @@ app.use(renderer) // Apply common layout
 /**
  * Route Modules
  */
-app.route('/api/area', areaApp) // Area search API
+app.route('/api/area-drilldown', areaApi)
+// app.route('/api/area', areaApp) // Area search API
 app.route('/', googleAuthApp)   // Google OAuth2.0
 app.route('/', home)            // Main application home
 

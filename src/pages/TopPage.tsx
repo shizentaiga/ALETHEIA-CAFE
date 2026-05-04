@@ -28,7 +28,9 @@ home.get('/', async (c) => {
   const q = joinKeywords(getNormalizedKeywords(c.req.queries('q')));
 
   // 3. Identify target area
-  const area = resolveDetectionArea(c);
+  // 修正：クエリパラメータの area を優先し、なければ resolveDetectionArea を使う
+  // const area = resolveDetectionArea(c);
+  const area = c.req.query('area') || resolveDetectionArea(c);
 
   // Retrieve user session
   const userId = getCookie(c, 'aletheia_session')

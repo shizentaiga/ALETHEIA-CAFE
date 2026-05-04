@@ -52,7 +52,7 @@ export const fetchServices = async (
 
   // 3. エリア検索 (前方一致)
   if (area) {
-    conditions.push(`address LIKE ?`);
+    conditions.push(`area_id LIKE ?`);
     params.push(`${area}%`); 
   }
 
