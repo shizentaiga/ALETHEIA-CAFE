@@ -10,14 +10,7 @@ test00.get('/', (c) => {
   // c.render を使用することで、renderer.tsx の共通レイアウトを適用します
   return c.render(
     <>
-      <header>
-        <a href={baseUrl}>
-          <h1>
-            ALETHEIA Area Master
-          </h1>
-        </a>
-      </header>
-
+      <header><a href={baseUrl}><h1>ALETHEIA</h1></a></header>
       <p>タイトルをクリックするとトップに移動します。</p>
     </>
   )
