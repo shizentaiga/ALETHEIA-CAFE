@@ -36,15 +36,16 @@ export const TopMain: FC<{
   total: number, 
   area?: string,
   q?: string,
+  areaName?: string,
   currentParams?: URLSearchParams // 💡 URLの状態を丸ごと受け取る
-}> = ({ results, total, area, q, currentParams }) => (
+}> = ({ results, total, area, q, areaName, currentParams }) => (
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
     {/* Display search chips (Area and Category) */}
     <div class="search-bar-row">
       {/* 💡 SearchArea に currentParams を渡すよう修正 */}
-      <SearchArea currentParams={currentParams} />
+      <SearchArea currentParams={currentParams} areaName={areaName} />
       
       {/* SearchCategory is currently under development */}
       {/* <SearchCategory /> */}

@@ -37,7 +37,7 @@ home.get('/', async (c) => {
   const user = userId ? {} : null;
   
   // 5. DBから対象サービスを取得
-  const { results, total } = await fetchServices(db, q, 1, area);
+  const { results, total, areaName } = await fetchServices(db, q, 1, area);
 
   // 6. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
   return c.render(
@@ -49,6 +49,7 @@ home.get('/', async (c) => {
         total={total} 
         area={area} 
         q={q} 
+        areaName={areaName}
         currentParams={currentParams} 
       />
       <TopFooter />

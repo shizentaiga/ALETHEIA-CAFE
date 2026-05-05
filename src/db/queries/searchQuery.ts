@@ -76,11 +76,28 @@ export const fetchServices = async (
      LIMIT ? OFFSET ?`
   ).bind(...params, limit, offset).all();
 
+  // --- 💡 今回追加する「エリア名取得」ロジック ---
+  let areaName = "エリアを選択";
+  if (area) {
+    try {
+      const areaRecord = await db.prepare(`SELECT name FROM areas WHERE area_id = ?`)
+        .bind(area)
+        .first<{ name: string }>();
+      if (areaRecord) {
+        areaName = areaRecord.name;
+      }
+    } catch (e) {
+      console.error("Area name fetch error:", e);
+      // エラー時も「エリアを選択」を維持して処理を続行させる（ビルド・実行エラー防止）
+    }
+  }
+
   // 既存の View コンポーネントとの互換性を保つため、同じオブジェクト形式で返却
   return {
     results: results || [],
     total: countRes?.count || 0,
     currentPage: page,
-    limit: limit
+    limit: limit,
+    areaName: areaName // 💡 新しく追加
   };
 };

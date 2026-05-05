@@ -31,9 +31,10 @@ const CONFIG = {
 
 interface SearchAreaProps {
   currentParams?: URLSearchParams;
+  areaName?: string;
 }
 
-export const SearchArea: FC<SearchAreaProps> = ({ currentParams }) => {
+export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => {
   // --- 2. ロジック部 (変更なし) ---
   const queryString = currentParams?.toString();
   const apiPath = queryString 
@@ -81,7 +82,7 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams }) => {
         >
           <div class="trigger-content">
             <span>{CONFIG.labels.icon}</span>
-            <span>{CONFIG.labels.placeholder}</span>
+            <span>{areaName ||CONFIG.labels.placeholder}</span>
           </div>
           <span class="trigger-arrow">{CONFIG.labels.arrow}</span>
         </button>
