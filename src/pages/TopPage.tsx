@@ -39,7 +39,7 @@ home.get('/', async (c) => {
   // 5. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
   return c.render(
     <>
-      <TopHeader user={user} results={results} total={total} area={area} q={q} />
+      <TopHeader user={user} q={q} />
       <TopMain results={results} total={total} area={area} q={q} />
       <TopFooter />
     </>
