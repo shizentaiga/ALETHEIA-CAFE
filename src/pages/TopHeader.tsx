@@ -50,7 +50,6 @@ export const TopHeader: FC<{
       <HeaderSearch 
         keywords={keywords} 
         placeholder={CONFIG.placeholder} 
-        area={area} 
       />
 
       {/* 3. Authentication Links */}

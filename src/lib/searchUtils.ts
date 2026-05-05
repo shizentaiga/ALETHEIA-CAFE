@@ -25,15 +25,33 @@ export const getNormalizedKeywords = (queries: string | string[] | undefined): s
 };
 
 /**
- * キーワード配列から安全にエンコードされた検索URLを生成する
+ * 現在の検索条件を維持しつつ、特定のパラメータのみを更新したURLを生成する
  */
-export const createSearchUrl = (keywords: string[], baseUrl: string = ''): string => {
-  const params = new URLSearchParams();
-  keywords.forEach((kw) => params.append('q', kw));
-  
-  const queryString = params.toString();
-  // クエリが空なら baseUrl または現在のディレクトリを返す
-  return queryString ? `${baseUrl}?${queryString}` : baseUrl || './';
+export const createSearchUrl = (
+  currentParams: URLSearchParams,
+  updates: Record<string, string | string[] | null>
+): string => {
+  // 1. 現在のパラメータをコピーして新しいオブジェクトを作る（元のデータを壊さないため）
+  const params = new URLSearchParams(currentParams.toString());
+
+  // 2. updates オブジェクトの中身をループして適用する
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === null) {
+      // 値が null ならそのパラメータを削除
+      params.delete(key);
+    } else if (Array.isArray(value)) {
+      // 配列（キーワードなど）なら、一度消してから append で並べる
+      params.delete(key);
+      value.forEach(v => params.append(key, v));
+    } else {
+      // それ以外は set で上書き
+      params.set(key, value);
+    }
+  }
+
+  const query = params.toString();
+  // 3. クエリがあれば付与し、なければトップ（/）を返す
+  return query ? `/?${query}` : '/';
 };
 
 /**
