@@ -5,6 +5,9 @@ import { html } from 'hono/html'
 import { dbQueries } from '../db/queries/main'
 import { createSearchUrl } from '../lib/searchUtils' // 💡 ステップ1で作った関数
 
+// 💡 検索を実行してリロードする階層を定義（現在は都道府県レベル）
+const SEARCH_EXECUTION_LEVEL = 2;
+
 const areaApi = new Hono<{ Bindings: { ALETHEIA_CAFE_DB: D1Database } }>()
 
 areaApi.get('/', async (c) => {
@@ -56,7 +59,7 @@ areaApi.get('/', async (c) => {
         <div class="area-list-scroll">
         
         ${subAreas.map(area => {
-            if (area.area_level === 3) {
+            if (area.area_level === SEARCH_EXECUTION_LEVEL) {
                 // 💡 検索実行：現在のパラメータを維持しつつ area だけ更新
                 const nextUrl = createSearchUrl(searchBaseParams, { area: area.area_id });
                 return html`
