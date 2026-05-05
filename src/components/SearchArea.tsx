@@ -3,7 +3,16 @@
  */
 import type { FC } from 'hono/jsx'
 
-export const SearchArea: FC = () => {
+// 💡 今後のビルドエラーを防ぐため、Propsの型定義を追加
+interface SearchAreaProps {
+  currentParams?: URLSearchParams;
+}
+
+export const SearchArea: FC<SearchAreaProps> = ({ currentParams }) => {
+  // 💡 現在のURLパラメータを文字列化して、APIエンドポイントを構築
+  const queryString = currentParams?.toString();
+  const apiPath = queryString ? `/api/area-drilldown?${queryString}` : '/api/area-drilldown';
+
   return (
     <div class="search-area-module">
       <style>{`
@@ -39,7 +48,7 @@ export const SearchArea: FC = () => {
         <button 
           class="search-trigger" 
           type="button" 
-          hx-get="/api/area-drilldown" 
+          hx-get={apiPath}  /* 💡 ここで現在の検索条件をAPIへ引き渡す */
           hx-target="#area-drilldown-root"
           hx-trigger="click"
         >
@@ -51,13 +60,9 @@ export const SearchArea: FC = () => {
         </button>
       </div>
 
-      
-
-      {/* 💡 デザインに一切影響を与えないスクリプトを追加 */}
       <script dangerouslySetInnerHTML={{ __html: `
         document.addEventListener('click', (e) => {
           const root = document.getElementById('area-drilldown-root');
-          // 「エリア選択枠」の外側、かつ「エリア選択枠」が展開されている時だけリロード
           if (root && !root.contains(e.target) && root.querySelector('.area-list-container')) {
             location.reload();
           }

@@ -29,20 +29,22 @@ const layoutStyle = `
 
 /**
  * TopMain Component
- * We add 'area' to props to pass the state to SearchResult.
+ * Propsに currentParams を追加し、SearchAreaへ引き継ぎます。
  */
 export const TopMain: FC<{ 
   results: any[], 
   total: number, 
-  area?: string
-  q?: string // Added
-}> = ({ results, total, area, q }) => (
+  area?: string,
+  q?: string,
+  currentParams?: URLSearchParams // 💡 URLの状態を丸ごと受け取る
+}> = ({ results, total, area, q, currentParams }) => (
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
     {/* Display search chips (Area and Category) */}
     <div class="search-bar-row">
-      <SearchArea currentArea={area} />
+      {/* 💡 SearchArea に currentParams を渡すよう修正 */}
+      <SearchArea currentParams={currentParams} />
       
       {/* SearchCategory is currently under development */}
       {/* <SearchCategory /> */}
@@ -50,10 +52,6 @@ export const TopMain: FC<{
 
     {/* Search Results Section */}
     <div id="search-result-module">
-      {/* 
-        Pass the 'area' from the URL parameter to SearchResult.
-        This ensures the hidden input field is correctly set on page reload.
-      */}
       <SearchResult results={results} total={total} area={area} q={q} />
     </div>
   </section>

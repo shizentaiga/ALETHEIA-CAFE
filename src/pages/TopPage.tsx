@@ -1,6 +1,5 @@
 /**
  * [File Path] src/pages/TopPage.tsx
- * [Role] Main entry point for the top page.
  */
 
 import { Hono } from 'hono';
@@ -21,26 +20,37 @@ export const home = new Hono<{ Bindings: Bindings }>();
 home.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;
 
-  // 1. 検索キーワード(q)の抽出と正規化
-  const queryArray = c.req.queries('q');
-  const normalized = getNormalizedKeywords(queryArray); // 最大5件
-  const q = joinKeywords(normalized); // スペース区切り
+  // 1. 全てのクエリパラメータをURLSearchParamsオブジェクトとして取得
+  // 💡 これが SearchArea までのバケツリレーの「容器」になります
+  const currentParams = new URLSearchParams(c.req.query());
 
-  // 2. 検索対象エリアの決定 (URL指定を優先、なければ現在地)
+  // 2. 検索キーワード(q)の抽出と正規化
+  const queryArray = c.req.queries('q');
+  const normalized = getNormalizedKeywords(queryArray);
+  const q = joinKeywords(normalized);
+
+  // 3. 検索対象エリアの決定 (URL指定を優先、なければ現在地)
   const area = c.req.query('area') || resolveDetectionArea(c);
 
-  // 3. ユーザーセッションの確認（DBアクセスを省略）
+  // 4. ユーザーセッションの確認
   const userId = getCookie(c, 'aletheia_session');
   const user = userId ? {} : null;
   
-  // 4. キーワードとエリアに基づき、DBから対象サービスを取得（メイン処理）
+  // 5. DBから対象サービスを取得
   const { results, total } = await fetchServices(db, q, 1, area);
 
-  // 5. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
+  // 6. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
   return c.render(
     <>
       <TopHeader user={user} q={q} />
-      <TopMain results={results} total={total} area={area} q={q} />
+      {/* 💡 TopMain に currentParams を渡します */}
+      <TopMain 
+        results={results} 
+        total={total} 
+        area={area} 
+        q={q} 
+        currentParams={currentParams} 
+      />
       <TopFooter />
     </>
   );
