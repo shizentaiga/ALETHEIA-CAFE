@@ -28,47 +28,46 @@
 | Sandbox | `src/_sandbox/` | 新機能・コンポーネントを試作する実験場 |
 
 ---
+# プロジェクト構成 (Source Directory Structure)
 
-## Directory Structure
+## src/
+- **index.tsx**: エントリポイント。Hono によるルーティング定義とリクエスト集約。
+- **renderer.tsx**: 全ページ共通の HTML 外枠・メタデータ定義。
 
-~~~
-src/
-├── index.tsx              # エントリポイント。ルーティング定義
-├── renderer.tsx           # 全ページ共通の土台（HTML外枠）
-├── style.css              # リセット CSS・共通変数
-│
-├── pages/                 # 【View & Page Controllers】
-│   ├── TopPage.tsx        # トップページの親レイアウト
-│   ├── TopMain.tsx        # メイン領域のレイアウト
-│   ├── TopFooter.tsx      # フッター
-│   ├── TopHeader.tsx      # ヘッダー（部品の統合窓口）
-│   ├── header/            # ヘッダー専用コンポーネント
-│   │   ├── headerStyle.ts      # ヘッダー固有のCSS（外部変数）
-│   │   ├── HeaderSearch.tsx    # 検索窓・チップ表示ロジック
-│   │   └── HeaderAuth.tsx      # 認証・ログイン状態表示
-│   └── GoogleAuth.ts      # 認証ハンドラ
-│
-├── components/            # 【UI Parts】機能単位の共通コンポーネント
-│   ├── SearchArea.tsx     # ドリルダウン検索（初期表示）
-│   ├── SearchCategory.tsx # カテゴリ選択
-│   ├── SearchResult.tsx   # 結果一覧（HTMX ターゲット）
-│   └── AreaList.tsx       # 階層データ表示（HTMX 小部品）
-│
-├── api/                   # 【Logic】HTMX 用エンドポイント
-│   └── areaHandler.ts          # ドリルダウン階層データ返却
-│
-├── db/                    # 【Data】D1 関連
-│   ├── queries/           # 物理分割されたクエリ層
-│   │   ├── main.ts        # 統合窓口
-│   │   └── searchQuery.ts      # D1 検索実行
-│   ├── schema.sql         # テーブル定義
-│   └── seed/              # 初期データ
-│
-└── lib/                   # 【Shared】共通定数・ロジック
-    ├── constants.ts       # 地理情報・UIテキスト
-    ├── auth.ts            # 認証の低レイヤー処理
-    └── searchUtils.ts          # クエリ正規化・URL同期
-~~~
+### 📂 pages/ (View & Page Controllers)
+ページ全体のレイアウトと、特定ページに紐づくロジックを管理。
+- **TopPage.tsx / TopMain.tsx**: トップページのメイン構造と共通レイアウト。
+- **TopHeader.tsx / TopFooter.tsx**: サイトのヘッダー・フッター統合。
+- **header/**: 
+    - `HeaderSearch.tsx`: 検索窓・履歴管理（`headerSearchHistory.ts`）を含む検索コア。
+    - `HeaderAuth.tsx`: 認証状態に応じた UI 表示。
+- **GoogleAuth.ts**: Google 認証のフロントエンド・ハンドラ。
+
+### 📂 components/ (UI Parts)
+HTMX で動的に差し替えられる、機能単位の UI コンポーネント。
+- **SearchArea.tsx**: エリアドリルダウン検索のトリガーおよび初期表示。
+- **SearchResult.tsx**: 店舗検索結果の一覧表示（HTMX ターゲット）。
+- **SearchCategory.tsx**: カテゴリ選択・絞り込み UI。
+
+### 📂 api/ (HTMX Endpoints)
+HTMX からのリクエストに対して、部分的な HTML 破片（Fragments）を返却するロジック。
+- **areaDrilldown.ts**: エリア選択の次階層データを返却するコアロジック。
+- **areaHandler.ts**: エリア関連の汎用リクエスト・ハンドリング。
+
+### 📂 db/ (Data Layer)
+Cloudflare D1 関連のスキーマ、クエリ、およびシードデータ。
+- **queries/**: 
+    - `areaQuery.ts`: エリアマスタ（`areas` テーブル）操作専用。
+    - `searchQuery.ts`: 店舗情報の複雑な検索・フィルタリング。
+    - `main.ts`: クエリ層の統合エクスポート窓口。
+- **seed/**: マスタデータ（`areas.sql`）、チェーン店（Starbucks/Doutor）、地域別店舗データの SQL 資産。
+- **add_tables/**: 拡張用スキーマ変更履歴（`add_areas_table.sql`等）。
+
+### 📂 lib/ (Shared Utilities)
+特定の View に依存しない、純粋なロジックや共通定数。
+- **searchUtils.ts**: URL パラメータ（area, q）の同期と、検索状態の維持ロジック。
+- **geo.ts / geoUtils.ts**: 現在地座標の解決や、距離計算等の地理情報処理。
+- **auth.ts / constants.ts**: 認証の低レイヤー処理および、地理情報・UI 用定数。
 
 ~~~
 public/
