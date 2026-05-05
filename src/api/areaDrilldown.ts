@@ -54,6 +54,7 @@ areaApi.get('/', async (c) => {
         </div>
 
         <div class="area-list-scroll">
+        
         ${subAreas.map(area => {
             if (area.area_level === 3) {
                 // 💡 検索実行：現在のパラメータを維持しつつ area だけ更新
@@ -74,6 +75,7 @@ areaApi.get('/', async (c) => {
                 </button>
             `;
         })}
+
         </div>
     </div>
     `);
