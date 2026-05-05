@@ -10,47 +10,58 @@
  */
 export const getNormalizedKeywords = (queries: string | string[] | undefined): string[] => {
   if (!queries) return [];
+
+  // 1. 配列への正規化
   const rawArray = Array.isArray(queries) ? queries : [queries];
 
-  const keywords = [
-    ...new Set(
-      rawArray
-        .flatMap((v) => v.split(/[\s　]+/))
-        .map((v) => v.trim())
-        .filter(Boolean)
-    ),
-  ];
+  // 2. 文字列の分解とクリーニング
+  const allWords = rawArray
+    .flatMap((v) => v.split(/[\s　]+/)) // 空白分割
+    .map((v) => v.trim())             // 前後空白削除
+    .filter(Boolean);                 // 空文字排除
 
-  return keywords.slice(0, 5); // DB負荷保護のため5件上限
+  // 3. 重複排除と件数制限 (最大5件)
+  return [...new Set(allWords)].slice(0, 5);
 };
 
 /**
- * 現在の検索条件を維持しつつ、特定のパラメータのみを更新したURLを生成する
+ * 現在のURLパラメータを継承しながら、指定した項目だけをピンポイントで更新したURLを生成する
+ * 
+ * 【目的】
+ * 検索キーワード(q)を更新する際、同時に設定されている「エリア(area)」や「ソート順」などの
+ * 他の条件を消さずに、URLの状態を同期し続けるために使用します。
  */
 export const createSearchUrl = (
   currentParams: URLSearchParams,
   updates: Record<string, string | string[] | null>
 ): string => {
-  // 1. 現在のパラメータをコピーして新しいオブジェクトを作る（元のデータを壊さないため）
+  // 1. 現在の全パラメータをコピー（元の検索状態をベースにする）
   const params = new URLSearchParams(currentParams.toString());
 
-  // 2. updates オブジェクトの中身をループして適用する
-  for (const [key, value] of Object.entries(updates)) {
+  // 2. 更新したい項目だけをループして適用
+  Object.entries(updates).forEach(([key, value]) => {
+    // 値が null の場合：その条件を検索から除外する
     if (value === null) {
-      // 値が null ならそのパラメータを削除
       params.delete(key);
-    } else if (Array.isArray(value)) {
-      // 配列（キーワードなど）なら、一度消してから append で並べる
+      return;
+    }
+
+    // 値が配列の場合：既存の同名キーを一度リセットし、新しい値のリストで上書きする
+    // (例: 複数のキーワードチップを扱う際などに使用)
+    if (Array.isArray(value)) {
       params.delete(key);
       value.forEach(v => params.append(key, v));
-    } else {
-      // それ以外は set で上書き
-      params.set(key, value);
+      return;
     }
-  }
 
+    // 値が文字列等の場合：既存の値を新しい値で上書き、または新規追加
+    params.set(key, value);
+  });
+
+  // 3. 最終的なURL文字列を組み立て
   const query = params.toString();
-  // 3. クエリがあれば付与し、なければトップ（/）を返す
+  
+  // クエリがあれば「/?q=...」を返し、なければトップ「/」を返す
   return query ? `/?${query}` : '/';
 };
 
