@@ -26,7 +26,10 @@ function cleanDisplayAddress(str: string) {
 
 function convertToSql(items: any[], areas: AreaMaster[]) {
     return items.map((item) => {
-        const rawName = item.name || 'コメダ珈琲店';
+        // --- 修正箇所：ブランド名を店名の前に付与 ---
+        const brandPrefix = 'コメダ珈琲店';
+        const rawName = item.name ? `${brandPrefix} ${item.name}` : brandPrefix;
+        
         const rawAddr = item.address || '';
         const komedaId = item.id;
         
