@@ -1,4 +1,6 @@
 /**
+ * scripts/utils.ts
+ * 
  * Utility functions and shared configurations for data processing.
  * This file handles file paths, timing, and directory management.
  */
@@ -21,14 +23,21 @@ export const PATHS = {
 };
 
 /**
+ * Utility to generate Brand ID from a string.
+ * Example: "KOMEDA" -> "brand_komeda"
+ */
+export const getBrandId = (name: string) => `brand_${name.toLowerCase()}`;
+
+/**
  * CONFIG: Operational parameters.
  * These values control Brand IDs, Ownership, and Request Throttling.
  */
 export const CONFIG = {
     // Unique identifier for each brand
     BRANDS: {
-        STARBUCKS: 'brand_starbucks',
-        DOUTOR: 'brand_doutor', 
+        STARBUCKS: getBrandId('STARBUCKS'),
+        DOUTOR: getBrandId('DOUTOR'),
+        KOMEDA: getBrandId('KOMEDA'),
     },
     OWNER_ID: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
     WAIT_LONG: 2000,   // Interval between large data chunks (ms)
