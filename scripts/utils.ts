@@ -38,6 +38,7 @@ export const CONFIG = {
         STARBUCKS: getBrandId('STARBUCKS'),
         DOUTOR: getBrandId('DOUTOR'),
         KOMEDA: getBrandId('KOMEDA'),
+        MISTERDONUTS: getBrandId('MISTERDONUTS'),
     },
     OWNER_ID: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
     WAIT_LONG: 2000,   // Interval between large data chunks (ms)
