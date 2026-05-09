@@ -21,8 +21,14 @@ interface AreaMaster {
  */
 function cleanDisplayAddress(str: string) {
     if (!str) return '';
-    // タブ、全角スペースを半角に変換し、改行を除去
-    return str.replace(/\t/g, ' ').replace(/　/g, ' ').replace(/\r?\n/g, ' ').trim();
+    // NFKC正規化で全角数字・全角スペース・全角ハイフンを一括で半角に変換
+    // その後、タブや改行を除去
+    return str.normalize('NFKC')
+              // VSCodeが警告を出す特定のハイフン（U+2010等）を半角マイナスに変換
+              .replace(/[‐－ー—]/g, '-') 
+              .replace(/\t/g, ' ')
+              .replace(/\r?\n/g, ' ')
+              .trim();
 }
 
 function convertToSql(items: any[], areas: AreaMaster[]) {
