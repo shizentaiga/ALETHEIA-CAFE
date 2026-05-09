@@ -77,6 +77,9 @@ test04.get('/', async (c) => {
 
       {/* 結果テーブル */}
       <section style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+
+
         {/* 判定不能リスト */}
         <div>
           <h2 style="color: #cf1322; font-size: 1.2em;">⚠️ 判定不能 (Failed)</h2>
@@ -84,15 +87,26 @@ test04.get('/', async (c) => {
             <table style="width: 100%; border-collapse: collapse; font-size: 0.8em;">
               <thead style="position: sticky; top: 0; background: #fafafa;">
                 <tr style="border-bottom: 2px solid #eee;">
-                  <th style="padding: 8px; text-align: left;">Title / Address</th>
+                  <th style="padding: 8px; text-align: left;">ID / Title / Address</th>
                 </tr>
               </thead>
               <tbody>
                 {unmatchedList.map((s: any) => (
                   <tr key={s.service_id} style="border-bottom: 1px solid #f0f0f0;">
                     <td style="padding: 8px;">
-                      <strong>{s.title}</strong><br/>
-                      <span style="color: #999;">{s.address}</span>
+                      <code style="font-size: 0.7em; color: #999; background: #f5f5f5; padding: 2px 4px; border-radius: 3px;">
+                        {s.service_id}
+                      </code>
+                      <div style="margin-top: 4px;">
+                        <strong>{s.title || <span style="color: #ccc;">(No Title)</span>}</strong>
+                      </div>
+                      <div style="margin-top: 2px; color: #cf1322; font-family: monospace;">
+                        {s.address ? (
+                          <span style="color: #666;">{s.address}</span>
+                        ) : (
+                          <span style="background: #fff1f0; padding: 0 4px; border: 1px dashed #ffa39e;">[NULL or EMPTY ADDRESS]</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -100,6 +114,9 @@ test04.get('/', async (c) => {
             </table>
           </div>
         </div>
+
+
+
 
         {/* 判定成功リスト (一部表示) */}
         <div>

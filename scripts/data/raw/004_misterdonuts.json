@@ -2621,32 +2621,6 @@
     "fetchedAt": "2026-05-09T00:49:25.761Z"
   },
   {
-    "id": "",
-    "name": "",
-    "address": "",
-    "location": {
-      "lat": null,
-      "lng": null
-    },
-    "url": "https://md.mapion.co.jp",
-    "services": {
-      "is_net_order": false,
-      "is_demaecan": false,
-      "is_ubereats": false,
-      "has_parking": false,
-      "has_drive_thru": false,
-      "has_buffet": false,
-      "has_pop_buffet": false,
-      "smoking_status": "不明",
-      "has_yamcha": false,
-      "has_espresso": false
-    },
-    "raw_icons": [
-      ""
-    ],
-    "fetchedAt": "2026-05-09T00:49:25.761Z"
-  },
-  {
     "id": "0863",
     "name": "ららぽーとTOKYO－BAY ショップ",
     "address": "千葉県船橋市浜町２丁目１－１ ららぽ－と西館１階",

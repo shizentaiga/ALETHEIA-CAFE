@@ -84,6 +84,7 @@ export const normalizeAddress = (address: string): string => {
     .replace(/\s+/g, '')                                                   // 空白削除
     .replace(/[ー－―‐－]/g, '-')                                           // ハイフン類の統一
     .replace(/ヶ/g, 'ケ')                                                   // ヶ/ケの統一
+    .replace(/塩釜/g, '塩竈');                                              // 特定の表記揺れを吸収
 };
 
 /**
