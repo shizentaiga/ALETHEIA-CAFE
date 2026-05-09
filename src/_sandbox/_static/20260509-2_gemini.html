@@ -1,0 +1,177 @@
+<!-- 左側が詳細(エリア等)、右側がキーワード -->
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALETHEIA - Hybrid Search</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #111827;
+            --sub-text: #6b7280;
+            --accent: #000000;
+            --border: #e5e7eb;
+            --chip-bg: #f3f4f6;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, sans-serif;
+            color: var(--text);
+            background-color: #f9fafb;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 16px;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 💡 検索バーの再定義 */
+        .search-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 48px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 0 16px;
+            transition: all 0.2s;
+        }
+
+        .search-container:focus-within {
+            border-color: #9ca3af;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        /* 詳細条件へのトリガーチップ */
+        .area-trigger-chip {
+            background: var(--chip-bg);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .area-trigger-chip:hover { background: #e5e7eb; }
+
+        .keyword-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+            background: transparent;
+            min-width: 0;
+        }
+
+        /* ドロワー（詳細設定） */
+        #filter-drawer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+        }
+        .drawer-content {
+            position: absolute; bottom: 0; width: 100%; background: white;
+            border-radius: 20px 20px 0 0; padding: 24px;
+            max-width: 800px; left: 50%; transform: translateX(-50%);
+        }
+
+        /* カードデザイン */
+        main { max-width: 800px; margin: 0 auto; padding: 16px; }
+        .cafe-card {
+            background: white; border: 1px solid var(--border);
+            border-radius: 12px; padding: 16px; margin-bottom: 12px;
+        }
+        .cafe-name { font-weight: bold; font-size: 1.1rem; }
+        .dist { color: #059669; font-size: 0.8rem; font-weight: bold; }
+        
+        .chip { padding: 6px 12px; background: #eee; border-radius: 16px; font-size: 0.8rem; cursor: pointer; }
+        .chip.active { background: #000; color: #fff; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-inner">
+        <!-- 検索バーの中に「エリア」をボタンとして組み込む -->
+        <div class="search-container">
+            <div class="area-trigger-chip" onclick="openDrawer()">
+                📍 江戸川区 ▼
+            </div>
+            <input type="text" class="keyword-input" placeholder="店名・特徴をキーワード検索">
+            <span style="cursor:pointer">🔍</span>
+        </div>
+    </div>
+</header>
+
+<div id="filter-drawer" onclick="closeDrawer()">
+    <div class="drawer-content" onclick="event.stopPropagation()">
+        <h3 style="margin-top:0">絞り込み条件</h3>
+        <p style="font-size:0.8rem; color:var(--sub-text)">エリアや特定の設備で絞り込みます</p>
+        
+        <div style="margin: 20px 0;">
+            <strong>エリア</strong>
+            <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <span class="chip active">江戸川区</span>
+                <span class="chip">千代田区</span>
+                <span class="chip">新宿区</span>
+            </div>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <strong>特徴</strong>
+            <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <span class="chip">Wi-Fi</span>
+                <span class="chip">電源</span>
+                <span class="chip">テラス席</span>
+            </div>
+        </div>
+
+        <button onclick="closeDrawer()" style="width:100%; padding:14px; background:#000; color:#fff; border:none; border-radius:8px; font-weight:bold;">条件を確定して閉じる</button>
+    </div>
+</div>
+
+<main>
+    <div class="cafe-card">
+        <div class="dist">🚉 小岩駅 徒歩3分 (250m)</div>
+        <div class="cafe-name">アヤスカフェ小岩</div>
+        <div style="font-size:0.85rem; color:var(--sub-text); margin-top:4px;">東京都江戸川区南小岩8丁目11-8</div>
+    </div>
+</main>
+
+<script>
+    function openDrawer() {
+        document.getElementById('filter-drawer').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer() {
+        document.getElementById('filter-drawer').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+</script>
+
+</body>
+</html>

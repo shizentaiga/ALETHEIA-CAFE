@@ -1,0 +1,330 @@
+<!-- キーワード検索不可(クリックして詳細) -->
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALETHEIA Design Prototype</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #111827;
+            --sub-text: #6b7280;
+            --accent: #000000;
+            --border: #e5e7eb;
+            --chip-bg: #f3f4f6;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            background-color: #f9fafb;
+        }
+
+        /* --- Header --- */
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-family: "Times New Roman", serif;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .search-trigger-bar {
+            flex: 1;
+            height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+
+        .search-trigger-bar:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .search-placeholder {
+            color: var(--sub-text);
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        /* --- Search Drawer (The Magic) --- */
+        #search-drawer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none; /* 初期は非表示 */
+            z-index: 1000;
+        }
+
+        .drawer-content {
+            position: absolute;
+            bottom: 0; width: 100%;
+            background: white;
+            border-radius: 24px 24px 0 0;
+            padding: 24px;
+            max-width: 800px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--sub-text);
+            margin: 16px 0 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Location Button */
+        .location-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Area / Feature Selectors */
+        .chip-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            padding: 8px 16px;
+            background: var(--chip-bg);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .chip.active {
+            background: var(--text);
+            color: white;
+        }
+
+        /* --- Main Content --- */
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .results-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .sort-select {
+            border: none;
+            background: transparent;
+            font-size: 0.85rem;
+            color: var(--sub-text);
+            cursor: pointer;
+        }
+
+        /* Cafe Card */
+        .cafe-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 16px;
+            transition: transform 0.1s;
+        }
+
+        .cafe-card:active { transform: scale(0.98); }
+
+        .cafe-info { flex: 1; }
+
+        .cafe-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; display: block; }
+        
+        .station-info {
+            font-size: 0.75rem;
+            color: #059669; /* Green */
+            background: #ecfdf5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .cafe-addr { font-size: 0.8rem; color: var(--sub-text); display: block; margin-bottom: 8px;}
+
+        .tags { display: flex; gap: 6px; }
+        .tag { font-size: 0.7rem; color: var(--sub-text); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+
+        /* Floating Map Button */
+        .map-fab {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 50;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-inner">
+        <a href="#" class="logo">ALETHEIA</a>
+        <div class="search-trigger-bar" onclick="toggleDrawer(true)">
+            <span class="search-placeholder">📍 東京都 江戸川区 / Wi-Fi...</span>
+            <span>🔍</span>
+        </div>
+    </div>
+</header>
+
+<!-- Search Drawer -->
+<div id="search-drawer" onclick="toggleDrawer(false)">
+    <div class="drawer-content" onclick="event.stopPropagation()">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin:0; font-size: 1.2rem;">絞り込み検索</h2>
+            <button onclick="toggleDrawer(false)" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">×</button>
+        </div>
+
+        <div class="section-title">現在地</div>
+        <button class="location-btn">📍 現在地周辺から探す</button>
+
+        <div class="section-title">エリア選択</div>
+        <div class="chip-group">
+            <span class="chip">千代田区</span>
+            <span class="chip">中央区</span>
+            <span class="chip">港区</span>
+            <span class="chip">新宿区</span>
+            <span class="chip active">江戸川区</span>
+            <span class="chip">渋谷区</span>
+        </div>
+
+        <div class="section-title">特徴・設備</div>
+        <div class="chip-group">
+            <span class="chip active">Wi-Fiあり</span>
+            <span class="chip">電源あり</span>
+            <span class="chip">赤ちゃんOK</span>
+            <span class="chip">静か</span>
+            <span class="chip">テラス席</span>
+            <span class="chip">24時間</span>
+        </div>
+
+        <button onclick="toggleDrawer(false)" style="width:100%; margin-top:24px; padding:16px; background:var(--text); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">
+            1,126件の結果を表示
+        </button>
+    </div>
+</div>
+
+<main>
+    <div class="results-meta">
+        <span style="font-size: 0.85rem; font-weight: 600;">検索結果: 1,126件</span>
+        <select class="sort-select">
+            <option>標準順</option>
+            <option>近い順</option>
+            <option>新しい順</option>
+        </select>
+    </div>
+
+    <!-- Sample Card 1 -->
+    <div class="cafe-card">
+        <div class="cafe-info">
+            <span class="station-info">🚉 小岩駅 徒歩3分 (250m)</span>
+            <span class="cafe-name">アヤスカフェ小岩</span>
+            <span class="cafe-addr">東京都江戸川区南小岩8丁目11-8</span>
+            <div class="tags">
+                <span class="tag">赤ちゃんOK</span>
+                <span class="tag">Wi-Fi</span>
+                <span class="tag">PayPay</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Card 2 -->
+    <div class="cafe-card">
+        <div class="cafe-info">
+            <span class="station-info">🚉 代々木駅 徒歩1分 (80m)</span>
+            <span class="cafe-name">ドトールコーヒーショップ 代々木店</span>
+            <span class="cafe-addr">東京都渋谷区代々木1-36-7</span>
+            <div class="tags">
+                <span class="tag">Wi-Fi</span>
+                <span class="tag">全席禁煙</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="height: 80px;"></div> <!-- Spacer for FAB -->
+</main>
+
+<div class="map-fab">
+    <span>🗺️</span>
+    <span>地図で見る</span>
+</div>
+
+<script>
+    function toggleDrawer(show) {
+        const drawer = document.getElementById('search-drawer');
+        drawer.style.display = show ? 'block' : 'none';
+        
+        // Body scroll lock
+        document.body.style.overflow = show ? 'hidden' : 'auto';
+    }
+
+    // Chip toggle logic
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('active');
+        });
+    });
+</script>
+
+</body>
+</html>

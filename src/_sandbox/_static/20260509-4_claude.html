@@ -1,0 +1,596 @@
+<!-- PC用デザイン(スマホは修正が必要) -->
+ 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ALETHEIA - 検索UI v2 モックアップ</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f5f5f5;
+    color: #111827;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  /* ---- Frame ---- */
+  .frame {
+    background: #f5f5f5;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  /* ---- Header ---- */
+  .hdr {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    flex-shrink: 0;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+  }
+  .hdr-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    padding: 0 12px;
+    height: 38px;
+    background: #ffffff;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .hdr-search::-webkit-scrollbar { display: none; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #374151;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .chip-x {
+    font-size: 11px;
+    color: #9ca3af;
+    cursor: pointer;
+    margin-left: 2px;
+    line-height: 1;
+  }
+  .chip-x:hover { color: #374151; }
+  .hdr-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    outline: none;
+    color: #111827;
+    min-width: 80px;
+  }
+  .hdr-input::placeholder { color: #9ca3af; }
+  .hdr-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .hdr-btn:hover { color: #6b7280; }
+  .login-txt {
+    font-size: 11px;
+    color: #9ca3af;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .login-txt:hover { color: #374151; }
+
+  /* ---- Body layout ---- */
+  .body {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    min-height: 500px;
+  }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .sb-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: #9ca3af;
+    margin-bottom: 6px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .sb-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .sb-item:hover { background: #f9fafb; }
+  .sb-item.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+  .sb-item.indent { padding-left: 18px; font-size: 11px; }
+  .sb-count { font-size: 10px; color: #9ca3af; }
+  .sb-item.active .sb-count { color: #93c5fd; }
+
+  .sb-feature {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .feat-tag {
+    font-size: 10px;
+    padding: 5px 4px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    cursor: pointer;
+    text-align: center;
+    background: #ffffff;
+    transition: all 0.12s;
+    user-select: none;
+  }
+  .feat-tag:hover { background: #f9fafb; }
+  .feat-tag.on {
+    background: #f0fdf4;
+    color: #15803d;
+    border-color: #86efac;
+  }
+
+  .sort-opt {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #374151;
+    cursor: pointer;
+    user-select: none;
+  }
+  .sort-opt:hover { background: #f9fafb; }
+  .sort-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    flex-shrink: 0;
+    transition: all 0.12s;
+  }
+  .sort-dot.selected {
+    background: #2563eb;
+    border-color: #2563eb;
+  }
+
+  /* ---- Results ---- */
+  .results {
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+  }
+  .result-meta {
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .result-meta strong { color: #111827; font-weight: 500; }
+
+  .card {
+    background: #ffffff;
+    margin: 6px 8px 0;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.12s;
+  }
+  .card:last-of-type { margin-bottom: 6px; }
+  .card:hover { border-color: #d1d5db; }
+  .card-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 2px;
+  }
+  .card-addr {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+  .card-dist {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-bottom: 4px;
+  }
+  .card-station {
+    font-size: 11px;
+    color: #374151;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .station-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2563eb;
+    flex-shrink: 0;
+  }
+  .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+  }
+
+  /* ---- Map bar ---- */
+  .map-bar {
+    grid-column: 1 / -1;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .map-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    font-size: 12px;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-family: inherit;
+  }
+  .map-btn:hover { background: #f9fafb; }
+  .map-btn.primary {
+    border-color: #2563eb;
+    color: #1d4ed8;
+    background: #eff6ff;
+  }
+  .map-btn.primary:hover { background: #dbeafe; }
+
+  /* ---- Mobile ---- */
+  @media (max-width: 560px) {
+    body { padding: 0; }
+    .frame { border-radius: 0; border: none; box-shadow: none; max-width: 100%; }
+    .body { grid-template-columns: 1fr; }
+    .sidebar {
+      border-right: none;
+      border-bottom: 1px solid #e5e7eb;
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 12px;
+      padding: 10px 12px;
+      flex-wrap: nowrap;
+    }
+    .sidebar::-webkit-scrollbar { display: none; }
+    .sidebar { scrollbar-width: none; }
+    .sb-section { flex-shrink: 0; min-width: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- Header -->
+  <div class="hdr">
+    <a href="/" class="logo">ALETHEIA</a>
+    <div class="hdr-search">
+      <div class="chip" id="area-chip">
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+          <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="8" y1="8" x2="11" y2="11" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        東京都
+        <span class="chip-x" onclick="removeChip('area-chip')">×</span>
+      </div>
+      <div class="chip" id="feat-chip" style="display:none;">
+        <span id="feat-chip-label">Wi-Fi</span>
+        <span class="chip-x" onclick="clearFeats()">×</span>
+      </div>
+      <input class="hdr-input" type="text" placeholder="キーワードで検索..." autocomplete="off"/>
+      <button class="hdr-btn" type="button" aria-label="検索">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="11" y1="11" x2="14.5" y2="14.5" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </button>
+    </div>
+    <span class="login-txt">ログアウト</span>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <div class="sb-section">
+        <div class="sb-label">エリア</div>
+        <div class="sb-item" onclick="clickArea(this,'全国','1,126')">
+          <span>全国</span><span class="sb-count">1.1k</span>
+        </div>
+        <div class="sb-item" onclick="clickArea(this,'関東','623')">
+          <span>関東</span><span class="sb-count">623</span>
+        </div>
+        <div class="sb-item active" onclick="clickArea(this,'東京都','312')">
+          <span>東京都</span><span class="sb-count">312</span>
+        </div>
+        <div class="sb-item indent" onclick="clickArea(this,'新宿区','48')">
+          <span>新宿区</span><span class="sb-count">48</span>
+        </div>
+        <div class="sb-item indent" onclick="clickArea(this,'渋谷区','37')">
+          <span>渋谷区</span><span class="sb-count">37</span>
+        </div>
+        <div class="sb-item indent" onclick="clickArea(this,'江戸川区','22')">
+          <span>江戸川区</span><span class="sb-count">22</span>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-label">特徴</div>
+        <div class="sb-feature">
+          <div class="feat-tag" onclick="toggleFeat(this)">Wi-Fi</div>
+          <div class="feat-tag" onclick="toggleFeat(this)">電源</div>
+          <div class="feat-tag" onclick="toggleFeat(this)">赤ちゃん</div>
+          <div class="feat-tag" onclick="toggleFeat(this)">PayPay</div>
+          <div class="feat-tag" onclick="toggleFeat(this)">現金</div>
+          <div class="feat-tag" onclick="toggleFeat(this)">禁煙</div>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-label">並び順</div>
+        <div class="sort-opt" onclick="selectSort(this)">
+          <div class="sort-dot selected"></div>標準順
+        </div>
+        <div class="sort-opt" onclick="selectSort(this)">
+          <div class="sort-dot"></div>近い順
+        </div>
+        <div class="sort-opt" onclick="selectSort(this)">
+          <div class="sort-dot"></div>新着順
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+
+    <!-- Results -->
+    <div class="results">
+      <div class="result-meta">
+        <span><strong id="result-count">312</strong> 件</span>
+        <span id="result-area-label">東京都</span>
+      </div>
+
+      <div class="card">
+        <div class="card-name">アヤスカフェ小岩</div>
+        <div class="card-addr">東京都江戸川区南小岩8丁目11-8</div>
+        <div class="card-dist" id="dist-1">現在地から — km</div>
+        <div class="card-station">
+          <div class="station-dot"></div>小岩駅から徒歩8分
+        </div>
+        <div class="tags">
+          <span class="tag">赤ちゃんOK</span>
+          <span class="tag">Wi-Fi</span>
+          <span class="tag">11:00〜16:00</span>
+          <span class="tag">PayPay可</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-name">地域活動支援センター cafe bloom</div>
+        <div class="card-addr">東京都江戸川区南小岩7丁目19-7</div>
+        <div class="card-dist" id="dist-2">現在地から — km</div>
+        <div class="card-station">
+          <div class="station-dot"></div>小岩駅から徒歩6分
+        </div>
+        <div class="tags">
+          <span class="tag">電源あり</span>
+          <span class="tag">Wi-Fi</span>
+          <span class="tag">10:00〜17:00</span>
+          <span class="tag">現金のみ</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-name">ドトールコーヒー 西新宿１丁目店</div>
+        <div class="card-addr">東京都新宿区西新宿1-13-8</div>
+        <div class="card-dist" id="dist-3">現在地から — km</div>
+        <div class="card-station">
+          <div class="station-dot"></div>西新宿駅から徒歩2分
+        </div>
+        <div class="tags">
+          <span class="tag">Wi-Fi</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-name">サンライズ・カフェ</div>
+        <div class="card-addr">東京都江戸川区東小岩6丁目18-17</div>
+        <div class="card-dist" id="dist-4">現在地から — km</div>
+        <div class="card-station">
+          <div class="station-dot"></div>小岩駅から徒歩11分
+        </div>
+        <div class="tags">
+          <span class="tag">9:30〜18:00</span>
+          <span class="tag">PayPay可</span>
+        </div>
+      </div>
+
+    </div><!-- /results -->
+
+    <!-- Map bar -->
+    <div class="map-bar">
+      <button class="map-btn primary" id="map-btn" type="button" onclick="onMapClick()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="3" width="4" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="6" y="1" width="4" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="11" y="4" width="4" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+        地図で見る（<span id="map-count">312</span>件）
+      </button>
+      <button class="map-btn" id="loc-btn" type="button" onclick="getLocation()">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="8" y1="1" x2="8" y2="4" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="8" y1="12" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="1" y1="8" x2="4" y2="8" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="12" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        現在地を使う
+      </button>
+    </div>
+
+  </div><!-- /body -->
+</div><!-- /frame -->
+
+<script>
+  function removeChip(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function clickArea(el, name, count) {
+    document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    const n = parseInt(count.replace(',', ''));
+    document.getElementById('result-count').textContent = n.toLocaleString();
+    document.getElementById('result-area-label').textContent = name;
+    document.getElementById('map-count').textContent = n.toLocaleString();
+    const areaChip = document.getElementById('area-chip');
+    if (areaChip) {
+      areaChip.childNodes[1].textContent = name + ' ';
+    }
+  }
+
+  function toggleFeat(el) {
+    el.classList.toggle('on');
+    const onTags = Array.from(document.querySelectorAll('.feat-tag.on'));
+    const chip = document.getElementById('feat-chip');
+    const label = document.getElementById('feat-chip-label');
+    if (onTags.length > 0) {
+      label.textContent = onTags.length === 1
+        ? onTags[0].textContent
+        : onTags.length + '件の特徴';
+      chip.style.display = 'inline-flex';
+    } else {
+      chip.style.display = 'none';
+    }
+  }
+
+  function clearFeats() {
+    document.querySelectorAll('.feat-tag.on').forEach(t => t.classList.remove('on'));
+    document.getElementById('feat-chip').style.display = 'none';
+  }
+
+  function selectSort(el) {
+    document.querySelectorAll('.sort-dot').forEach(d => d.classList.remove('selected'));
+    el.querySelector('.sort-dot').classList.add('selected');
+    if (el.textContent.includes('近い')) {
+      document.getElementById('dist-1').textContent = '現在地から 0.4 km';
+      document.getElementById('dist-2').textContent = '現在地から 0.5 km';
+      document.getElementById('dist-3').textContent = '現在地から 2.1 km';
+      document.getElementById('dist-4').textContent = '現在地から 0.8 km';
+    } else {
+      ['dist-1','dist-2','dist-3','dist-4'].forEach(id => {
+        document.getElementById(id).textContent = '現在地から — km';
+      });
+    }
+  }
+
+  function getLocation() {
+    const btn = document.getElementById('loc-btn');
+    btn.textContent = '取得中...';
+    btn.disabled = true;
+    setTimeout(() => {
+      document.getElementById('dist-1').textContent = '現在地から 0.4 km';
+      document.getElementById('dist-2').textContent = '現在地から 0.5 km';
+      document.getElementById('dist-3').textContent = '現在地から 2.1 km';
+      document.getElementById('dist-4').textContent = '現在地から 0.8 km';
+      btn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="8" y1="1" x2="8" y2="4" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="8" y1="12" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="1" y1="8" x2="4" y2="8" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="12" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        新宿区付近`;
+      btn.disabled = false;
+    }, 900);
+  }
+
+  function onMapClick() {
+    const btn = document.getElementById('map-btn');
+    const orig = btn.innerHTML;
+    btn.textContent = '地図を表示中...';
+    setTimeout(() => { btn.innerHTML = orig; }, 1500);
+  }
+</script>
+
+</body>
+</html>

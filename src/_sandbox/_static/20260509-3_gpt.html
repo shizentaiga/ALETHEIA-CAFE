@@ -1,0 +1,567 @@
+<!-- スペースの無駄が多い -->
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ALETHEIA UI Mock</title>
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --soft: #f9fafb;
+      --chip: #f3f4f6;
+      --accent: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    main {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* ----------------------------------
+       Header
+    ---------------------------------- */
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      height: 64px;
+      padding: 0 20px;
+
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: "Times New Roman", serif;
+      letter-spacing: 0.08em;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    /* ----------------------------------
+       Search
+    ---------------------------------- */
+
+    .search-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+
+      height: 52px;
+      padding: 0 16px;
+
+      border: 1px solid var(--border);
+      border-radius: 999px;
+
+      background: #fff;
+
+      transition: 0.15s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: #d1d5db;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+
+    .search-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .search-button {
+      border: none;
+      background: none;
+      font-size: 1rem;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+
+    /* ----------------------------------
+       Controls
+    ---------------------------------- */
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .control-button {
+      flex: 1;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 12px 14px;
+
+      border-radius: 12px;
+      border: 1px solid var(--border);
+
+      background: #fff;
+
+      color: #374151;
+
+      cursor: pointer;
+
+      transition: background 0.15s ease;
+    }
+
+    .control-button:hover {
+      background: var(--soft);
+    }
+
+    .control-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .arrow {
+      color: #9ca3af;
+      font-size: 0.8rem;
+    }
+
+    /* ----------------------------------
+       Expanded Panel
+    ---------------------------------- */
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .panel-section {
+      padding: 14px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .panel-section:last-child {
+      border-bottom: none;
+    }
+
+    .panel-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    .area-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .area-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 10px 12px;
+
+      border-radius: 10px;
+
+      cursor: pointer;
+
+      transition: background 0.15s ease;
+    }
+
+    .area-item:hover {
+      background: var(--soft);
+    }
+
+    .area-item.active {
+      background: #eff6ff;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .filter-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+
+      padding: 8px 12px;
+
+      border-radius: 999px;
+      border: 1px solid var(--border);
+
+      background: #fff;
+
+      font-size: 0.82rem;
+
+      cursor: pointer;
+    }
+
+    .filter-chip.active {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: var(--accent);
+    }
+
+    /* ----------------------------------
+       Result
+    ---------------------------------- */
+
+    .result-header {
+      margin-top: 24px;
+      margin-bottom: 12px;
+
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      padding: 16px;
+
+      border: 1px solid var(--border);
+      border-radius: 14px;
+
+      background: var(--card);
+
+      transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
+    }
+
+    .card:hover {
+      background: #fafafa;
+      border-color: #d1d5db;
+    }
+
+    .card-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+
+    .card-address {
+      font-size: 0.8rem;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+
+      margin-top: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+
+      padding: 4px 9px;
+
+      border-radius: 999px;
+
+      background: var(--chip);
+
+      font-size: 0.7rem;
+      font-weight: 500;
+
+      color: #374151;
+    }
+
+    /* ----------------------------------
+       Map CTA
+    ---------------------------------- */
+
+    .map-button {
+      margin-top: 28px;
+
+      width: 100%;
+      height: 52px;
+
+      border-radius: 14px;
+      border: 1px solid var(--border);
+
+      background: #fff;
+
+      font-size: 0.95rem;
+      color: #374151;
+
+      cursor: pointer;
+
+      transition: background 0.15s ease;
+    }
+
+    .map-button:hover {
+      background: var(--soft);
+    }
+
+    /* ----------------------------------
+       Mobile
+    ---------------------------------- */
+
+    @media (max-width: 640px) {
+      main {
+        padding: 14px;
+      }
+
+      .controls {
+        flex-direction: row;
+      }
+
+      .control-button {
+        padding: 11px 12px;
+      }
+
+      .search-box {
+        height: 48px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="logo">ALETHEIA</div>
+  </header>
+
+  <main>
+
+    <!-- Search -->
+    <section class="search-section">
+
+      <div class="search-box">
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Wi-Fi カフェ / 作業 / 静か ..."
+        />
+        <button class="search-button">🔍</button>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+
+        <button class="control-button">
+          <div class="control-left">
+            <span>📍</span>
+            <span>東京都</span>
+          </div>
+          <span class="arrow">▼</span>
+        </button>
+
+        <button class="control-button">
+          <div class="control-left">
+            <span>⚙</span>
+            <span>絞り込み</span>
+          </div>
+          <span class="arrow">▼</span>
+        </button>
+
+      </div>
+
+      <!-- Expanded Area Panel -->
+      <div class="panel">
+
+        <div class="panel-section">
+          <div class="panel-title">
+            エリア
+          </div>
+
+          <div class="area-list">
+
+            <div class="area-item">
+              <span>関東</span>
+              <span class="arrow">›</span>
+            </div>
+
+            <div class="area-item active">
+              <span>東京都</span>
+              <span class="arrow">✓</span>
+            </div>
+
+            <div class="area-item">
+              <span>神奈川県</span>
+              <span class="arrow">›</span>
+            </div>
+
+            <div class="area-item">
+              <span>埼玉県</span>
+              <span class="arrow">›</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="panel-section">
+
+          <div class="panel-title">
+            特徴
+          </div>
+
+          <div class="filter-grid">
+
+            <div class="filter-chip active">
+              ☑ Wi-Fi
+            </div>
+
+            <div class="filter-chip">
+              ☐ 電源あり
+            </div>
+
+            <div class="filter-chip">
+              ☐ 赤ちゃんOK
+            </div>
+
+            <div class="filter-chip active">
+              ☑ PayPay可
+            </div>
+
+            <div class="filter-chip">
+              ☐ 食べ放題
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- Results -->
+    <div class="result-header">
+      検索結果: 1,126件
+    </div>
+
+    <section class="card-list">
+
+      <a class="card">
+
+        <div class="card-name">
+          アヤスカフェ小岩
+        </div>
+
+        <div class="card-address">
+          東京都江戸川区南小岩8丁目11-8
+        </div>
+
+        <div class="tag-row">
+          <div class="tag">赤ちゃんOK</div>
+          <div class="tag">Wi-Fi</div>
+          <div class="tag">11:00〜16:00</div>
+          <div class="tag">PayPay可</div>
+        </div>
+
+      </a>
+
+      <a class="card">
+
+        <div class="card-name">
+          コモン・カフェ
+        </div>
+
+        <div class="card-address">
+          東京都江戸川区西小岩1丁目27
+        </div>
+
+        <div class="tag-row">
+          <div class="tag">Wi-Fi</div>
+          <div class="tag">電源あり</div>
+          <div class="tag">10:00〜19:00</div>
+        </div>
+
+      </a>
+
+      <a class="card">
+
+        <div class="card-name">
+          ドトールコーヒーショップ 西新宿1丁目店
+        </div>
+
+        <div class="card-address">
+          東京都新宿区西新宿1-13-8
+        </div>
+
+        <div class="tag-row">
+          <div class="tag">Wi-Fi</div>
+        </div>
+
+      </a>
+
+    </section>
+
+    <!-- Map -->
+    <button class="map-button">
+      🗺 地図で見る
+    </button>
+
+  </main>
+
+</body>
+</html>
