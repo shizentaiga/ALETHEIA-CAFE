@@ -21,7 +21,7 @@ import { test06 } from './test06_keyword'
 import { test07 } from './test07_geo'
 import { test08 } from './test08_history'
 import { test09 } from './test09_heartrails'
-import { test10 } from './test10_drill'
+import { test10 } from './test10_accordion'
 
 export const sandboxApp = new Hono<{}>()
 
