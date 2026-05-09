@@ -1,3 +1,5 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/shops/koiwa.sql --local
+
 /**
  * [ALETHEIA] Area Seed Data - Koiwa (koiwa.sql)
  * 役割：新 schema.sql（2026-04版）に基づく小岩エリアの実データ投入
@@ -30,6 +32,7 @@ INSERT OR REPLACE INTO services (
     , 139.882140
     , json_object(
         'wifi', true
+        , 'business_hours', '11:00～16:00'
         , 'baby', true
         , 'payment', json_array('PayPay', 'Rakuten Pay', 'JCB', 'AMEX')
         , 'ext_place_id', 'GOOGLE_PLACE_AYAS_KOIWA'
@@ -61,6 +64,7 @@ INSERT OR REPLACE INTO services (
     , 139.880560
     , json_object(
         'wifi', true
+        , 'business_hours', '10:00～17:00'
         , 'payment', json_array('CASH_ONLY')
         , 'outlets', true
         , 'ext_place_id', 'GOOGLE_PLACE_CAFE_BLOOM'
@@ -93,6 +97,7 @@ INSERT OR REPLACE INTO services (
     , 139.888560
     , json_object(
         'payment', json_array('PayPay')
+        , 'business_hours', '9:30～18:00'
         , 'ext_place_id', 'GOOGLE_PLACE_SUNRISE_CAFE'
         , 'category', 'cat_cafe'
     )
@@ -122,6 +127,7 @@ INSERT OR REPLACE INTO services (
     , 139.881230
     , json_object(
         'payment', json_array('PayPay')
+        , 'business_hours', '10:00～19:00'
         , 'category', 'cat_cafe'
     )
 );
@@ -150,9 +156,9 @@ INSERT OR REPLACE INTO services (
     , 139.883726
     , json_object(
         'payment', json_array('CASH_ONLY')
+        , 'business_hours', '12:00～19:00'
         , 'category', 'cat_cafe'
         , 'ext_source', 'google_maps'
-        , 'tel', '03-3672-7686'
         , 'price_range', '￥1,000'
     )
 );
