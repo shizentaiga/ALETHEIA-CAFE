@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALETHEIA - Hybrid Search UI</title>
+    <style>
+        :root {
+            --bg: #f9fafb;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --accent: #2563eb;
+            --chip-bg: #f3f4f6;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text-main); line-height: 1.5; }
+
+        /* ---- Header & Search ---- */
+        .hdr {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .hdr-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo { font-family: serif; font-weight: 600; font-size: 16px; text-decoration: none; color: var(--text-main); }
+
+        .search-bar {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            padding: 4px 12px;
+            min-height: 40px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .search-bar::-webkit-scrollbar { display: none; }
+        
+        .chip-stack { display: flex; gap: 4px; align-items: center; }
+        .chip {
+            background: var(--chip-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2px 10px;
+            font-size: 12px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .chip-x { cursor: pointer; color: #9ca3af; font-size: 14px; }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 14px;
+            padding-left: 8px;
+            min-width: 120px;
+        }
+
+        /* ---- Layout ---- */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 24px;
+            padding: 20px 16px;
+        }
+
+        /* Sidebar (PC) / Quick Filter (Mobile) */
+        .sidebar { display: flex; flex-direction: column; gap: 24px; }
+        .sb-group h4 { font-size: 10px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .sb-list { list-style: none; }
+        .sb-item {
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            transition: 0.2s;
+        }
+        .sb-item:hover { background: #f3f4f6; }
+        .sb-item.active { background: #eff6ff; color: var(--accent); font-weight: 600; }
+        .sb-count { font-size: 11px; color: #9ca3af; }
+
+        .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .feat-btn {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .feat-btn.on { background: #f0fdf4; border-color: #86efac; color: #15803d; }
+
+        /* ---- Results & Cards ---- */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: transform 0.1s;
+            cursor: pointer;
+        }
+        .card:active { transform: scale(0.99); }
+        .card-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        .card-meta { font-size: 12px; color: var(--text-sub); margin-bottom: 8px; }
+        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tag { background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 10px; }
+
+        /* Floating Action Button (Mobile Map) */
+        .fab-map {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-main);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 999px;
+            display: none; /* Mobile only */
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 200;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; padding: 0; }
+            .sidebar {
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 12px 16px;
+                background: var(--surface);
+                border-bottom: 1px solid var(--border);
+                gap: 8px;
+                scrollbar-width: none;
+            }
+            .sidebar::-webkit-scrollbar { display: none; }
+            .sb-group { flex-shrink: 0; display: flex; gap: 4px; align-items: center; }
+            .sb-group h4, .sb-count { display: none; }
+            .sb-item { border: 1px solid var(--border); padding: 6px 12px; border-radius: 20px; }
+            .feat-grid { display: flex; gap: 4px; }
+            .feat-btn { padding: 6px 14px; border-radius: 20px; }
+            
+            .results { padding: 12px 16px 80px; }
+            .fab-map { display: flex; }
+            .logo { display: none; } /* スマホでは検索窓を広く */
+        }
+    </style>
+</head>
+<body>
+
+<header class="hdr">
+    <div class="hdr-inner">
+        <a href="#" class="logo">ALETHEIA</a>
+        <div class="search-bar">
+            <div class="chip-stack" id="chip-stack">
+                <span class="chip">江戸川区 <span class="chip-x" onclick="removeChip(this)">×</span></span>
+                <span class="chip">Wi-Fi <span class="chip-x" onclick="removeChip(this)">×</span></span>
+            </div>
+            <input type="text" class="search-input" placeholder="キーワード入力..." id="main-search">
+        </div>
+        <div style="font-size: 11px; color: #9ca3af; cursor: pointer; white-space: nowrap;">Login</div>
+    </div>
+</header>
+
+<div class="container">
+    <!-- Sidebar / Filter Bar -->
+    <aside class="sidebar">
+        <div class="sb-group">
+            <h4>Area</h4>
+            <div class="sb-list">
+                <div class="sb-item active"><span>東京都</span><span class="sb-count">312</span></div>
+                <div class="sb-item"><span>江戸川区</span><span class="sb-count">22</span></div>
+            </div>
+        </div>
+        <div class="sb-group">
+            <h4>Features</h4>
+            <div class="feat-grid">
+                <div class="feat-btn on">Wi-Fi</div>
+                <div class="feat-btn">電源</div>
+                <div class="feat-btn">PayPay</div>
+                <div class="feat-btn">禁煙</div>
+            </div>
+        </div>
+        <div class="sb-group">
+            <h4>Sort</h4>
+            <div class="sb-list">
+                <div class="sb-item active">標準順</div>
+                <div class="sb-item">近い順</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Results -->
+    <main class="results">
+        <div class="results-header">
+            <span><strong>312</strong> 件の場所</span>
+            <span>東京都内</span>
+        </div>
+
+        <div class="card">
+            <div class="card-title">地域活動支援センター cafe bloom</div>
+            <div class="card-meta">小岩駅から徒歩6分 • 450m</div>
+            <div class="card-tags">
+                <span class="tag">Wi-Fi</span>
+                <span class="tag">電源あり</span>
+                <span class="tag">現金のみ</span>
+                <span class="tag">10:00-17:00</span>
+            </div>
+        </div>
+
+        <!-- Repeat Cards... -->
+    </main>
+</div>
+
+<!-- Mobile Map Button -->
+<button class="fab-map">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 6V22L8 18L16 22L23 18V2L16 6L8 2L1 6Z"/>
+    </svg>
+    地図で見る
+</button>
+
+<script>
+    // チップ削除の簡易エフェクト
+    function removeChip(el) {
+        el.parentElement.remove();
+    }
+
+    // 入力欄にフォーカスした際の挙動調整（マニアックな検索キーワードへの期待）
+    const input = document.getElementById('main-search');
+    input.addEventListener('focus', () => {
+        console.log("キーワード入力モード: マニアックな絞り込みを期待中...");
+    });
+
+    // 特徴ボタンのトグル
+    document.querySelectorAll('.feat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.toggle('on');
+            // ここでチップスタックへの動的追加ロジックを書くイメージ
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!-- ソートとアコーディオンを強化したブラッシュアップ版 -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALETHEIA - Pro Search UI</title>
+    <style>
+        :root {
+            --bg: #f9fafb;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --accent: #2563eb;
+            --chip-bg: #f3f4f6;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text-main); line-height: 1.5; }
+
+        /* ---- Header & Search (既存を維持) ---- */
+        .hdr { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 8px 16px; position: sticky; top: 0; z-index: 100; }
+        .hdr-inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+        .logo { font-family: serif; font-weight: 600; font-size: 16px; text-decoration: none; color: var(--text-main); }
+        .search-bar { flex: 1; display: flex; align-items: center; background: var(--surface); border: 1px solid #d1d5db; border-radius: 999px; padding: 4px 12px; min-height: 40px; }
+        .search-input { flex: 1; border: none; outline: none; background: transparent; font-size: 14px; padding-left: 8px; }
+        .chip { background: var(--chip-bg); border: 1px solid var(--border); border-radius: 16px; padding: 2px 10px; font-size: 12px; white-space: nowrap; display: flex; align-items: center; gap: 4px; margin-right: 4px; }
+
+        /* ---- Layout ---- */
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 240px 1fr; gap: 32px; padding: 20px 16px; }
+
+        /* Sidebar: アコーディオン形式 */
+        .sidebar { display: flex; flex-direction: column; gap: 8px; }
+        
+        /* HTML標準のdetailsタグをスタイリング */
+        details.filter-group {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+        details.filter-group summary {
+            list-style: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        details.filter-group summary::after {
+            content: '＋';
+            font-size: 10px;
+            color: var(--text-sub);
+        }
+        details[open].filter-group summary::after {
+            content: '－';
+        }
+
+        .filter-content { padding: 8px 4px 12px; }
+        .sb-item { padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; transition: 0.2s; }
+        .sb-item:hover { background: #f3f4f6; }
+        .sb-item.active { background: #eff6ff; color: var(--accent); font-weight: 600; }
+        .sb-count { font-size: 11px; color: #9ca3af; }
+
+        /* 特徴ボタンのグリッド改良 */
+        .feat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; }
+        .feat-btn { border: 1px solid var(--border); background: var(--surface); padding: 6px; border-radius: 6px; font-size: 11px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .feat-btn.on { background: #eff6ff; border-color: var(--accent); color: var(--accent); }
+
+        /* ---- Results Header (ソート機能追加) ---- */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .results-count { font-size: 14px; font-weight: 600; }
+        
+        /* メルカリ風ソートセレクト */
+        .sort-select-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+        .sort-select {
+            appearance: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 6px 32px 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+        }
+        .sort-select-wrapper::after {
+            content: '▾';
+            position: absolute;
+            right: 12px;
+            pointer-events: none;
+        }
+
+        /* Card (既存ベースに余白調整) */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .card-title { font-weight: 600; font-size: 16px; color: var(--accent); }
+        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .tag { background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: var(--text-sub); }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+            .sidebar { display: none; } /* スマホではドロワー形式にするのが一般的 */
+        }
+    </style>
+</head>
+<body>
+
+<header class="hdr">
+    <div class="hdr-inner">
+        <a href="#" class="logo">ALETHEIA</a>
+        <div class="search-bar">
+            <div id="chip-stack" style="display:flex">
+                <span class="chip">江戸川区</span>
+            </div>
+            <input type="text" class="search-input" placeholder="キーワード...">
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <aside class="sidebar">
+        <!-- エリア：最初から開いておく -->
+        <details class="filter-group" open>
+            <summary>エリア</summary>
+            <div class="filter-content">
+                <div class="sb-item active"><span>東京都</span><span class="sb-count">312</span></div>
+                <div class="sb-item"><span>江戸川区</span><span class="sb-count">22</span></div>
+            </div>
+        </details>
+
+        <!-- 特徴：最初から開いておく -->
+        <details class="filter-group" open>
+            <summary>特徴</summary>
+            <div class="filter-content">
+                <div class="feat-grid">
+                    <div class="feat-btn on">Wi-Fi</div>
+                    <div class="feat-btn">電源</div>
+                    <div class="feat-btn">禁煙</div>
+                    <div class="feat-btn">PayPay</div>
+                </div>
+            </div>
+        </details>
+
+        <!-- カテゴリ：折りたたんでおく -->
+        <details class="filter-group">
+            <summary>カテゴリ</summary>
+            <div class="filter-content">
+                <div class="sb-item">カフェ</div>
+                <div class="sb-item">コワーキング</div>
+                <div class="sb-item">図書館</div>
+            </div>
+        </details>
+
+        <!-- 将来的：最寄駅やスタッフを追加しても崩れない -->
+        <details class="filter-group">
+            <summary>最寄駅 (準備中)</summary>
+            <div class="filter-content text-sub" style="font-size:12px;">
+                駅名を入力して検索...
+            </div>
+        </details>
+    </aside>
+
+    <main class="results">
+        <div class="results-header">
+            <div class="results-count">312 件の場所</div>
+            <div class="sort-select-wrapper">
+                <span>並び替え:</span>
+                <select class="sort-select">
+                    <option>標準順</option>
+                    <option>近い順</option>
+                    <option>新しい順</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">地域活動支援センター cafe bloom</div>
+            <div class="card-meta">小岩駅から徒歩6分 • 450m</div>
+            <div class="card-tags">
+                <span class="tag">Wi-Fi</span><span class="tag">電源あり</span><span class="tag">10:00-17:00</span>
+            </div>
+        </div>
+    </main>
+</div>
+
+</body>
+</html>
