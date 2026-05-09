@@ -1,61 +1,57 @@
 /**
  * [File Path] src/db/queries/transformers.ts
- * [Role] Logic to transform raw database data into display formats.
  */
 import { isTruthy } from './utils';
 
-// --- CONFIGURATION ---
-const MAX_TAG_DISPLAY = 3; // Maximum number of labels to show in the UI
+const MAX_TAG_DISPLAY = 5;  // 表示するタグ数
 
-const LABEL_MAP: Record<string, string> = {
-  wifi: 'Wi-Fi',
-  outlets: '電源',
-  baby: 'お子様連れ',
-  smoking: '喫煙',
-  pet: 'ペット可'
-};
+// 優先順位に基づいたラベル定義（上に書いたものほど優先される）
+const FEATURE_PRIORITY = [
+  { key: 'buffet', label: '食べ放題' },
+  { key: 'baby', label: '赤ちゃんOK' },
+  { key: 'outlets', label: '電源あり' },
+  { key: 'wifi', label: 'Wi-Fi' },
+] as const;
 
 const PAYMENT_LABELS = {
   CASH_ONLY: '現金のみ',
   PAYPAY: 'PayPay可',
-  CASHLESS: 'キャッシュレス可'
+  CASHLESS: 'キャッシュレス'
 } as const;
-// -------------------
 
-export interface ServiceAttributes {
-  payment?: string[];
-  [key: string]: any;
-}
-
-/**
- * Converts attribute JSON into an array of display labels.
- * Prioritizes payment methods and extracts labels based on the display limit.
- */
 export const formatAttributes = (jsonStr: string): string[] => {
   try {
-    const attrs: ServiceAttributes = JSON.parse(jsonStr || '{}');
+    const attrs = JSON.parse(jsonStr || '{}');
     const tags: string[] = [];
 
-    // 1. Evaluate payment methods (Priority display)
-    const payments = attrs.payment;
-    if (Array.isArray(payments) && payments.length > 0) {
-      if (payments.includes('CASH_ONLY')) {
-        tags.push(PAYMENT_LABELS.CASH_ONLY);
-      } else if (payments.includes('PayPay')) {
-        tags.push(PAYMENT_LABELS.PAYPAY);
-      } else {
-        tags.push(PAYMENT_LABELS.CASHLESS);
+    // 1. 体験・インフラ系（優先度順に走査）
+    for (const item of FEATURE_PRIORITY) {
+      if (isTruthy(attrs[item.key])) {
+        tags.push(item.label);
       }
     }
 
-    // 2. Evaluate equipment flags (Extracted via LABEL_MAP)
-    const otherTags = Object.entries(attrs)
-      .filter(([k, v]) => LABEL_MAP[k] && isTruthy(v))
-      .map(([k]) => LABEL_MAP[k]);
+    // 2. 営業時間（12文字以内なら採用。例: "9:00-21:00"）
+    if (attrs.business_hours && typeof attrs.business_hours === 'string') {
+      const hours = attrs.business_hours;
+      if (hours.length > 0 && hours.length <= 12) {
+        tags.push(hours);
+      }
+    }
 
-    // Limit to constant for UI consistency
-    return [...tags, ...otherTags].slice(0, MAX_TAG_DISPLAY);
+    // 3. 決済方法（優先度が低いため、枠が余っている場合のみ評価）
+    if (tags.length < MAX_TAG_DISPLAY) {
+      const p = attrs.payment;
+      if (Array.isArray(p) && p.length > 0) {
+        if (p.includes('CASH_ONLY')) tags.push(PAYMENT_LABELS.CASH_ONLY);
+        else if (p.includes('PayPay')) tags.push(PAYMENT_LABELS.PAYPAY);
+        else tags.push(PAYMENT_LABELS.CASHLESS);
+      }
+    }
+
+    // 規定数でスライス
+    return tags.slice(0, MAX_TAG_DISPLAY);
   } catch {
-    return []; // Safely return an empty array if parsing fails
+    return [];
   }
 };
