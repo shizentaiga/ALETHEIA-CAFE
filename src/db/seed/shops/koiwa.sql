@@ -65,7 +65,7 @@ INSERT OR REPLACE INTO services (
     , json_object(
         'wifi', true
         , 'business_hours', '10:00～17:00'
-        , 'payment', json_array('CASH_ONLY')
+        , 'payment', json_array('AirPay')
         , 'outlets', true
         , 'ext_place_id', 'GOOGLE_PLACE_CAFE_BLOOM'
         , 'type', 'Medical/Welfare Counselor'
