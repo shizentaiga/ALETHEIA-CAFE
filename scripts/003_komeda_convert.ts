@@ -57,7 +57,7 @@ function convertToSql(items: any[], areas: AreaMaster[]) {
         const escapedAddr = displayAddress.replace(/'/g, "''");
         const jsonString = JSON.stringify(attributes).replace(/'/g, "''");
 
-        return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, pref, city, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.KOMEDA}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddr}', NULL, NULL, NULL, NULL, '${jsonString}');`;
+        return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.KOMEDA}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddr}', NULL, NULL, '${jsonString}');`;
     }).join('\n');
 }
 

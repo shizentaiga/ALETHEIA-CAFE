@@ -63,7 +63,7 @@ function convertToSql(items: any[], areas: AreaMaster[]) {
         const lat = item.location?.lat ?? 'NULL';
         const lng = item.location?.lng ?? 'NULL';
 
-        return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, pref, city, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.MISTERDONUTS}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddr}', NULL, NULL, ${lat}, ${lng}, '${jsonString}');`;
+        return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.MISTERDONUTS}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddr}', ${lat}, ${lng}, '${jsonString}');`;
     }).join('\n');
 }
 

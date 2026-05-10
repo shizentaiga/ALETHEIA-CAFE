@@ -67,8 +67,8 @@ function convertToSql(items: any[], areas: AreaMaster[]) {
         const escapedAddr = displayAddress.replace(/'/g, "''");
         const jsonString = JSON.stringify(attributes).replace(/'/g, "''");
 
-        // pref, city は NULL。area_id で管理。
-        return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, pref, city, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.DOUTOR}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddr}', NULL, NULL, NULL, NULL, '${jsonString}');`;
+        // pref, city は削除して、area_id で管理。
+        return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.DOUTOR}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddr}', NULL, NULL, '${jsonString}');`;
     }).join('\n');
 }
 
