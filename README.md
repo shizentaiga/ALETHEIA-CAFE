@@ -30,6 +30,9 @@
 ---
 # プロジェクト構成 (Source Directory Structure)
 
+## public/
+- **icon.svg**:共通アイコン
+
 ## src/
 - **index.tsx**: エントリポイント。Hono によるルーティング定義とリクエスト集約。
 - **renderer.tsx**: 全ページ共通の HTML 外枠・メタデータ定義。
@@ -69,10 +72,32 @@ Cloudflare D1 関連のスキーマ、クエリ、およびシードデータ。
 - **geo.ts / geoUtils.ts**: 現在地座標の解決や、距離計算等の地理情報処理。
 - **auth.ts / constants.ts**: 認証の低レイヤー処理および、地理情報・UI 用定数。
 
-~~~
-public/
-└── icon.svg               # 共通アイコン
-~~~
+### 新規対応中(最寄駅検索)
+```
+src/db/
+├── add_tables/
+│   ├── add_areas_table.sql
+│   └── + add_stations_tables.sql    # 駅・路線・接続情報のスキーマ定義
+├── queries/
+│   ├── areaQuery.ts
+│   ├── main.ts
+│   ├── searchQuery.ts
+│   ├── transformers.ts
+│   ├── utils.ts
+│   └── + stationQuery.ts           # 【新規】座標からの最寄駅計算、駅名検索ロジック
+├── seed/
+│   ├── 00_master/
+│   │   ├── areas.sql
+│   │   ├── + stations.sql          # 【新規】駅マスタデータ
+│   │   ├── + lines.sql             # 【新規】路線マスタデータ
+│   │   └── + companies.sql         # 【新規】鉄道会社マスタデータ
+│   ├── chains/
+│   │   └── (既存の .sql 群)
+│   └── shops/
+│       └── (既存の .sql 群)
+├── schema.sql
+└── setup.sh                        # 【更新案】新規マスタの投入順序を追記
+```
 
 ---
 
