@@ -1,3 +1,5 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/companies.sql --local
+
 -- Generated from company20260409.csv
 DELETE FROM companies;
 INSERT INTO companies VALUES (1, 11, 'JR北海道', 'ジェイアールホッカイドウ', '北海道旅客鉄道株式会社', 'JR北海道', 'http://www.jrhokkaido.co.jp/', 1, 0, 1);

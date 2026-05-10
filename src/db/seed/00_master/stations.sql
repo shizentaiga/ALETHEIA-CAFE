@@ -1,3 +1,5 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/stations.sql --local
+
 -- Generated from station20260430free.csv
 DELETE FROM stations;
 INSERT INTO stations VALUES (1110101, 1110101, '函館', NULL, NULL, 11101, 1, '040-0063', '北海道函館市若松町12-13', 140.726413, 41.773709, '1902-12-10', NULL, 0, 1110101);

@@ -1,3 +1,5 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/lines.sql --local
+
 -- Generated from line20260409free.csv
 DELETE FROM lines;
 INSERT INTO lines VALUES (1001, 3, '中央新幹線', 'チュウオウシンカンセン', '中央新幹線', NULL, NULL, NULL, 137.49389648438, 35.411438052435, 8, 1, 1001);
