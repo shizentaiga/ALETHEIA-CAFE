@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
+  GOOGLE_MAPS_API_KEY: string // .dev.vars から読み込み
 }
 
 export const test03 = new Hono<{ Bindings: Bindings }>()
@@ -11,8 +12,11 @@ const M_PER_LAT = 111111; // 緯度1度あたりのメートル
 const M_PER_LON = 91000;  // 経度1度あたりのメートル（日本付近）
 
 test03.get('/', async (c) => {
+  // 現在のパスを取得（末尾の / を考慮）
+  const baseUrl = c.req.path.endsWith('/') ? c.req.path : `${c.req.path}/`;
+
   const db = c.env.ALETHEIA_CAFE_DB
-  const baseUrl = c.req.path.endsWith('/') ? c.req.path : `${c.req.path}/`
+  const apiKey = c.env.GOOGLE_MAPS_API_KEY
   
   const addressQuery = c.req.query('address')
   let geoResult: any = null
@@ -20,15 +24,19 @@ test03.get('/', async (c) => {
 
   if (addressQuery) {
     try {
-      const res = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(addressQuery)}`)
-      const data: any = await res.json()
+      // 1. Google Maps Geocoding API で座標取得
+      const googleRes = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressQuery)}&key=${apiKey}`
+      )
+      const data: any = await googleRes.json()
       
-      if (data && data.length > 0) {
-        const lon = data[0].geometry.coordinates[0]
-        const lat = data[0].geometry.coordinates[1]
-        geoResult = { address: data[0].properties.title, lon, lat }
+      if (data.status === 'OK' && data.results.length > 0) {
+        const result = data.results[0]
+        const lat = result.geometry.location.lat
+        const lon = result.geometry.location.lng
+        geoResult = { address: result.formatted_address, lon, lat }
 
-        // 正常動作していたSQLをそのまま維持（s.lon, s.latを計算用に取得項目に追加）
+        // 2. 三平方の定理で近似距離が近い順に取得
         const { results } = await db.prepare(`
           SELECT 
             s.station_name, 
@@ -60,7 +68,9 @@ test03.get('/', async (c) => {
   return c.render(
     <div style="font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333;">
       <header style="margin-bottom: 30px; border-bottom: 2px solid #333;">
-        <h1>📍 最寄駅検索 (Geo-Search)</h1>
+        <a href={baseUrl} style="text-decoration: none; color: #333; display: block;">
+          <h1 style="margin: 0;">📍 最寄駅検索 (Google Map API)</h1>
+        </a>
       </header>
 
       {/* 検索フォーム */}
@@ -92,11 +102,9 @@ test03.get('/', async (c) => {
               <h3>🚉 付近の駅</h3>
               <div style="display: grid; gap: 10px;">
                 {nearestStations.map((st: any) => {
-                  // 追加：直線距離(m)の計算
                   const dx = (st.lon - geoResult.lon) * M_PER_LON;
                   const dy = (st.lat - geoResult.lat) * M_PER_LAT;
                   const distanceM = Math.round(Math.sqrt(dx * dx + dy * dy));
-                  // 追加：徒歩分数の計算（80m=1分、切り上げ）
                   const walkMinutes = Math.ceil(distanceM / 80);
 
                   return (
