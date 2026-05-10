@@ -1,5 +1,4 @@
 import { Hono } from 'hono'
-import { html } from 'hono/html'
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
@@ -7,118 +6,130 @@ type Bindings = {
 
 export const test03 = new Hono<{ Bindings: Bindings }>()
 
+// 距離計算用の定数
+const M_PER_LAT = 111111; // 緯度1度あたりのメートル
+const M_PER_LON = 91000;  // 経度1度あたりのメートル（日本付近）
+
 test03.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB
   const baseUrl = c.req.path.endsWith('/') ? c.req.path : `${c.req.path}/`
+  
+  const addressQuery = c.req.query('address')
+  let geoResult: any = null
+  let nearestStations: any[] = []
 
-  // 1. 基本統計の取得
+  if (addressQuery) {
+    try {
+      const res = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(addressQuery)}`)
+      const data: any = await res.json()
+      
+      if (data && data.length > 0) {
+        const lon = data[0].geometry.coordinates[0]
+        const lat = data[0].geometry.coordinates[1]
+        geoResult = { address: data[0].properties.title, lon, lat }
+
+        // 正常動作していたSQLをそのまま維持（s.lon, s.latを計算用に取得項目に追加）
+        const { results } = await db.prepare(`
+          SELECT 
+            s.station_name, 
+            l.line_name,
+            s.address,
+            s.lon,
+            s.lat,
+            ((s.lon - ?1) * (s.lon - ?1) + (s.lat - ?2) * (s.lat - ?2)) as dist_sq
+          FROM stations s
+          JOIN lines l ON s.line_cd = l.line_cd
+          WHERE s.e_status = 0
+          ORDER BY dist_sq ASC
+          LIMIT 5
+        `).bind(lon, lat).all()
+        
+        nearestStations = results
+      }
+    } catch (e) {
+      console.error('Search error:', e)
+    }
+  }
+
   const stats = await db.prepare(`
     SELECT 
-      (SELECT COUNT(*) FROM companies) as company_count,
-      (SELECT COUNT(*) FROM lines) as line_count,
-      (SELECT COUNT(*) FROM stations) as station_count,
-      (SELECT COUNT(*) FROM stations WHERE e_status = 2) as closed_station_count
+      (SELECT COUNT(*) FROM stations WHERE e_status = 0) as active_stations,
+      (SELECT COUNT(*) FROM lines) as line_count
   `).first()
 
-  // 2. 都道府県別駅数ランキング (Top 10)
-  // ※pref_cdの名称マッピングは簡易化のためSQL内でCASEを使用
-  const prefStats = await db.prepare(`
-    SELECT 
-      pref_cd,
-      COUNT(*) as count 
-    FROM stations 
-    GROUP BY pref_cd 
-    ORDER BY count DESC 
-    LIMIT 10
-  `).all()
-
-  // 3. 同一駅名ランキング（乗換駅・重複確認）
-  // station_g_cd が同じものは「同じ駅」として扱われるため、
-  // station_name でグループ化して、異なる station_cd がいくつあるかを集計
-  const duplicateStations = await db.prepare(`
-    SELECT 
-      station_name, 
-      COUNT(*) as count,
-      GROUP_CONCAT(DISTINCT address) as locations
-    FROM stations 
-    GROUP BY station_name 
-    HAVING count > 1 
-    ORDER BY count DESC 
-    LIMIT 10
-  `).all()
-
   return c.render(
-    <div style="font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 20px;">
-      <header>
-        <a href={baseUrl} style="text-decoration: none; color: #333;">
-          <h1>🚉 Railway Data Health Check</h1>
-        </a>
+    <div style="font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333;">
+      <header style="margin-bottom: 30px; border-bottom: 2px solid #333;">
+        <h1>📍 最寄駅検索 (Geo-Search)</h1>
       </header>
 
-      <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px;">
-        <div style="background: #f0f4f8; padding: 20px; border-radius: 8px; text-align: center;">
-          <div style="font-size: 0.9rem; color: #666;">鉄道会社数</div>
-          <div style="font-size: 1.8rem; font-weight: bold;">{stats?.company_count}</div>
-        </div>
-        <div style="background: #f0f4f8; padding: 20px; border-radius: 8px; text-align: center;">
-          <div style="font-size: 0.9rem; color: #666;">路線総数</div>
-          <div style="font-size: 1.8rem; font-weight: bold;">{stats?.line_count}</div>
-        </div>
-        <div style="background: #f0f4f8; padding: 20px; border-radius: 8px; text-align: center;">
-          <div style="font-size: 0.9rem; color: #666;">駅総数</div>
-          <div style="font-size: 1.8rem; font-weight: bold;">{stats?.station_count}</div>
-        </div>
-        <div style="background: #ffecec; padding: 20px; border-radius: 8px; text-align: center;">
-          <div style="font-size: 0.9rem; color: #e53e3e;">うち廃止駅</div>
-          <div style="font-size: 1.8rem; font-weight: bold; color: #e53e3e;">{stats?.closed_station_count}</div>
-        </div>
+      {/* 検索フォーム */}
+      <section style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+        <form method="get" action={baseUrl} style="display: flex; gap: 10px;">
+          <input 
+            type="text" 
+            name="address" 
+            placeholder="住所を入力（例：東京都新宿区）" 
+            defaultValue={addressQuery}
+            style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px;"
+          />
+          <button type="submit" style="padding: 10px 25px; background: #333; color: #fff; border: none; border-radius: 5px; cursor: pointer;">
+            検索
+          </button>
+        </form>
       </section>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-        <section>
-          <h3>📍 都道府県別駅数 (Top 10)</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="border-bottom: 2px solid #eee; text-align: left;">
-                <th style="padding: 8px;">Code</th>
-                <th style="padding: 8px;">駅数</th>
-              </tr>
-            </thead>
-            <tbody>
-              {prefStats.results.map((row: any) => (
-                <tr style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 8px;">Pref {row.pref_cd}</td>
-                  <td style="padding: 8px;">{row.count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+      {/* 検索結果 */}
+      {addressQuery && (
+        <section style="margin-bottom: 40px;">
+          {geoResult ? (
+            <>
+              <div style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #4CAF50; background: #e8f5e9;">
+                <strong>判定地点:</strong> {geoResult.address}<br/>
+                <small style="color: #666;">座標: {geoResult.lat}, {geoResult.lon}</small>
+              </div>
 
-        <section>
-          <h3>🔄 重複駅名ランキング</h3>
-          <p style="font-size: 0.8rem; color: #666;">※別路線で同名の駅、または乗換駅の数</p>
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="border-bottom: 2px solid #eee; text-align: left;">
-                <th style="padding: 8px;">駅名</th>
-                <th style="padding: 8px;">重複数</th>
-              </tr>
-            </thead>
-            <tbody>
-              {duplicateStations.results.map((row: any) => (
-                <tr style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 8px; font-weight: bold;">{row.station_name}</td>
-                  <td style="padding: 8px;">{row.count} <span style="font-size: 0.7rem; color: #999;">Lines</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      </div>
+              <h3>🚉 付近の駅</h3>
+              <div style="display: grid; gap: 10px;">
+                {nearestStations.map((st: any) => {
+                  // 追加：直線距離(m)の計算
+                  const dx = (st.lon - geoResult.lon) * M_PER_LON;
+                  const dy = (st.lat - geoResult.lat) * M_PER_LAT;
+                  const distanceM = Math.round(Math.sqrt(dx * dx + dy * dy));
+                  // 追加：徒歩分数の計算（80m=1分、切り上げ）
+                  const walkMinutes = Math.ceil(distanceM / 80);
 
-      <footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 0.8rem;">
-        Last Database Sync: 2026-05-10
+                  return (
+                    <div key={`${st.line_name}-${st.station_name}`} style="padding: 15px; border: 1px solid #eee; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                      <div>
+                        <strong style="font-size: 1.1rem;">{st.station_name}</strong>
+                        <div style="font-size: 0.85rem; color: #666;">{st.line_name} | {st.address}</div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #2c3e50;">
+                          徒歩約 {walkMinutes} 分
+                        </div>
+                        <div style="font-size: 0.75rem; color: #999;">
+                          （直線 {distanceM} m）
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <p style="color: #e53e3e;">該当する住所が見つかりませんでした。</p>
+          )}
+        </section>
+      )}
+
+      {/* 最小限の統計 */}
+      <footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.85rem; color: #888; display: flex; justify-content: space-between;">
+        <div>
+          運用中駅数: <strong>{stats?.active_stations}</strong> / 
+          収録路線数: <strong>{stats?.line_count}</strong>
+        </div>
       </footer>
     </div>
   )
