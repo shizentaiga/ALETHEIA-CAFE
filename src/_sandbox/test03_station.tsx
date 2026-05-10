@@ -3,10 +3,11 @@
 import { Hono } from 'hono'
 import { fetchCoordinatesFromYahoo } from '../lib/geo'
 import { calculateNearestStations, StationCandidate } from '../db/queries/stationQuery'
+import { isValidCoordinates, formatAccessTime } from '../lib/geoUtils'
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
-  YAHOO_MAPS_CLIENT_ID: string // .dev.vars から読み込み
+  YAHOO_MAPS_CLIENT_ID: string
 }
 
 export const test03 = new Hono<{ Bindings: Bindings }>()
@@ -19,29 +20,27 @@ test03.get('/', async (c) => {
   const addressQuery = c.req.query('address')
   let geoResult: any = null
   let nearestStations: StationCandidate[] = []
+  let errorMessage: string | null = null
 
   if (addressQuery) {
-    // 1. Yahoo! ジオコーダ関数を呼び出し
     const geo = await fetchCoordinatesFromYahoo(addressQuery, clientId);
     
-    if (geo) {
+    // 1. バリデーション関数の流用
+    if (geo && isValidCoordinates(geo.lat, geo.lon)) {
       geoResult = { 
         address: geo.formattedAddress, 
         lon: geo.lon, 
         lat: geo.lat 
       };
 
-      // 2. 外部化した関数を呼び出し（グループ化・緯度補正済みのデータを取得）
-      nearestStations = await calculateNearestStations(
-        db, 
-        geo.lat, 
-        geo.lon, 
-        5 // 上位5グループを取得
-      );
+      nearestStations = await calculateNearestStations(db, geo.lat, geo.lon, 5);
+    } else if (geo) {
+      errorMessage = "日本の範囲外の住所が指定されました。";
+    } else {
+      errorMessage = "該当する住所が見つかりませんでした。";
     }
   }
 
-  // 統計情報の取得
   const stats = await db.prepare(`
     SELECT 
       (SELECT COUNT(*) FROM stations WHERE e_status = 0) as active_stations,
@@ -85,8 +84,9 @@ test03.get('/', async (c) => {
               <h3>🚉 付近の駅</h3>
               <div style="display: grid; gap: 10px;">
                 {nearestStations.map((st) => {
-                  // 徒歩分数の計算（1分=80m換算）
-                  const walkMinutes = Math.ceil(st.distance / 80);
+                  // 2. formatAccessTime 関数の流用
+                  // 直線距離から最適な「テキスト」や「距離表記」を取得
+                  const access = formatAccessTime(st.distance);
 
                   return (
                     <div key={st.stationName} style="padding: 15px; border: 1px solid #eee; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
@@ -97,11 +97,11 @@ test03.get('/', async (c) => {
                         </div>
                       </div>
                       <div style="text-align: right;">
-                        <div style="font-size: 1.1rem; font-weight: bold; color: #d32f2f;">
-                          徒歩約 {walkMinutes} 分
+                        <div style="font-size: 1.1rem; font-weight: bold; color: {access.mode === 'walk' ? '#d32f2f' : '#2c3e50'};">
+                          {access.text}
                         </div>
                         <div style="font-size: 0.75rem; color: #999;">
-                          （直線 {st.distance} m）
+                          （道のり約 {access.distanceText}）
                         </div>
                       </div>
                     </div>
@@ -110,7 +110,7 @@ test03.get('/', async (c) => {
               </div>
             </>
           ) : (
-            <p style="color: #e53e3e;">該当する住所が見つかりませんでした。</p>
+            <p style="color: #e53e3e;">{errorMessage}</p>
           )}
         </section>
       )}
