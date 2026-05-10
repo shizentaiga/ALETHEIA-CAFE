@@ -1,8 +1,11 @@
+// src/_sandbox/test03_station.tsx
+
 import { Hono } from 'hono'
+import { fetchCoordinatesFromYahoo } from '../lib/geo' // パスは適宜調整してください
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
-  GOOGLE_MAPS_API_KEY: string // .dev.vars から読み込み
+  YAHOO_MAPS_CLIENT_ID: string // .dev.vars から読み込み
 }
 
 export const test03 = new Hono<{ Bindings: Bindings }>()
@@ -12,53 +15,46 @@ const M_PER_LAT = 111111; // 緯度1度あたりのメートル
 const M_PER_LON = 91000;  // 経度1度あたりのメートル（日本付近）
 
 test03.get('/', async (c) => {
-  // 現在のパスを取得（末尾の / を考慮）
   const baseUrl = c.req.path.endsWith('/') ? c.req.path : `${c.req.path}/`;
-
   const db = c.env.ALETHEIA_CAFE_DB
-  const apiKey = c.env.GOOGLE_MAPS_API_KEY
+  const clientId = c.env.YAHOO_MAPS_CLIENT_ID
   
   const addressQuery = c.req.query('address')
   let geoResult: any = null
   let nearestStations: any[] = []
 
   if (addressQuery) {
-    try {
-      // 1. Google Maps Geocoding API で座標取得
-      const googleRes = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressQuery)}&key=${apiKey}`
-      )
-      const data: any = await googleRes.json()
-      
-      if (data.status === 'OK' && data.results.length > 0) {
-        const result = data.results[0]
-        const lat = result.geometry.location.lat
-        const lon = result.geometry.location.lng
-        geoResult = { address: result.formatted_address, lon, lat }
+    // 1. Yahoo! ジオコーダ関数を呼び出し
+    const geo = await fetchCoordinatesFromYahoo(addressQuery, clientId);
+    
+    if (geo) {
+      geoResult = { 
+        address: geo.formattedAddress, 
+        lon: geo.lon, 
+        lat: geo.lat 
+      };
 
-        // 2. 三平方の定理で近似距離が近い順に取得
-        const { results } = await db.prepare(`
-          SELECT 
-            s.station_name, 
-            l.line_name,
-            s.address,
-            s.lon,
-            s.lat,
-            ((s.lon - ?1) * (s.lon - ?1) + (s.lat - ?2) * (s.lat - ?2)) as dist_sq
-          FROM stations s
-          JOIN lines l ON s.line_cd = l.line_cd
-          WHERE s.e_status = 0
-          ORDER BY dist_sq ASC
-          LIMIT 5
-        `).bind(lon, lat).all()
-        
-        nearestStations = results
-      }
-    } catch (e) {
-      console.error('Search error:', e)
+      // 2. 近似距離（三平方の定理）でD1から駅を取得
+      const { results } = await db.prepare(`
+        SELECT 
+          s.station_name, 
+          l.line_name,
+          s.address,
+          s.lon,
+          s.lat,
+          ((s.lon - ?1) * (s.lon - ?1) + (s.lat - ?2) * (s.lat - ?2)) as dist_sq
+        FROM stations s
+        JOIN lines l ON s.line_cd = l.line_cd
+        WHERE s.e_status = 0
+        ORDER BY dist_sq ASC
+        LIMIT 5
+      `).bind(geo.lon, geo.lat).all()
+      
+      nearestStations = results
     }
   }
 
+  // 統計情報の取得
   const stats = await db.prepare(`
     SELECT 
       (SELECT COUNT(*) FROM stations WHERE e_status = 0) as active_stations,
@@ -69,7 +65,7 @@ test03.get('/', async (c) => {
     <div style="font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333;">
       <header style="margin-bottom: 30px; border-bottom: 2px solid #333;">
         <a href={baseUrl} style="text-decoration: none; color: #333; display: block;">
-          <h1 style="margin: 0;">📍 最寄駅検索 (Google Map API)</h1>
+          <h1 style="margin: 0;">📍 最寄駅検索 (Yahoo! API)</h1>
         </a>
       </header>
 
@@ -79,7 +75,7 @@ test03.get('/', async (c) => {
           <input 
             type="text" 
             name="address" 
-            placeholder="住所を入力（例：東京都新宿区）" 
+            placeholder="住所を入力（例：岩手県遠野市上郷町細越6丁目）" 
             defaultValue={addressQuery}
             style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px;"
           />
@@ -94,7 +90,7 @@ test03.get('/', async (c) => {
         <section style="margin-bottom: 40px;">
           {geoResult ? (
             <>
-              <div style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #4CAF50; background: #e8f5e9;">
+              <div style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #ff0033; background: #fff5f5;">
                 <strong>判定地点:</strong> {geoResult.address}<br/>
                 <small style="color: #666;">座標: {geoResult.lat}, {geoResult.lon}</small>
               </div>
