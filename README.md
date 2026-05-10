@@ -101,14 +101,14 @@ src/
 src/
 └── db/                 # Data Layer（Cloudflare D1）
     ├── schema.sql
-    │── setup.sh            # 【更新予定】新規マスタの投入順序を追記
+    │── setup.sh            # 【完了】新規マスタの投入順序を追記
     │── queries/
     │   ├── areaQuery.ts        # エリアマスタ（areas テーブル）操作専用
     │   ├── searchQuery.ts      # 店舗情報の複雑な検索・フィルタリング
     │   ├── transformers.ts
     │   ├── utils.ts
     │   ├── main.ts             # クエリ層の統合エクスポート窓口
-    │   └── + stationQuery.ts   # 【新規】座標からの最寄駅計算、駅名検索ロジック(calculateNearestStation)
+    │   └── + stationQuery.ts   # 【完了】最寄駅計算
     ├── seed/
     │   ├── 00_master/
     │   │   ├── areas.sql
@@ -130,7 +130,7 @@ src/
 ```
 scripts/
 ├── 000_gen_areas.ts          # エリアマスタ生成
-├── + 000_gen_stations.ts     # 【新規】駅・路線マスタ生成（ekidata ソース）
+├── + 000_gen_stations.ts     # 【完了】駅・路線マスタ生成（ekidata ソース）
 ├── 00x_{provider}_fetch.ts   # 各ショップデータの取得スクリプト（順次追加）
 │                             #   例: 001_starbucks_fetch.ts, 002_doutor_fetch.ts ...
 ├── 00x_{provider}_convert.ts # 各ショップデータの SQL 変換スクリプト（順次追加）
