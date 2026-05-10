@@ -61,7 +61,7 @@ test03.get('/', async (c) => {
           <input 
             type="text" 
             name="address" 
-            placeholder="住所を入力（例：岩手県遠野市上郷町細越6丁目）" 
+            placeholder="住所を入力" 
             defaultValue={addressQuery}
             style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px;"
           />
