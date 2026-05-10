@@ -18,7 +18,13 @@
 -- DROP TABLE IF EXISTS user_activities;
 DROP TABLE IF EXISTS services;
 -- DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS areas; -- Added for new schema
+DROP TABLE IF EXISTS areas; 
+
+-- Station Master Tables
+DROP TABLE IF EXISTS station_join;
+DROP TABLE IF EXISTS stations;
+DROP TABLE IF EXISTS lines;
+DROP TABLE IF EXISTS companies;
 
 -- =============================================================================
 -- 2. Area Management (Hierarchy & Navigation)
@@ -30,7 +36,7 @@ DROP TABLE IF EXISTS areas; -- Added for new schema
 -- =============================================================================
 CREATE TABLE areas (
     area_id    TEXT PRIMARY KEY,      -- e.g., '00'(全国), '10', '10-08', '10-08-A001'
-    name       TEXT NOT NULL,         -- e.g., '関東', '東京都', '道央'
+    name       TEXT NOT NULL,          -- e.g., '関東', '東京都', '道央'
     area_level INTEGER NOT NULL,      -- 0:全国, 1:大エリア(地方), 2:中エリア(都道府県), 3:小エリア(市区町村/仮想)
     lat        REAL,                  -- Representative Latitude (from HeartRails)
     lng        REAL,                  -- Representative Longitude (from HeartRails)
@@ -49,7 +55,7 @@ CREATE TABLE areas (
 --     status        TEXT DEFAULT 'ACTIVE' NOT NULL, -- Account status
 --     plan_id       TEXT DEFAULT 'free' NOT NULL,   -- 'free', 'pro', or 'biz'
 --     last_login_at DATETIME,
---     deleted_at    DATETIME,                       -- Logic delete timestamp
+--     deleted_at    DATETIME,                        -- Logic delete timestamp
 --     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
 -- );
 
@@ -95,11 +101,75 @@ CREATE TABLE services (
 -- Essential indices for search performance
 CREATE INDEX idx_services_area_id ON services(area_id);
 CREATE INDEX idx_services_geo ON services(lat, lng);         -- For proximity search
-
 CREATE INDEX idx_services_pref_city ON services(pref, city); -- Legacy support
 
 -- =============================================================================
--- 4. User Activities (Personal Data)
+-- 5. Station Master (Railway Data)
+-- =============================================================================
+
+CREATE TABLE companies (
+    company_cd     INTEGER PRIMARY KEY,
+    rr_cd          INTEGER NOT NULL,
+    company_name   TEXT NOT NULL,
+    company_name_k TEXT,
+    company_name_h TEXT,
+    company_name_r TEXT,
+    company_url    TEXT,
+    company_type INTEGER, -- 1:JR, 2:大手私鉄, 3:準大手私鉄...
+    e_status     INTEGER DEFAULT 0, -- 0:運用中, 1:運用前, 2:廃止
+    e_sort         INTEGER
+);
+
+CREATE TABLE lines (
+    line_cd      INTEGER PRIMARY KEY,
+    company_cd   INTEGER NOT NULL,
+    line_name    TEXT NOT NULL,
+    line_name_k  TEXT,
+    line_name_h  TEXT,
+    line_color_c TEXT,    -- 十六進位カラーコード (例: 'ff0000')
+    line_color_t TEXT,    -- 路線記号/テキスト
+    line_type    INTEGER, -- 1:新幹線, 2:一般鉄道, 3:地下鉄...
+    lon          REAL,    -- 路線代表地点（中心）
+    lat          REAL,
+    zoom         INTEGER,
+    e_status     INTEGER DEFAULT 0,
+    e_sort       INTEGER,
+    FOREIGN KEY (company_cd) REFERENCES companies(company_cd)
+);
+
+CREATE TABLE stations (
+    station_cd     INTEGER PRIMARY KEY,
+    station_g_cd   INTEGER NOT NULL, -- Group ID for transferring stations
+    station_name   TEXT NOT NULL,
+    station_name_k TEXT,
+    station_name_r TEXT,
+    line_cd        INTEGER NOT NULL,
+    pref_cd        INTEGER,
+    post           TEXT,
+    address        TEXT,
+    lon          REAL NOT NULL,    -- 経度 (X)
+    lat          REAL NOT NULL,    -- 緯度 (Y)
+    open_ymd       TEXT,
+    close_ymd      TEXT,
+    e_status       INTEGER DEFAULT 0,
+    e_sort         INTEGER,
+    FOREIGN KEY (line_cd) REFERENCES lines(line_cd)
+);
+
+CREATE TABLE station_join (
+    line_cd      INTEGER NOT NULL,
+    station_cd1  INTEGER NOT NULL,
+    station_cd2  INTEGER NOT NULL,
+    PRIMARY KEY (line_cd, station_cd1, station_cd2)
+);
+
+-- Essential indices for station search performance
+CREATE INDEX idx_stations_geo ON stations(lat, lon);
+CREATE INDEX idx_stations_group ON stations(station_g_cd);
+CREATE INDEX idx_stations_line ON stations(line_cd);
+
+-- =============================================================================
+-- 6. User Activities (Personal Data)
 -- 　[ Disabled to prevent accidental data loss. ]
 -- =============================================================================
 -- CREATE TABLE IF NOT EXISTS user_activities (
