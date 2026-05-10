@@ -85,34 +85,42 @@ src/
 │   ├── areaDrilldown.ts    # エリア選択の次階層データを返却するコアロジック
 │   └── areaHandler.ts      # エリア関連の汎用リクエスト・ハンドリング
 │
-├── db/                 # Data Layer（Cloudflare D1）
-│   ├── schema.sql
-│   ├── setup.sh            # 【更新予定】新規マスタの投入順序を追記
-│   ├── queries/
-│   │   ├── areaQuery.ts        # エリアマスタ（areas テーブル）操作専用
-│   │   ├── searchQuery.ts      # 店舗情報の複雑な検索・フィルタリング
-│   │   ├── transformers.ts
-│   │   ├── utils.ts
-│   │   ├── main.ts             # クエリ層の統合エクスポート窓口
-│   │   └── + stationQuery.ts   # 【新規】座標からの最寄駅計算、駅名検索ロジック
-│   ├── seed/
-│   │   ├── 00_master/
-│   │   │   ├── areas.sql
-│   │   │   ├── + stations.sql  # 【新規】駅マスタデータ
-│   │   │   ├── + lines.sql     # 【新規】路線マスタデータ
-│   │   │   └── + companies.sql # 【新規】鉄道会社マスタデータ
-│   │   ├── chains/             # チェーン店データ（Starbucks / Doutor 等）
-│   │   └── shops/              # 地域別店舗データ
-│   └── add_tables/             # 拡張用スキーマ変更履歴
-│       ├── add_areas_table.sql
-│       └── + add_stations_tables.sql  # 【新規】駅・路線・接続情報のスキーマ定義
-│
 └── lib/                # Shared Utilities（View に依存しない純粋なロジック・定数）
     ├── searchUtils.ts      # URL パラメータ（area, q）の同期と検索状態の維持
     ├── geo.ts              # 現在地座標の解決・地理情報処理
-    ├── geoUtils.ts         # 距離計算等のユーティリティ
+    ├── geoUtils.ts         # 【変更】距離計算等のユーティリティ(追加予定：formatAccessTime)
     ├── auth.ts             # 認証の低レイヤー処理
     └── constants.ts        # 地理情報・UI 用定数
+```
+
+---
+
+## src/db/
+
+```
+src/
+└── db/                 # Data Layer（Cloudflare D1）
+    ├── schema.sql
+    │── setup.sh            # 【更新予定】新規マスタの投入順序を追記
+    │── queries/
+    │   ├── areaQuery.ts        # エリアマスタ（areas テーブル）操作専用
+    │   ├── searchQuery.ts      # 店舗情報の複雑な検索・フィルタリング
+    │   ├── transformers.ts
+    │   ├── utils.ts
+    │   ├── main.ts             # クエリ層の統合エクスポート窓口
+    │   └── + stationQuery.ts   # 【新規】座標からの最寄駅計算、駅名検索ロジック(calculateNearestStation)
+    ├── seed/
+    │   ├── 00_master/
+    │   │   ├── areas.sql
+    │   │   ├── + stations.sql  # 【完了】駅マスタデータ
+    │   │   ├── + lines.sql     # 【完了】路線マスタデータ
+    │   │   └── + companies.sql # 【完了】鉄道会社マスタデータ
+    │   ├── chains/             # チェーン店データ（Starbucks / Doutor 等）
+    │   └── shops/              # 地域別店舗データ
+    └── add_tables/             # 拡張用スキーマ変更履歴
+        ├── add_areas_table.sql
+        └── + add_stations_tables.sql  # 【完了】駅・路線・接続情報のスキーマ定義
+
 ```
 
 ---
