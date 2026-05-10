@@ -1,13 +1,5 @@
-// scripts/000_gen_stations.ts
-// 実行コマンド: npx tsx scripts/000_gen_stations.ts
-
-// 出力先：src/db/seed/00_master/companies.sql 
-// 出力先：src/db/seed/00_master/lines.sql 
-// 出力先：src/db/seed/00_master/stations.sql 
-
 import fs from 'fs';
 import path from 'path';
-import iconv from 'iconv-lite';
 import { parse } from 'csv-parse/sync';
 
 /**
@@ -17,7 +9,6 @@ import { parse } from 'csv-parse/sync';
 const INPUT_DIR = 'scripts/data/ekidata';
 const OUTPUT_DIR = 'src/db/seed/00_master';
 
-// 対象ファイル定義
 const TARGETS = [
   {
     csv: 'company20260409.csv',
@@ -37,11 +28,32 @@ const TARGETS = [
 ];
 
 /**
+ * 住所のクリーニング（最小限）
+ * src/lib/searchUtils.ts の実装をそのまま移植
+ */
+export function cleanDisplayAddress(str: string) {
+  if (!str) return '';
+  // NFKC正規化で全角数字・全角スペース・全角ハイフンを一括で半角に変換
+  // その後、タブや改行を除去
+  return str.normalize('NFKC')
+            // VSCodeが警告を出す特定のハイフン（U+2010等）を半角マイナスに変換
+            // .replace(/[‐－ー—]/g, '-') 
+            .replace(/\t/g, ' ')
+            .replace(/\r?\n/g, ' ')
+            .trim();
+}
+
+/**
  * 文字列をSQLセーフな形式に変換
  */
 const escapeSql = (val: string | undefined): string => {
   if (val === undefined || val === '' || val === '0000-00-00') return 'NULL';
-  const escaped = val.replace(/'/g, "''");
+  
+  // 指定された関数でクリーニング
+  const cleaned = cleanDisplayAddress(val);
+  
+  // シングルクォートのエスケープ
+  const escaped = cleaned.replace(/'/g, "''");
   return `'${escaped}'`;
 };
 
@@ -54,7 +66,7 @@ const formatNum = (val: string | undefined): string => {
 };
 
 async function main() {
-  console.log('🚀 Starting station data generation for D1...');
+  console.log('🚀 Starting station data generation (Logic: cleanDisplayAddress)...');
 
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -69,10 +81,8 @@ async function main() {
 
     console.log(`📖 Processing ${target.csv}...`);
 
-    const buffer = fs.readFileSync(csvPath);
-    const utf8Content = iconv.decode(buffer, 'Shift_JIS');
+    const utf8Content = fs.readFileSync(csvPath, 'utf8');
 
-    // record の型を Record<string, string> としてパース
     const records = parse(utf8Content, {
       columns: true,
       skip_empty_lines: true,
@@ -83,7 +93,6 @@ async function main() {
     sqlLines.push(`-- Generated from ${target.csv}`);
     sqlLines.push(`DELETE FROM ${target.table};`);
 
-    // D1のエラー回避のため BEGIN/COMMIT は含めず、各INSERT文のみを生成
     for (const record of records) {
       let values = '';
 

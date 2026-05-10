@@ -130,3 +130,18 @@ export const getAreaAllLabel = (name: string, level: number): string => {
   if (level === 0) return "全国";
   return `${name} すべて`;
 };
+
+/**
+ * 住所のクリーニング（最小限）
+ */
+export function cleanDisplayAddress(str: string) {
+    if (!str) return '';
+    // NFKC正規化で全角数字・全角スペース・全角ハイフンを一括で半角に変換
+    // その後、タブや改行を除去
+    return str.normalize('NFKC')
+              // VSCodeが警告を出す特定のハイフン（U+2010等）を半角マイナスに変換
+              // .replace(/[‐－ー—]/g, '-') // ジェイアールがジェイア-ルに誤変換されるためコメントアウト
+              .replace(/\t/g, ' ')
+              .replace(/\r?\n/g, ' ')
+              .trim();
+}
