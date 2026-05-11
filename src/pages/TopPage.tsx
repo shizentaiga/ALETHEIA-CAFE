@@ -36,14 +36,13 @@ home.get('/', async (c) => {
   const userId = getCookie(c, 'aletheia_session');
   const user = userId ? {} : null;
   
-  // 5. DBから対象サービスを取得
+  // 5. DBから対象サービスを取得(lat/lng含む)
   const { results, total, areaName } = await fetchServices(db, q, 1, area);
 
   // 6. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
   return c.render(
     <>
       <TopHeader user={user} q={q} />
-      {/* 💡 TopMain に currentParams を渡します */}
       <TopMain 
         results={results} 
         total={total} 
