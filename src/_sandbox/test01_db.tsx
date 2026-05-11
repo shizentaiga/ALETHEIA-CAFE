@@ -1,10 +1,13 @@
+// src/_sandbox/test01_db.tsx
+
 /**
  * ALETHEIA Sandbox - サービス検索一覧画面 (test01)
- * [役割] Honoを使用した検索UIの提供と、クエリ関数を用いたデータ表示
- * [特徴] ページネーション対応、属性タグ表示、住所/店名の表記揺れ検索
+ * 最寄駅・アクセス情報表示対応版
  */
 import { Hono } from 'hono'
 import { fetchServices, formatAttributes } from '../db/queries/main'
+import { calculateNearestStations } from '../db/queries/stationQuery'
+import { formatAccessTime } from '../lib/geoUtils'
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
@@ -19,8 +22,28 @@ test01.get('/', async (c) => {
   const perPage = 30;
 
   try {
-    // 外部化したクエリ関数でデータを取得
+    // 1. サービスの基本情報を取得
     const { results, total } = await fetchServices(db, q, page);
+
+    // 2. 各店舗ごとの最寄駅情報を並列で取得して合成
+    const resultsWithAccess = await Promise.all(
+      results.map(async (row: any) => {
+        // 最寄駅を1件検索
+        const stations = await calculateNearestStations(db, row.lat, row.lng, 1);
+        const nearestStation = stations.length > 0 ? stations[0] : null;
+
+        // アクセス時間の計算 (直線距離 -> 徒歩/車表記)
+        const access = nearestStation 
+          ? formatAccessTime(nearestStation.distance)
+          : null;
+
+        return {
+          ...row,
+          nearestStation,
+          access
+        };
+      })
+    );
 
     return c.render(
       <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: auto; padding: 16px; color: #334155;">
@@ -50,20 +73,37 @@ test01.get('/', async (c) => {
 
           {/* リスト表示 */}
           <div style="display: flex; flex-direction: column; gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-            {results.length > 0 ? (
-              results.map((row: any) => {
-                // 属性JSONを表示用タグ配列に変換
+            {resultsWithAccess.length > 0 ? (
+              resultsWithAccess.map((row) => {
                 const tags = formatAttributes(row.attributes_json);
                 return (
-                  <div key={row.service_id} style="background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 4px;">
-                    <div style="font-weight: 600; color: #1e293b; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  <div key={row.service_id} style="background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+                    {/* 店舗名 */}
+                    <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                       {row.title}
                     </div>
+
+                    {/* 最寄駅・アクセス情報 */}
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem;">
+                      {row.nearestStation ? (
+                        <>
+                          <span style="background: #eff6ff; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                            {row.nearestStation.stationName}駅
+                          </span>
+                          <span style="color: #475569;">
+                            {row.access?.text} ({row.access?.distanceText})
+                          </span>
+                        </>
+                      ) : (
+                        <span style="color: #94a3b8;">最寄駅情報なし</span>
+                      )}
+                    </div>
+
+                    {/* 住所とタグ */}
                     <div style="display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: #64748b;">
                       <span style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                         {row.address}
                       </span>
-                      {/* タグの表示 */}
                       <div style="display: flex; gap: 4px; flex-shrink: 0;">
                         {tags.map((tag, i) => (
                           <span key={i} style="background: #f1f5f9; padding: 1px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">
@@ -85,17 +125,17 @@ test01.get('/', async (c) => {
           {/* ページネーション */}
           <div style="margin-top: 24px; display: flex; justify-content: center; align-items: center; gap: 16px;">
             {page > 1 ? (
-              <a href={`?q=${encodeURIComponent(q)}&page=${page - 1}`} style="font-size: 0.85rem; color: #3b82f6; text-decoration: none;">← 前の30件</a>
+              <a href={`?q=${encodeURIComponent(q)}&page=${page - 1}`} style="font-size: 0.85rem; color: #3b82f6; text-decoration: none;">← 前の{perPage}件</a>
             ) : (
-              <span style="font-size: 0.85rem; color: #cbd5e1;">← 前の30件</span>
+              <span style="font-size: 0.85rem; color: #cbd5e1;">← 前の{perPage}件</span>
             )}
             
             <span style="font-size: 0.8rem; color: #475569; font-weight: 600;">Page {page}</span>
             
             {total > page * perPage ? (
-              <a href={`?q=${encodeURIComponent(q)}&page=${page + 1}`} style="font-size: 0.85rem; color: #3b82f6; text-decoration: none;">次の30件 →</a>
+              <a href={`?q=${encodeURIComponent(q)}&page=${page + 1}`} style="font-size: 0.85rem; color: #3b82f6; text-decoration: none;">次の{perPage}件 →</a>
             ) : (
-              <span style="font-size: 0.85rem; color: #cbd5e1;">次の30件 →</span>
+              <span style="font-size: 0.85rem; color: #cbd5e1;">次の{perPage}件 →</span>
             )}
           </div>
         </main>

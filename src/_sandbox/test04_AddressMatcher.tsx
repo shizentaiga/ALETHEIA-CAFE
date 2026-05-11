@@ -11,7 +11,7 @@ test04.get('/', async (c) => {
   // 1. データの取得
   // servicesからは判定の源泉となるフル住所(address)を、areasからはマスター名称を取得
   const [servicesRes, areasRes] = await Promise.all([
-    c.env.ALETHEIA_CAFE_DB.prepare(`SELECT service_id, title, pref, city, address FROM services WHERE deleted_at IS NULL`).all(),
+    c.env.ALETHEIA_CAFE_DB.prepare(`SELECT service_id, title, address FROM services WHERE deleted_at IS NULL`).all(),
     c.env.ALETHEIA_CAFE_DB.prepare(`SELECT area_id, name FROM areas WHERE area_level = 3`).all()
   ]);
 

@@ -66,15 +66,22 @@ export const fetchServices = async (
     .first<{count: number}>();
   
   /**
-   * 2. 実データの取得 (最新順、LIMIT/OFFSET適用)
-   * 既存のデータ構造 (service_id, title, address, attributes_json) を維持。
-   */
-  const { results } = await db.prepare(
-    `SELECT service_id, title, address, attributes_json FROM services 
-     ${whereSql} 
-     ORDER BY created_at DESC 
-     LIMIT ? OFFSET ?`
-  ).bind(...params, limit, offset).all();
+     * 2. 実データの取得 (最新順、LIMIT/OFFSET適用)
+     * 修正点: 緯度(lat)と経度(lng)を SELECT カラムに追加
+     */
+    const { results } = await db.prepare(
+      `SELECT 
+        service_id, 
+        title, 
+        address, 
+        lat,             -- 追加
+        lng,             -- 追加
+        attributes_json 
+      FROM services 
+      ${whereSql} 
+      ORDER BY created_at DESC 
+      LIMIT ? OFFSET ?`
+    ).bind(...params, limit, offset).all();
 
   // --- 💡 今回追加する「エリア名取得」ロジック ---
   let areaName = "エリアを選択";
