@@ -99,7 +99,6 @@ CREATE TABLE services (
 -- Essential indices for search performance
 CREATE INDEX idx_services_area_id ON services(area_id);
 CREATE INDEX idx_services_geo ON services(lat, lng);         -- For proximity search
-CREATE INDEX idx_services_pref_city ON services(pref, city); -- Legacy support
 
 -- =============================================================================
 -- 5. Station Master (Railway Data)
