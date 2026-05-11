@@ -1,7 +1,7 @@
 /**
  * Mister Donuts Fetcher (HTML Scraping Mode)
  * 
- * Usage: npx tsx scripts/004_misterdonuts_fetch.ts
+ * Usage: npx tsx scripts/004-1_misterdonuts_fetch.ts
  */
 
 import fs from 'fs';

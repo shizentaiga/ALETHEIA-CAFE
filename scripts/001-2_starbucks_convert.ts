@@ -1,7 +1,7 @@
 /**
  * Starbucks Data Converter (SQL Generator with D1 Area Lookup)
  * 
- * Usage: npx tsx scripts/001_starbucks_convert.ts
+ * Usage: npx tsx scripts/001-2_starbucks_convert.ts
  */
 
 import fs from 'fs';

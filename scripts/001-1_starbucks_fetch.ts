@@ -1,7 +1,7 @@
 /**
  * Starbucks Data Fetcher (Refactored & Secure Version)
  * 
- * Usage: npx tsx scripts/001_starbucks_fetch.ts
+ * Usage: npx tsx scripts/001-1_starbucks_fetch.ts
  * 
  * Features:
  * - Functional decomposition (Lower nesting levels)

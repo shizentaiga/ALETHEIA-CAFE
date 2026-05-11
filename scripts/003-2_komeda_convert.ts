@@ -1,7 +1,7 @@
 /**
  * Komeda Data Converter (SQL Generator with D1 Area Lookup)
  * 
- * Usage: npx tsx scripts/003_komeda_convert.ts
+ * Usage: npx tsx scripts/003-2_komeda_convert.ts
  */
 
 import fs from 'fs';

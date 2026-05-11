@@ -1,7 +1,7 @@
 /**
  * Doutor Coffee Shop Data Fetcher (Hybrid Deduplication Mode)
  * 
- * Usage: npx tsx scripts/002_doutor_fetch.ts
+ * Usage: npx tsx scripts/002-1_doutor_fetch.ts
  */
 
 import fs from 'fs';

@@ -1,7 +1,7 @@
 /**
  * Mister Donuts Data Converter (SQL Generator with D1 Area Lookup)
  * 
- * Usage: npx tsx scripts/004_misterdonuts_convert.ts
+ * Usage: npx tsx scripts/004-2_misterdonuts_convert.ts
  */
 
 import fs from 'fs';

@@ -1,7 +1,7 @@
 /**
  * Komeda Coffee Shop Data Fetcher (Hybrid Deduplication Mode)
  * 
- * Usage: npx tsx scripts/003_komeda_fetch.ts
+ * Usage: npx tsx scripts/003-1_komeda_fetch.ts
  */
 
 import fs from 'fs';
