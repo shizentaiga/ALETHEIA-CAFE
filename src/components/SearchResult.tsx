@@ -10,6 +10,8 @@ export interface ServiceResult {
   title: string;
   address: string;
   attributes_json: string;
+  nearestStation?: { stationName: string } | null;
+  access?: { text: string; distanceText: string } | null;
 }
 
 export interface SearchResultProps {
@@ -61,7 +63,15 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
         {results.map(row => (
           <a class="cafe-card">
             <span class="name">{row.title}</span>
-            <span class="addr">{row.address}</span>
+
+            {/* 最寄駅情報がある場合は優先表示、ない場合は住所を表示 */}
+            <span class="addr">
+              {row.nearestStation 
+                ? `${row.nearestStation.stationName}駅 ${row.access?.text}`
+                : row.address
+              }
+            </span>
+
             <div class="tag-box">
               {/* Maps formatted attributes into individual tag badges */}
               {formatAttributes(row.attributes_json).map(tag => (

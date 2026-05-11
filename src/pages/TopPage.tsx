@@ -7,6 +7,8 @@ import { TopHeader } from './TopHeader';
 import { TopMain } from './TopMain';
 import { TopFooter } from './TopFooter';
 import { fetchServices } from '../db/queries/main';
+import { calculateNearestStations } from '../db/queries/stationQuery'; // 追加
+import { formatAccessTime } from '../lib/geoUtils'; // 追加
 import { getCookie } from 'hono/cookie';
 import { resolveDetectionArea } from '../lib/geo';
 import { getNormalizedKeywords, joinKeywords } from '../lib/searchUtils';
@@ -21,7 +23,6 @@ home.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;
 
   // 1. 全てのクエリパラメータをURLSearchParamsオブジェクトとして取得
-  // 💡 これが SearchArea までのバケツリレーの「容器」になります
   const currentParams = new URLSearchParams(c.req.query());
 
   // 2. 検索キーワード(q)の抽出と正規化
@@ -39,12 +40,25 @@ home.get('/', async (c) => {
   // 5. DBから対象サービスを取得(lat/lng含む)
   const { results, total, areaName } = await fetchServices(db, q, 1, area);
 
+  // --- 💡 取得した results に最寄駅情報を付与 ---
+  const resultsWithAccess = await Promise.all(
+    results.map(async (row: any) => {
+      const stations = await calculateNearestStations(db, row.lat, row.lng, 1);
+      const nearestStation = stations.length > 0 ? stations[0] : null;
+      return {
+        ...row,
+        nearestStation,
+        access: nearestStation ? formatAccessTime(nearestStation.distance) : null
+      };
+    })
+  );
+
   // 6. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
   return c.render(
     <>
       <TopHeader user={user} q={q} />
       <TopMain 
-        results={results} 
+        results={resultsWithAccess} 
         total={total} 
         area={area} 
         q={q} 
