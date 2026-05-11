@@ -91,8 +91,16 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => 
       <script dangerouslySetInnerHTML={{ __html: `
         document.addEventListener('click', (e) => {
           const root = document.getElementById('${CONFIG.ids.root}');
-          if (root && !root.contains(e.target) && root.querySelector('.area-list-container')) {
-            location.reload();
+          const trigger = root?.querySelector('.search-trigger');
+          const container = root?.querySelector('.area-list-container');
+
+          // クリックされた場所がroot（ドリルダウン全体）の外側、かつ、今リストが開いている場合
+          if (root && !root.contains(e.target) && container) {
+            // rootの中身を最初のボタン（トリガー）だけの状態に戻す
+            location.href = location.href; // リロード
+            
+            // htmxの要素をリセット：「初期表示のURL」
+            htmx.ajax('GET', '${apiPath}', {target: '#${CONFIG.ids.root}'});
           }
         });
       ` }} />
