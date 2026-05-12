@@ -23,9 +23,19 @@ areaApi.get('/', async (c) => {
   const { results: subAreas } = await dbQueries.getSubAreas(db, parentId)
   const parentArea = parentId ? await dbQueries.getAreaInfo(db, parentId) : null
 
+  // 💡 親のIDを算出（例: '10-13-A001' -> '10-13'）
+  const getBackParentId = (id: string | null) => {
+    if (!id || !id.includes('-')) return null;
+    return id.split('-').slice(0, -1).join('-');
+  };
+  const backParentId = getBackParentId(parentId);
+
   // 💡 HTMXの遷移先にも現在のクエリを引き継がせるための文字列
   const baseQueryString = searchBaseParams.toString();
   const hxQueryPrefix = baseQueryString ? `&${baseQueryString}` : '';
+
+  // 💡 戻り先のURL生成
+  const backUrl = `/api/area-drilldown?${backParentId ? `parent_id=${backParentId}` : ''}${hxQueryPrefix}`;
 
   return c.html(html`
     <div class="area-list-container">
@@ -49,7 +59,7 @@ areaApi.get('/', async (c) => {
         <div>
             ${parentArea ? html`
               <span class="back-icon" 
-                    hx-get="/api/area-drilldown?${baseQueryString}" 
+                    hx-get="${backUrl}" 
                     hx-target="#area-drilldown-root">←</span>` : ''}
             ${parentArea ? parentArea.name : 'エリアを選択'}
         </div>
