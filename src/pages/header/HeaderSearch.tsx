@@ -48,20 +48,21 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) =
         class="header-search-form" 
         method="get" 
         action="/"
-        // onsubmit="return window.saveKeyword()" // return を追加
+        onsubmit="this.querySelectorAll('.js-existing-q').forEach(el => el.name = 'q')"
       >
+
+        {/* 💡 対策1: hiddenをwrapperの外、formの直下に集約（iOSの認識を助ける） */}
+        {otherParams.map(([key, value]) => (
+          <input type="hidden" name={key} value={value} />
+        ))}
+
+        {/* 💡 既存キーワードを 'q-hidden' で保持 */}
+        {keywords.map(word => (
+          <input type="hidden" name="q-hidden" value={word} class="js-existing-q" />
+        ))}
+
         <div class="header-search-input-wrapper">
-          {/* 💡 q以外のパラメータを hidden で一括維持 */}
-          {otherParams.map(([key, value]) => (
-            <input type="hidden" name={key} value={value} />
-          ))}
-
-          {/* 1. 既存キーワードの hidden 維持 */}
-          {keywords.map(word => (
-            <input type="hidden" name="q" value={word} />
-          ))}
-
-          {/* 2. チップ表示 */}
+          {/* チップ表示 */}
           {keywords.map(word => {
             const otherWords = keywords.filter(k => k !== word);
             const deleteUrl = createSearchUrl(currentParams, { q: otherWords });
@@ -98,6 +99,7 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) =
           </button>
         </div>
         
+        {/* 💡 対策4: datalistは一番最後に配置（干渉を防ぐ） */}
         <datalist id={CONFIG.listId}></datalist>
       </form>
 
