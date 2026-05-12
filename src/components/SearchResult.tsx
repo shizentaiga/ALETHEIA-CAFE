@@ -29,10 +29,23 @@ export interface SearchResultProps {
 const moduleStyle = (scope: string) => `
   #${scope} { margin-top: 10px; }
   #${scope} .result-header { font-size: 0.8rem; color: #555; margin-bottom: 8px; }
-  #search-results-target { display: flex; flex-direction: column; gap: 8px; }
+  
+  /* 💡 FlexからGridに変更し、デフォルト(スマホ)を2列に設定 */
+  #search-results-target { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 8px; 
+  }
+
+  /* 💡 PCなど広い画面(640px以上)では1列に戻す */
+  @media (min-width: 640px) {
+    #search-results-target { grid-template-columns: 1fr; }
+  }
+
   #${scope} .cafe-card {
     display: block; text-decoration: none; color: inherit;
-    padding: 16px; border: 1px solid #eee; border-radius: 10px;
+    padding: 12px; /* 💡 2列時に文字領域を稼ぐため16pxから微減 */
+    border: 1px solid #eee; border-radius: 10px;
     background: #fff; transition: background 0.2s;
   }
   #${scope} .cafe-card:hover { background: #fafafa; border-color: #ddd; }
