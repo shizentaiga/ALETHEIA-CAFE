@@ -47,9 +47,9 @@ export const headerSearchHistory = `
     //   window.renderHistory();
     // };
 
-    // --- 4. ライフサイクル管理 (HTMX対応) ---
+    // --- 3. ライフサイクル管理 (HTMX対応) ---
     function init() {
-      window.renderHistory();
+      // window.renderHistory();
     }
 
     // 初回読み込み
