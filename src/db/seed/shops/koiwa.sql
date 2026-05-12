@@ -28,8 +28,8 @@ INSERT OR REPLACE INTO services (
     , (SELECT area_id FROM areas WHERE name = '江戸川区' AND area_level = 3 LIMIT 1)
     , 'アヤスカフェ小岩'
     , '東京都江戸川区南小岩8丁目11-8 ウイルコート小岩1F'
-    , 35.731720
-    , 139.882140
+    , 35.73309
+    , 139.88420
     , json_object(
         'wifi', true
         , 'business_hours', '11:00～16:00'
@@ -60,8 +60,8 @@ INSERT OR REPLACE INTO services (
     , (SELECT area_id FROM areas WHERE name = '江戸川区' AND area_level = 3 LIMIT 1)
     , '地域活動支援センターこいわ ～cafe bloom～'
     , '東京都江戸川区南小岩7丁目19-7 MACOビル2階'
-    , 35.733210
-    , 139.880560
+    , 35.73092
+    , 139.88289
     , json_object(
         'wifi', true
         , 'business_hours', '10:00～17:00'
@@ -93,8 +93,8 @@ INSERT OR REPLACE INTO services (
     , (SELECT area_id FROM areas WHERE name = '江戸川区' AND area_level = 3 LIMIT 1)
     , 'サンライズ・カフェ'
     , '東京都江戸川区東小岩6丁目18-17'
-    , 35.734780
-    , 139.888560
+    , 35.73383
+    , 139.88861
     , json_object(
         'payment', json_array('PayPay')
         , 'business_hours', '9:30～18:00'
@@ -123,8 +123,8 @@ INSERT OR REPLACE INTO services (
     , (SELECT area_id FROM areas WHERE name = '江戸川区' AND area_level = 3 LIMIT 1)
     , 'コモン・カフェ'
     , '東京都江戸川区西小岩1丁目27'
-    , 35.735150
-    , 139.881230
+    , 35.73530
+    , 139.88247
     , json_object(
         'payment', json_array('PayPay')
         , 'business_hours', '10:00～19:00'
@@ -152,8 +152,8 @@ INSERT OR REPLACE INTO services (
     , (SELECT area_id FROM areas WHERE name = '江戸川区' AND area_level = 3 LIMIT 1)
     , 'コーヒーパーラー レモン'
     , '東京都江戸川区南小岩6丁目25-14'
-    , 35.730355
-    , 139.883726
+    , 35.72802
+    , 139.88169
     , json_object(
         'payment', json_array('CASH_ONLY')
         , 'business_hours', '12:00～19:00'

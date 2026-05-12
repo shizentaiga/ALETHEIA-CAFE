@@ -48,7 +48,11 @@ home.get('/', async (c) => {
       return {
         ...row,
         nearestStation,
-        access: nearestStation ? formatAccessTime(nearestStation.distance) : null
+        access: nearestStation ? formatAccessTime(
+          nearestStation.distance,
+          nearestStation.lat, nearestStation.lon, // 駅の座標 (lonである点に注意)
+          row.lat, row.lng,                       // 店舗の座標
+        ) : null
       };
     })
   );

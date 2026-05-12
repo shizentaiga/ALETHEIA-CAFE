@@ -88,7 +88,7 @@ src/
 └── lib/                # Shared Utilities（View に依存しない純粋なロジック・定数）
     ├── searchUtils.ts      # URL パラメータ（area, q）の同期と検索状態の維持
     ├── geo.ts              # 現在地座標の解決・地理情報処理
-    ├── geoUtils.ts         # 【完了】距離計算等のユーティリティ
+    ├── geoUtils.ts         # 距離計算、駅からの方角計算のユーティリティ
     ├── auth.ts             # 認証の低レイヤー処理
     └── constants.ts        # 地理情報・UI 用定数
 ```
