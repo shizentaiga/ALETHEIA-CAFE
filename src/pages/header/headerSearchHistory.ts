@@ -59,8 +59,8 @@ export const headerSearchHistory = `
       init();
     }
 
-    // HTMX: ページ遷移(Swap)後、および「戻る」ボタン(Restore)対応
-    document.body.addEventListener('htmx:afterSwap', init);
-    document.body.addEventListener('htmx:historyRestore', init);
+    // // HTMX: ページ遷移(Swap)後、および「戻る」ボタン(Restore)対応：⭐️切り分け中
+    // document.body.addEventListener('htmx:afterSwap', init);
+    // document.body.addEventListener('htmx:historyRestore', init);
   })();
 `;

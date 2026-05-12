@@ -103,7 +103,7 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) =
         <datalist id={CONFIG.listId}></datalist>
       </form>
 
-      {/* <script dangerouslySetInnerHTML={{ __html: headerSearchHistory }} /> */}
+      <script dangerouslySetInnerHTML={{ __html: headerSearchHistory }} />
     </nav>
   )
 }
