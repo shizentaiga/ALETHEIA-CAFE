@@ -153,7 +153,7 @@ export const headerStyle = `
 
   @media (max-width: 480px) {
     .header-logo {
-      display: none;
+      display: none;  // ヘッダロゴ非表示
     }
     /* モバイルでも右端を維持 */
     .header-auth {
