@@ -48,11 +48,15 @@ export const headerSearchHistory = `
     // };
 
     // --- 3. ライフサイクル管理 (HTMX対応) ---
-    function init() {
-      // すぐに実行せず、少し待機させる
-      setTimeout(() => {
-        window.renderHistory();
-      }, 300);
+
+    // function init() {
+    //   window.renderHistory();
+    // }
+
+    // init で呼ぶのをやめて、イベントリスナーにする
+    const input = document.getElementById(INPUT_ID);
+    if (input) {
+      input.addEventListener('focus', () => window.renderHistory(), { once: true });
     }
 
     // 初回読み込み
