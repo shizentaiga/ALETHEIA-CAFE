@@ -4,7 +4,7 @@ const CONFIG = {
   api: { basePath: '/api/area-drilldown' },
   ids: { root: 'area-drilldown-root' },
   design: {
-    width: '50%',
+    width: '50%',   // 幅を50％に変更
     borderRadius: '12px',
     colors: { border: '#e5e7eb', text: '#64748b', background: '#fff', hoverBg: '#f9fafb' }
   }
@@ -15,8 +15,20 @@ interface SearchAreaProps {
   areaName?: string;
 }
 
-export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => {
+export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => {  
   const parentId = currentParams?.get('parent_id');
+
+  // 💡 1. ボタンクリック時専用のパスを作成
+  // parent_idがない（閉じている）場合は、現在選択中のareaを親としてセットする
+  const getTriggerPath = () => {
+    const params = new URLSearchParams(currentParams?.toString());
+    if (!parentId && params.has('area')) {
+      params.set('parent_id', params.get('area')!);
+    }
+    return `${CONFIG.api.basePath}?${params.toString()}`;
+  };
+  
+  // 💡 2. 自動ロード（hx-trigger="load"）用のパスは、現在のパラメータをそのまま使用
   const apiPath = currentParams?.toString() 
     ? `${CONFIG.api.basePath}?${currentParams.toString()}` 
     : CONFIG.api.basePath;
@@ -31,10 +43,17 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => 
 
       {/* 💡 parent_idがある場合は自動ロード、なければボタンを表示 */}
       <div id={CONFIG.ids.root} 
-           hx-get={parentId ? apiPath : null} 
-           hx-trigger={parentId ? "load" : null}>
+        // リロード時：現在のURL状態を復元（開いている階層を維持）
+        hx-get={parentId ? apiPath : null} 
+        hx-trigger={parentId ? "load" : null}>
+
         {!parentId && (
-          <button class="search-trigger" hx-get={apiPath} hx-target={`#${CONFIG.ids.root}`}>
+          <button 
+            class="search-trigger" 
+            // クリック時：現在のareaを親とみなして「続き」から開始
+            hx-get={getTriggerPath()}
+            hx-target={`#${CONFIG.ids.root}`}
+          >
             <div style="display: flex; align-items: center; gap: 6px;">
               <span>📍</span>
               <span>{areaName || 'エリアを選択'}</span>
