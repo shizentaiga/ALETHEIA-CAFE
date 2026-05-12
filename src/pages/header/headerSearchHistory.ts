@@ -9,25 +9,23 @@ import { SEARCH_HISTORY_CONFIG } from '../../lib/constants';
  */
 export const headerSearchHistory = `
   (function() {
+    const config = ${JSON.stringify(SEARCH_HISTORY_CONFIG)};
+    const INPUT_ID = 'q-input-header';
+    const LIST_ID = 'searchHistoryList';
 
-    console.log('Script loaded');
-    // const config = ${JSON.stringify(SEARCH_HISTORY_CONFIG)};
-    // const INPUT_ID = 'q-input-header';
-    // const LIST_ID = 'searchHistoryList';
+    // --- 1. 描画ロジック ---
+    window.renderHistory = function() {
+      const datalist = document.getElementById(LIST_ID);
+      if (!datalist) return;
 
-    // // --- 1. 描画ロジック ---
-    // window.renderHistory = function() {
-    //   const datalist = document.getElementById(LIST_ID);
-    //   if (!datalist) return;
-
-    //   const history = JSON.parse(localStorage.getItem(config.KEY) || '[]');
+      const history = JSON.parse(localStorage.getItem(config.KEY) || '[]');
       
-    //   // datalistの更新
-    //   datalist.innerHTML = history
-    //     .map(word => '<option value="' + word + '">')
-    //     .join('');
+      // datalistの更新
+      datalist.innerHTML = history
+        .map(word => '<option value="' + word + '">')
+        .join('');
 
-    // };
+    };
 
     // // --- 2. 保存ロジック ---
     // window.saveKeyword = function() {
