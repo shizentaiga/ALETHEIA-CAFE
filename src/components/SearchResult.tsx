@@ -62,7 +62,7 @@ const moduleStyle = (scope: string) => `
   }
 
   #${scope} .cafe-card:hover { 
-    border-color: #d1d5db; 
+    border-color: #cbd5e1;
   }
 
   /* ③ タイトル行数制限 */
@@ -84,6 +84,9 @@ const moduleStyle = (scope: string) => `
     line-height: 1.45; 
     display: block;
     margin-top: 4px; 
+    white-space: nowrap;     /* 改行禁止 */
+    overflow: hidden;        /* はみ出しを隠す */
+    text-overflow: ellipsis; /* 三点リーダを表示 */
   }
 
   /* ① タグを“静か”にする */
