@@ -1,115 +1,93 @@
-// src/_sandbox/test13_direction.tsx
-
 import { Hono } from 'hono'
 import { getDirection } from '../lib/geoUtils'
 
-export const test13 = new Hono()
+type Bindings = {
+  ALETHEIA_CAFE_DB: D1Database
+}
 
-// 代表的なテストデータ（小岩駅を基準: 35.733, 139.888）
-const TEST_CASES = [
-  { name: '北 (市川方面)', lat: 35.743, lng: 139.888 },
-  { name: '東 (江戸川方面)', lat: 35.733, lng: 139.898 },
-  { name: '南 (鹿骨方面)', lat: 35.723, lng: 139.888 },
-  { name: '西 (新小岩方面)', lat: 35.733, lng: 139.878 },
-  { name: '北東', lat: 35.743, lng: 139.898 },
-]
+export const test13 = new Hono<{ Bindings: Bindings }>()
 
-test13.get('/', (c) => {
+test13.get('/', async (c) => {
+  const db = c.env.ALETHEIA_CAFE_DB;
   const baseUrl = c.req.path.endsWith('/') ? c.req.path : (c.req.path + '/');
-  
-  // 基準点（デフォルト: 小岩駅）
-  const baseLat = 35.733258;
-  const baseLng = 139.888122;
 
-  return c.render(
-    <div style="padding: 20px; font-family: monospace;">
-      <header>
-        <a href={baseUrl} style="text-decoration: none; color: inherit;">
-          <h1>方位判定サンドボックス (Test 13)</h1>
-        </a>
-      </header>
+  // 1. DBから小岩駅の情報を取得
+  // ※論理的にJR小岩駅（line_cdが11313など）に絞ることも可能ですが、まずは名前で取得します
+  const koiwaStation = await db.prepare(`
+    SELECT station_name, lat, lon as lng 
+    FROM stations 
+    WHERE station_name = '小岩' 
+    LIMIT 1
+  `).first<{ station_name: string, lat: number, lng: number }>();
 
-      <section style="margin-bottom: 30px; border: 1px solid #ccc; padding: 15px;">
-        <h3>1. プリセットテスト (基準: 小岩駅)</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="border-bottom: 2px solid #333;">
-              <th style="text-align: left;">ケース名</th>
-              <th style="text-align: left;">対象緯度/経度</th>
-              <th style="text-align: center;">結果</th>
-            </tr>
-          </thead>
-          <tbody>
-            {TEST_CASES.map(tc => {
-              const res = getDirection(baseLat, baseLng, tc.lat, tc.lng);
-              return (
-                <tr style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 8px;">{tc.name}</td>
-                  <td>{tc.lat}, {tc.lng}</td>
-                  <td style="text-align: center; font-size: 1.5rem;">
-                    <strong>{res.arrow}</strong> ({res.label})
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </section>
-
-      <section style="border: 1px solid #ccc; padding: 15px;">
-        <h3>2. 手入力テスト</h3>
-        <form hx-get={baseUrl + "calc"} hx-target="#result" hx-trigger="change, keyup from:input delay:200ms">
-          <div style="display: grid; gap: 10px;">
-            <div>
-              <label>基準緯度 (lat1): </label>
-              <input type="number" name="lat1" value={baseLat.toString()} step="0.000001" />
-            </div>
-            <div>
-              <label>基準経度 (lng1): </label>
-              <input type="number" name="lng1" value={baseLng.toString()} step="0.000001" />
-            </div>
-            <hr />
-            <div>
-              <label>対象緯度 (lat2): </label>
-              <input type="number" name="lat2" value={(baseLat + 0.005).toString()} step="0.000001" />
-            </div>
-            <div>
-              <label>対象経度 (lng2): </label>
-              <input type="number" name="lng2" value={baseLng.toString()} step="0.000001" />
-            </div>
-          </div>
-        </form>
-        <div id="result" style="margin-top: 20px; padding: 20px; background: #f0f0f0; text-align: center;">
-          <p>数値を変更するとここに結果が出ます</p>
-        </div>
-      </section>
-    </div>
-  )
-})
-
-// HTMX用エンドポイント
-test13.get('/calc', (c) => {
-  const q = c.req.query();
-  const lat1 = parseFloat(q.lat1);
-  const lng1 = parseFloat(q.lng1);
-  const lat2 = parseFloat(q.lat2);
-  const lng2 = parseFloat(q.lng2);
-
-  if (isNaN(lat1) || isNaN(lng1) || isNaN(lat2) || isNaN(lng2)) {
-    return c.html("入力値が不正です");
+  if (!koiwaStation) {
+    return c.html("小岩駅がデータベースに見つかりませんでした。");
   }
 
-  const res = getDirection(lat1, lng1, lat2, lng2);
-  const dy = lat2 - lat1;
-  const dx = lng2 - lng1;
+  const BASE_LAT = koiwaStation.lat;
+  const BASE_LNG = koiwaStation.lng;
 
-  return c.html(
-    <div style="font-size: 1.2rem;">
-      <div style="font-size: 3rem; margin-bottom: 10px;">{res.arrow}</div>
-      <div>判定: <strong>{res.label}</strong></div>
-      <div style="font-size: 0.8rem; color: #666; margin-top: 10px;">
-        差分: dy={dy.toFixed(6)}, dx={dx.toFixed(6)}
-      </div>
+  // 2. 江戸川区の店舗を取得（小岩付近に限定するため ORDER BY で距離を絞ることも可能ですが、まずは35件）
+  const { results: shops } = await db.prepare(`
+    SELECT title, address, lat, lng 
+    FROM services 
+    WHERE address LIKE '%小岩%' 
+      AND lat IS NOT NULL 
+    LIMIT 35
+  `).all();
+
+  const results = (shops as any[]).map(shop => {
+    // 基準: 駅, 対象: 店舗
+    const direction = getDirection(BASE_LAT, BASE_LNG, shop.lat, shop.lng);
+    const dy = shop.lat - BASE_LAT;
+    const dx = shop.lng - BASE_LNG;
+    
+    return { ...shop, direction, dy, dx };
+  });
+
+  return c.render(
+    <div style="padding: 20px; font-family: sans-serif;">
+      <header style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>方位判定デバッグ：{koiwaStation.station_name}駅基準</h1>
+        <div style="text-align: right; font-size: 0.8rem; background: #eee; padding: 10px; border-radius: 4px;">
+          <strong>基準点データ (DB)</strong><br/>
+          緯度: {BASE_LAT}<br/>
+          経度: {BASE_LNG}
+        </div>
+      </header>
+      
+      <p style="color: #666;">※赤色はプラス（北・東）、青色はマイナス（南・西）を示します。</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <thead>
+          <tr style="background: #333; color: #fff;">
+            <th style="padding: 12px; text-align: left;">店舗名 / 住所</th>
+            <th style="padding: 12px; text-align: center;">dy (緯度差)</th>
+            <th style="padding: 12px; text-align: center;">dx (経度差)</th>
+            <th style="padding: 12px; text-align: center;">判定</th>
+          </tr>
+        </thead>
+        <tbody>
+          {results.map((r, i) => (
+            <tr key={i} style="border-bottom: 1px solid #ddd;">
+              <td style="padding: 12px;">
+                <div style="font-weight: bold;">{r.title}</div>
+                <div style="font-size: 0.75rem; color: #666;">{r.address}</div>
+              </td>
+              <td style="padding: 12px; text-align: center; font-family: monospace; color: {r.dy >= 0 ? '#d32f2f' : '#1976d2'}">
+                {r.dy > 0 ? '+' : ''}{r.dy.toFixed(5)}
+              </td>
+              <td style="padding: 12px; text-align: center; font-family: monospace; color: {r.dx >= 0 ? '#d32f2f' : '#1976d2'}">
+                {r.dx > 0 ? '+' : ''}{r.dx.toFixed(5)}
+              </td>
+              <td style="padding: 12px; text-align: center; background: #fffde7; border-left: 2px solid #fbc02d;">
+                <span style="font-size: 1.8rem;">{r.direction.arrow}</span><br/>
+                <strong style="font-size: 0.9rem;">{r.direction.label}</strong>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  )
+  );
 })
