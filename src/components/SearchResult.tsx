@@ -90,12 +90,12 @@ const moduleStyle = (scope: string) => `
   .tag-box { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
   .tag { 
     font-size: 0.65rem; 
-    background: #f8fafc; 
+    background: #f1f5f9; 
     padding: 2px 8px; 
     border-radius: 999px; /* 完全に丸く */
     color: #55667a; /* タグも一段階濃くして確実にパスさせる */
     font-weight: 400; 
-    border: 1px solid #f1f5f9;
+    border: 1px solid #e2e8f0;
   }
 `
 
