@@ -1,7 +1,6 @@
 // iPhoneでキーワード検索の決定が効かない問題の切り分け
 
 // src/_sandbox/test12_iphone.tsx
-// src/_sandbox/test12_iphone.tsx
 import { Hono } from 'hono'
 
 export const test12 = new Hono()
