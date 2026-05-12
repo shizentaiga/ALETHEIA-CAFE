@@ -49,7 +49,10 @@ export const headerSearchHistory = `
 
     // --- 3. ライフサイクル管理 (HTMX対応) ---
     function init() {
-      // window.renderHistory();
+      // すぐに実行せず、少し待機させる
+      setTimeout(() => {
+        window.renderHistory();
+      }, 300);
     }
 
     // 初回読み込み
