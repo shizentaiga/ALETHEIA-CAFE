@@ -48,7 +48,8 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) =
         class="header-search-form" 
         method="get" 
         action="/"
-        onsubmit="this.querySelectorAll('.js-existing-q').forEach(el => el.name = 'q')"
+        // キーワード保存処理(window.saveKeyword())
+        onsubmit="this.querySelectorAll('.js-existing-q').forEach(el => el.name = 'q'); window.saveKeyword();"
       >
 
         {/* 💡 対策1: hiddenをwrapperの外、formの直下に集約（iOSの認識を助ける） */}

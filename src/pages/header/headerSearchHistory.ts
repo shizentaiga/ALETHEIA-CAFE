@@ -44,18 +44,17 @@ export const headerSearchHistory = `
       history = [word, ...history.filter(h => h !== word)].slice(0, config.MAX_COUNT);
 
       localStorage.setItem(config.KEY, JSON.stringify(history));
+      window.renderHistory();
     };
 
     // --- 3. ライフサイクル管理 (HTMX対応) ---
-
-    // function init() {
-    //   window.renderHistory();
-    // }
-
-    // init で呼ぶのをやめて、イベントリスナーにする
-    const input = document.getElementById(INPUT_ID);
-    if (input) {
-      input.addEventListener('focus', () => window.renderHistory(), { once: true });
+    function init() {
+      const input = document.getElementById(INPUT_ID);
+      if (input) {
+        // HTMX遷移後も確実にリスナーを付けるため、initの中で登録する
+        // 1回フォーカスされたら描画する設定。Enter阻害を避けるため初期化時は描画しない
+        input.addEventListener('focus', () => window.renderHistory(), { once: true });
+      }
     }
 
     // 初回読み込み
