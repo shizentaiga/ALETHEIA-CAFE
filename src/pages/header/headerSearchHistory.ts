@@ -47,20 +47,20 @@ export const headerSearchHistory = `
     //   window.renderHistory();
     // };
 
-    // // --- 4. ライフサイクル管理 (HTMX対応) ---
-    // function init() {
-    //   window.renderHistory();
-    // }
+    // --- 4. ライフサイクル管理 (HTMX対応) ---
+    function init() {
+      window.renderHistory();
+    }
 
-    // // 初回読み込み
-    // if (document.readyState === 'loading') {
-    //   document.addEventListener('DOMContentLoaded', init);
-    // } else {
-    //   init();
-    // }
+    // 初回読み込み
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
 
-    // // HTMX: ページ遷移(Swap)後、および「戻る」ボタン(Restore)対応：⭐️切り分け中
-    // document.body.addEventListener('htmx:afterSwap', init);
-    // document.body.addEventListener('htmx:historyRestore', init);
+    // HTMX: ページ遷移(Swap)後、および「戻る」ボタン(Restore)対応
+    document.body.addEventListener('htmx:afterSwap', init);
+    document.body.addEventListener('htmx:historyRestore', init);
   })();
 `;
