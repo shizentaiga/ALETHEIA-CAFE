@@ -48,7 +48,7 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) =
         class="header-search-form" 
         method="get" 
         action="/"
-        onsubmit="window.saveKeyword()"
+        onsubmit="return window.saveKeyword()" // return を追加
       >
         <div class="header-search-input-wrapper">
           {/* 💡 q以外のパラメータを hidden で一括維持 */}
@@ -78,7 +78,8 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) =
           {/* 3. 新規キーワード入力窓 */}
           <input 
             id={CONFIG.inputId}
-            type="text" 
+            type="search"   // textからsearchに変更
+            enterkeyhint="search" // 追加
             name="q" 
             list={CONFIG.listId}
             class="header-search-input" 
