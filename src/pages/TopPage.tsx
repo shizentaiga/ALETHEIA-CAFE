@@ -50,7 +50,7 @@ home.get('/', async (c) => {
         nearestStation,
         access: nearestStation ? formatAccessTime(
           nearestStation.distance,
-          nearestStation.lat, nearestStation.lon, // 駅の座標 (lonである点に注意)
+          nearestStation.lat, nearestStation.lng, // 駅の座標
           row.lat, row.lng,                       // 店舗の座標
         ) : null
       };

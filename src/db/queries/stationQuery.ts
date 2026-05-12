@@ -4,7 +4,7 @@ export type StationCandidate = {
   stationName: string; // 駅名（例: "新宿"）
   distance: number;    // 計算された直線距離(m)
   lat: number;
-  lon: number;
+  lng: number; // 💡 lon から lng に変更
   lines: string[];     // その駅に乗り入れている路線名のリスト
 };
 
@@ -14,7 +14,7 @@ export type StationCandidate = {
 export const calculateNearestStations = async (
   db: D1Database,
   lat: number,
-  lon: number,
+  lng: number,
   limit: number = 3
 ): Promise<StationCandidate[]> => {
   // --- 1. 【範囲絞り込み】 ---
@@ -23,8 +23,8 @@ export const calculateNearestStations = async (
   const range = 0.018; 
   const minLat = lat - range;
   const maxLat = lat + range;
-  const minLon = lon - range;
-  const maxLon = lon + range;
+  const minLng = lng - range;
+  const maxLng = lng + range;
 
   // 修正点: 同名駅（別場所）対策として station_g_cd を取得に追加
   const { results } = await db.prepare(`
@@ -32,14 +32,14 @@ export const calculateNearestStations = async (
       s.station_g_cd,
       s.station_name,
       s.lat,
-      s.lon,
+      s.lon AS lng, -- 💡 DBの lon を lng として取得
       l.line_name
     FROM stations s
     JOIN lines l ON s.line_cd = l.line_cd
     WHERE s.lat BETWEEN ?1 AND ?2
-      AND s.lon BETWEEN ?3 AND ?4
+      AND s.lon BETWEEN ?3 AND ?4 -- 💡 DBカラム名は lon なのでそのままでOK
       AND s.e_status = 0
-  `).bind(minLat, maxLat, minLon, maxLon).all();
+  `).bind(minLat, maxLat, minLng, maxLng).all();
 
   if (!results || results.length === 0) return [];
 
@@ -68,14 +68,14 @@ export const calculateNearestStations = async (
     // 新規駅グループの場合は距離計算
     // 三平方の定理に動的な経度補正を適用
     const dy = (lat - row.lat) * M_PER_LAT;
-    const dx = (lon - row.lon) * mPerLon;
+    const dx = (lng - row.lng) * mPerLon;
     const distance = Math.round(Math.sqrt(dx * dx + dy * dy));
 
     stationMap.set(gCd, {
       stationName: row.station_name,
       distance: distance,
       lat: row.lat,
-      lon: row.lon,
+      lng: row.lng,
       lines: [row.line_name]
     });
   }

@@ -30,7 +30,7 @@ export const resolveDetectionArea = (c: Context): string | undefined => {
 export const fetchCoordinatesFromYahoo = async (
   address: string, 
   clientId: string
-): Promise<{ lat: number; lon: number; formattedAddress: string } | null> => {
+): Promise<{ lat: number; lng: number; formattedAddress: string } | null> => {
   if (!address || !clientId) return null;
 
   try {
@@ -68,7 +68,7 @@ export const fetchCoordinatesFromYahoo = async (
     const coordinates = feature.Geometry.Coordinates.split(','); // "経度,緯度" 形式
 
     return {
-      lon: parseFloat(coordinates[0]),
+      lng: parseFloat(coordinates[0]),
       lat: parseFloat(coordinates[1]),
       formattedAddress: feature.Property.Address
     };
