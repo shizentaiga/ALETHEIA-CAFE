@@ -16,6 +16,7 @@ type Bindings = {
 export const test01 = new Hono<{ Bindings: Bindings }>()
 
 test01.get('/', async (c) => {
+  const baseUrl = c.req.path.endsWith('/') ? c.req.path : `${c.req.path}/`;
   const db = c.env.ALETHEIA_CAFE_DB;
   const q = c.req.query('q') || '';
   const page = parseInt(c.req.query('page') || '1');
@@ -49,7 +50,10 @@ test01.get('/', async (c) => {
       <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: auto; padding: 16px; color: #334155;">
         {/* ヘッダー・検索フォーム */}
         <header style="margin-bottom: 20px;">
-          <h2 style="font-size: 1.1rem; color: #0f172a; margin: 0;">ALETHEIA Sandbox (test01)</h2>
+
+          {/* トップに戻る */}
+          <a href={baseUrl}><h1>ALETHEIA</h1></a>  
+          
           <form method="get" style="display: flex; gap: 8px; margin-top: 12px;">
             <input 
               type="text" 
