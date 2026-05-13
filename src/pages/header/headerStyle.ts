@@ -92,11 +92,21 @@ export const headerStyle = `
   .header-search-input {
     flex: 1;
     min-width: 120px;
-    border: none;
+    border: none;      /* 枠線を強制排除 */
     background: transparent;
-    font-size: 0.875rem; // 0.875rem(14px相当)
-    outline: none;
+    font-size: 0.875rem;  /* チップの文字サイズ感と統一 */
+    outline: none;     /* フォーカス時の青枠等を排除 */
     color: #111827;
+    -webkit-appearance: none;     /* iOSのデフォルトスタイルをリセット */
+    appearance: none;
+  }
+
+  /* 擬似要素（×や▼）も同様に親を指定 */
+  .header-search-input-wrapper .header-search-input::-webkit-search-cancel-button,
+  .header-search-input-wrapper .header-search-input::-webkit-search-decoration,
+  .header-search-input-wrapper .header-search-input::-webkit-calendar-picker-indicator {
+    display: none;          /* !important 削除 */
+    -webkit-appearance: none;
   }
 
   .header-search-input::placeholder {
@@ -153,7 +163,7 @@ export const headerStyle = `
 
   @media (max-width: 480px) {
     .header-logo {
-      display: none;  // ヘッダロゴ非表示
+      display: none;  /* ヘッダロゴ非表示 */
     }
     /* モバイルでも右端を維持 */
     .header-auth {
