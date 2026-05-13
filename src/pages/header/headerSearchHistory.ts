@@ -1,7 +1,5 @@
 // src/pages/header/headerSearchHistory.ts
 
-import { SEARCH_HISTORY_CONFIG } from '../../lib/constants';
-
 /**
  * [ALETHEIA PROJECT] ヘッダー検索履歴ロジック
  * 
@@ -9,6 +7,16 @@ import { SEARCH_HISTORY_CONFIG } from '../../lib/constants';
  * 2. iPhone対策: ページ読み込み時のDOM操作を避け、Enterキーの動作を保証
  * 3. HTMX対応: ページ遷移や履歴復元後も、新しい要素に対して正しく動作を適用
  */
+
+/**
+ * 検索履歴設定 (PWA用ローカルストレージ)
+ * 最大10件、1件50文字以内のキーワードをFIFO形式で管理
+ */
+export const SEARCH_HISTORY_CONFIG = {
+  KEY: 'aletheia_search_history',
+  MAX_COUNT: 10,
+  MAX_CHARS: 50,
+} as const;
 
 export const headerSearchHistory = `
   (function() {

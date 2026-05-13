@@ -4,9 +4,14 @@
  */
 
 /**
+ * 設定定数
+ */
+const MAX_KEYWORDS_LIMIT = 20;
+
+/**
  * URLクエリパラメータ(q)からキーワード配列を正規化して抽出する
  * - 配列/文字列の両方に対応
- * - 最大5件制限
+ * - 最大件数制限（MAX_KEYWORDS_LIMIT）を適用
  */
 export const getNormalizedKeywords = (queries: string | string[] | undefined): string[] => {
   if (!queries) return [];
@@ -16,12 +21,12 @@ export const getNormalizedKeywords = (queries: string | string[] | undefined): s
 
   // 2. 文字列の分解とクリーニング
   const allWords = rawArray
-    .flatMap((v) => v.split(/[\s　]+/)) // 空白分割
-    .map((v) => v.trim())             // 前後空白削除
-    .filter(Boolean);                 // 空文字排除
+    .flatMap((v) => v.split(/[\s　]+/)) // 空白分割（半角・全角対応）
+    .map((v) => v.trim())              // 前後空白削除
+    .filter(Boolean);                  // 空文字排除
 
-  // 3. 重複排除と件数制限 (最大5件)
-  return [...new Set(allWords)].slice(0, 5);
+  // 3. 重複排除と件数制限
+  return [...new Set(allWords)].slice(0, MAX_KEYWORDS_LIMIT);
 };
 
 /**

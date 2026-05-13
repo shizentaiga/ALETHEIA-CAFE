@@ -19,7 +19,7 @@ const CONFIG = {
   searchIcon: '🔍',
   inputId: 'q-input-header',
   listId: 'searchHistoryList',
-  maxKeywords: 5,
+  maxKeywords: 20,
 } as const
 
 export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) => {
