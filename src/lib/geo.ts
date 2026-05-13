@@ -1,22 +1,23 @@
 // src/lib/geo.ts
 
 import { Context } from 'hono'
-import { getPrefectureName } from './constants'
-
+import { resolveAreaByRegionCode } from '../db/queries/main'
 /**
  * Resolve the most appropriate area (prefecture name) from the request.
  * Priority: 1. URL query parameters, 2. CDN (Cloudflare) location data.
  */
-export const resolveDetectionArea = (c: Context): string | undefined => {
-  // 1. Check URL parameters (?area=...)
+export const resolveDetectionArea = async (c: Context, db: D1Database): Promise<string | undefined> => {
+  // 1. URLパラメータ (?area=...) をチェック
   const queryArea = c.req.query('area')
   if (queryArea) return queryArea
 
-  // 2. Fallback to CDN (Cloudflare Workers) geolocation data
-  // const cf = (c.req.raw as any).cf
-  // if (cf?.country === 'JP' && cf.regionCode) {
-  //   return getPrefectureName(cf.regionCode) || undefined
-  // }
+  // 2. CDN (Cloudflare Workers) の位置情報をフォールバックとして使用
+  const cf = (c.req.raw as any).cf
+  if (cf?.country === 'JP' && cf.regionCode) {
+    const areaData = await resolveAreaByRegionCode(db, cf.regionCode);
+    // 初期値として「大エリア(L1)」のIDを返す
+    return areaData?.l1Id || undefined
+  }
 
   return undefined
 }

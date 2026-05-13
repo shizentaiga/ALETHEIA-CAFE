@@ -21,22 +21,28 @@ export const home = new Hono<{ Bindings: Bindings }>();
 home.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;
 
-  // 1. 全てのクエリパラメータをURLSearchParamsオブジェクトとして取得
+  // 1. クエリパラメータの保持（コンポーネントへの引き継ぎ用バトン）
   const currentParams = new URLSearchParams(c.req.query());
 
-  // 2. 検索キーワード(q)の抽出と正規化
+  // 2. 検索キーワードの抽出と正規化
   const queryArray = c.req.queries('q');
   const normalized = getNormalizedKeywords(queryArray);
   const q = joinKeywords(normalized);
 
-  // 3. 検索対象エリアの決定 (URL指定を優先、なければ現在地)
-  const area = c.req.query('area') || resolveDetectionArea(c);
+  // 3. エリア特定：URL指定がなければ現在地（CDN）をフォールバック
+  const urlArea = c.req.query('area');
+  const area = urlArea || await resolveDetectionArea(c, db);
+
+  // 現在地が特定された場合、パラメータに反映してドリルダウンの初期値にする
+  if (!urlArea && area) {
+    currentParams.set('area', area);
+  }
 
   // 4. ユーザーセッションの確認
   const userId = getCookie(c, 'aletheia_session');
   const user = userId ? {} : null;
   
-  // 5. DBから対象サービスを取得(lat/lng含む)
+  // 5. DBから店舗データと表示用エリア名を取得
   const { results, total, areaName } = await fetchServices(db, q, 1, area);
 
   // --- 💡 取得した results に最寄駅情報を付与 ---
