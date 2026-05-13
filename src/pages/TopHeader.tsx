@@ -10,8 +10,6 @@ import { HeaderAuth } from './header/HeaderAuth'
 import { headerStyle } from './header/headerStyle'
 import { getNormalizedKeywords } from '../lib/searchUtils'
 
-import { SearchResult } from '../components/SearchResult'
-
 // --- Configuration ---
 const CONFIG = {
   logoText: 'ALETHEIA',
@@ -22,11 +20,7 @@ const CONFIG = {
 
 export const TopHeader: FC<{
   user?: any,
-  results?: any[],
-  total?: number, 
-  area?: string, // Propsとしての定義
-  q?: string 
-}> = ({ user, results = [], total = 0, area: propsArea, q }) => {
+}> = ({ user}) => {
   const c = useRequestContext()
   
   /**
@@ -34,7 +28,7 @@ export const TopHeader: FC<{
    */
   const qParams = c.req.queries('q')
   const keywords = getNormalizedKeywords(qParams)
-  const area = propsArea || c.req.query('area') || ''
+  // const area = propsArea || c.req.query('area') || ''
 
   // --- Render Full Header for Initial Page Load ---
   return (

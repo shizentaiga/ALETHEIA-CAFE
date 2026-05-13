@@ -3,12 +3,14 @@
  */
 
 import { Hono } from 'hono';
+import { getCookie } from 'hono/cookie';
+
 import { TopHeader } from './TopHeader';
 import { TopMain } from './TopMain';
 import { TopFooter } from './TopFooter';
+
 import { fetchServices, calculateNearestStations } from '../db/queries/main';
-import { formatAccessTime } from '../lib/geoUtils'; // 追加
-import { getCookie } from 'hono/cookie';
+import { formatAccessTime } from '../lib/geoUtils';
 import { resolveDetectionArea } from '../lib/geo';
 import { getNormalizedKeywords, joinKeywords } from '../lib/searchUtils';
 
@@ -65,7 +67,7 @@ home.get('/', async (c) => {
   // 6. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
   return c.render(
     <>
-      <TopHeader user={user} q={q} />
+      <TopHeader user={user} />
       <TopMain 
         results={resultsWithAccess} 
         total={total} 
