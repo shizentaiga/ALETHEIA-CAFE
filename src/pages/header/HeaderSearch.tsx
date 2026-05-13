@@ -11,6 +11,7 @@ import { headerSearchHistory } from './headerSearchHistory'
 interface HeaderSearchProps {
   keywords: string[];
   placeholder: string;
+  areaName?: string;
 }
 
 // 検索窓に関する定数定義
@@ -22,24 +23,24 @@ const CONFIG = {
   maxKeywords: 20,
 } as const
 
-export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) => {
+export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, areaName: propsAreaName }) => {
   const c = useRequestContext();
   const currentUrl = new URL(c.req.url);
   const currentParams = currentUrl.searchParams;
 
-  // --- 1. 定数・状態の整理 (ネストを減らすための事前準備) ---
+  // 1. パラメータの取得
+  const areaName = propsAreaName || currentParams.get('areaName');
+  const areaValue = currentParams.get('area');
+
+  // キーワード入力数の上限を判定
   const isMax = keywords.length >= CONFIG.maxKeywords;
-  
-  // 検索上限に達しているかどうかに応じてプレースホルダーを切り替え
   const dynamicPlaceholder = isMax 
     ? "上限です" 
-    : (keywords.length > 0 ? "" : placeholder);
+    : (keywords.length > 0 || areaName ? "" : placeholder);
 
-  // 💡 パラメータの重複を排除しつつ q 以外を抽出
-  // URLに同じキーが複数ある場合、Mapに変換することで最後の値のみが保持され、
-  // hiddenフィールドが重複してHTMLが汚れるのを防ぎます
+  // 💡 【重要】重複防止：q, area, areaName は個別に hidden を作るので otherParams から除外する
   const otherParams = Array.from(new Map(currentParams.entries()))
-    .filter(([key]) => key !== 'q');
+    .filter(([key]) => key !== 'q' && key !== 'area' && key !== 'areaName');
 
   return (
     <nav id={CONFIG.headerId}>
@@ -53,6 +54,10 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) =
         onsubmit="this.querySelectorAll('.js-existing-q').forEach(el => el.name = 'q'); window.saveKeyword();"
       >
 
+        {/* 2. 状態の維持 (hidden) */}
+        {areaValue && <input type="hidden" name="area" value={areaValue} />}
+        {areaName && <input type="hidden" name="areaName" value={areaName} />}
+
         {/* 💡 対策1: hiddenをwrapperの外、formの直下に集約（iOSの認識を助ける） */}
         {otherParams.map(([key, value]) => (
           <input type="hidden" name={key} value={value} />
@@ -64,7 +69,18 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder }) =
         ))}
 
         <div class="header-search-input-wrapper">
-          {/* 現在適用されているキーワードをチップとして表示 */}
+          {/* 3. エリアチップの表示 */}
+          {areaName && (
+            <span class="search-chip area-chip">
+              📍 {areaName}
+              <a 
+                href={createSearchUrl(currentParams, { area: null, areaName: null })} 
+                class="search-chip-delete"
+              >×</a>
+            </span>
+          )}
+
+          {/* 4. キーワードチップの表示 */}
           {keywords.map(word => {
             const otherWords = keywords.filter(k => k !== word);
             const deleteUrl = createSearchUrl(currentParams, { q: otherWords });

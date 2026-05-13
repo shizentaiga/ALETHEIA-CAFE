@@ -20,7 +20,8 @@ const CONFIG = {
 
 export const TopHeader: FC<{
   user?: any,
-}> = ({ user}) => {
+  areaName?: string,
+}> = ({ user, areaName }) => {
   const c = useRequestContext()
   
   /**
@@ -43,6 +44,7 @@ export const TopHeader: FC<{
       <HeaderSearch 
         keywords={keywords} 
         placeholder={CONFIG.placeholder} 
+        areaName={areaName} // エリア名を渡す
       />
 
       {/* 3. Authentication Links */}
