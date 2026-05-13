@@ -27,19 +27,24 @@ DROP TABLE IF EXISTS lines;
 DROP TABLE IF EXISTS companies;
 
 -- =============================================================================
--- 2. Area Management (Hierarchy & Navigation)
+-- 2. エリア管理 (階層構造とナビゲーション)
 -- =============================================================================
--- area_id convention:
--- L1 (Region): '00'(全国), '10', '20' ...
--- L2 (Pref/Virtual): '10-13' (Tokyo), '01-V10' (Central Hokkaido)
--- L3 (City/Local): '10-13-A001' (A-code for city), '01-V10-A001' (Local area in Virtual)
+-- area_id 命名規則:
+-- L1 (大エリア/地方): '00'(全国), '10', '20' ...
+-- L2 (中エリア/都道府県/仮想): '10-13' (東京都), '01-V10' (道央)
+-- L3 (小エリア/市区町村/詳細): '10-13-A001' (市区町村), '01-V10-A001' (仮想エリア内詳細)
+-- -----------------------------------------------------------------------------
+-- L1 から L2 への対応リファレンス (L1: 地方コード, L2: 都道府県JISコード)
+-- 01:北海道 (V10-40) | 02:東北 (02-07) | 10:関東 (08-14) | 20:中部 (15-23)
+-- 30:近畿   (24-30)   | 40:中国 (31-35) | 50:四国 (36-39) | 60:九州・沖縄 (40-47)
 -- =============================================================================
+
 CREATE TABLE areas (
     area_id    TEXT PRIMARY KEY,      -- e.g., '00'(全国), '10', '10-08', '10-08-A001'
-    name       TEXT NOT NULL,          -- e.g., '関東', '東京都', '道央'
-    area_level INTEGER NOT NULL,      -- 0:全国, 1:大エリア(地方), 2:中エリア(都道府県), 3:小エリア(市区町村/仮想)
-    lat        REAL,                  -- Representative Latitude (from HeartRails)
-    lng        REAL,                  -- Representative Longitude (from HeartRails)
+    name       TEXT NOT NULL,         -- e.g., '関東', '東京都', '道央'
+    area_level INTEGER NOT NULL,      -- 0:全国, 1:大エリア(地方), 2:中エリア(都道府県), 3:小エリア(市区町村/詳細)
+    lat        REAL,                  -- 代表緯度 (HeartRails等から取得)
+    lng        REAL,                  -- 代表経度 (HeartRails等から取得)
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
