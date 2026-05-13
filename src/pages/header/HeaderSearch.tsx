@@ -94,7 +94,7 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
             );
           })}
 
-          {/* 3. 新規キーワード入力窓 */}
+          {/* 5. 新規キーワード入力窓 */}
           <input 
             id={CONFIG.inputId}
             type="search"         // iOSで「検索」ボタンを表示させるためsearchを指定
