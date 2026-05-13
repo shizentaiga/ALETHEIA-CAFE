@@ -88,13 +88,13 @@ export const headerStyle = `
     color: #374151;
   }
 
-  /* 入力欄：主役だが静か */
+  /* ブラウザ独自の検索窓装飾をリセット */
   .header-search-input {
     flex: 1;
     min-width: 120px;
     border: none;
     background: transparent;
-    font-size: 0.95rem;
+    font-size: 0.875rem; // 0.875rem(14px相当)
     outline: none;
     color: #111827;
   }
