@@ -79,3 +79,28 @@ export const getAreaInfo = async (db: D1Database, areaId: string) => {
     .bind(areaId)
     .first<AreaRecord>();
 }
+
+/**
+ * CDNのリージョンコード(JIS)から、DB上の大エリア・中エリア情報を特定する
+ */
+export async function resolveAreaByRegionCode(db: D1Database, regionCode: string) {
+  // 中エリア(L2)の特定
+  const l2Area = await db.prepare(
+    "SELECT area_id, name FROM areas WHERE area_level = 2 AND area_id LIKE ?"
+  ).bind(`%-${regionCode}`).first<{ area_id: string; name: string }>();
+
+  if (!l2Area) return null;
+
+  // 大エリア(L1)のID抽出と名称取得
+  const l1Id = l2Area.area_id.split('-')[0];
+  const l1Area = await db.prepare(
+    "SELECT name FROM areas WHERE area_id = ? AND area_level = 1"
+  ).bind(l1Id).first<{ name: string }>();
+
+  return {
+    l1Id,
+    l1Name: l1Area?.name || '不明',
+    l2Id: l2Area.area_id,
+    l2Name: l2Area.name
+  };
+}

@@ -5,8 +5,7 @@
  * 最寄駅・アクセス情報表示対応版
  */
 import { Hono } from 'hono'
-import { fetchServices, formatAttributes } from '../db/queries/main'
-import { calculateNearestStations } from '../db/queries/stationQuery'
+import { fetchServices, formatAttributes,calculateNearestStations } from '../db/queries/main'
 import { formatAccessTime } from '../lib/geoUtils'
 
 type Bindings = {

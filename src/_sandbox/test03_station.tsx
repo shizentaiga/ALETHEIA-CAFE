@@ -2,7 +2,7 @@
 
 import { Hono } from 'hono'
 import { fetchCoordinatesFromYahoo } from '../lib/geo'
-import { calculateNearestStations, StationCandidate } from '../db/queries/stationQuery'
+import { calculateNearestStations, StationCandidate } from '../db/queries/main'
 import { isValidCoordinates, formatAccessTime } from '../lib/geoUtils'
 
 type Bindings = {
@@ -26,14 +26,14 @@ test03.get('/', async (c) => {
     const geo = await fetchCoordinatesFromYahoo(addressQuery, clientId);
     
     // 1. バリデーション関数の流用
-    if (geo && isValidCoordinates(geo.lat, geo.lon)) {
+    if (geo && isValidCoordinates(geo.lat, geo.lng)) {
       geoResult = { 
         address: geo.formattedAddress, 
-        lon: geo.lon, 
+        lon: geo.lng, 
         lat: geo.lat 
       };
 
-      nearestStations = await calculateNearestStations(db, geo.lat, geo.lon, 5);
+      nearestStations = await calculateNearestStations(db, geo.lat, geo.lng, 5);
     } else if (geo) {
       errorMessage = "日本の範囲外の住所が指定されました。";
     } else {

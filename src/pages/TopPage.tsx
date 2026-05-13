@@ -6,8 +6,7 @@ import { Hono } from 'hono';
 import { TopHeader } from './TopHeader';
 import { TopMain } from './TopMain';
 import { TopFooter } from './TopFooter';
-import { fetchServices } from '../db/queries/main';
-import { calculateNearestStations } from '../db/queries/stationQuery'; // 追加
+import { fetchServices, calculateNearestStations } from '../db/queries/main';
 import { formatAccessTime } from '../lib/geoUtils'; // 追加
 import { getCookie } from 'hono/cookie';
 import { resolveDetectionArea } from '../lib/geo';
