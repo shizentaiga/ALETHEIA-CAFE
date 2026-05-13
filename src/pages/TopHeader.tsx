@@ -28,7 +28,6 @@ export const TopHeader: FC<{
    */
   const qParams = c.req.queries('q')
   const keywords = getNormalizedKeywords(qParams)
-  // const area = propsArea || c.req.query('area') || ''
 
   // --- Render Full Header for Initial Page Load ---
   return (
