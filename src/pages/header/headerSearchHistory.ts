@@ -10,12 +10,12 @@
 
 /**
  * 検索履歴設定 (PWA用ローカルストレージ)
- * 最大10件、1件50文字以内のキーワードをFIFO形式で管理
+ * 最大5件、1件20文字以内のキーワードをFIFO形式で管理
  */
 export const SEARCH_HISTORY_CONFIG = {
   KEY: 'aletheia_search_history',
-  MAX_COUNT: 10,
-  MAX_CHARS: 50,
+  MAX_COUNT: 5,
+  MAX_CHARS: 20,
 } as const;
 
 export const headerSearchHistory = `
