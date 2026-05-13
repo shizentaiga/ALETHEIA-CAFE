@@ -21,8 +21,7 @@ const SITE_CONFIG = {
  */
 const GLOBAL_STYLE = `
   :root {
-    // --bg-color: #fafafa;  // 背景を純白から少し落とす
-    --bg-color: #ffffff;  // 背純白
+    --bg-color: #ffffff;
     --text-color: #1f2937;
     --accent-color: #374151;
   }

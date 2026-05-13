@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
 
 import { renderer } from './renderer'
+import { htmlMinifier } from './middleware/htmlMinifier'
+
 import { home } from './pages/TopPage'
 import { googleAuthApp } from './pages/GoogleAuth'
 import { sandboxApp } from './_sandbox/_router'
@@ -18,6 +20,7 @@ const app = new Hono<{ Bindings: Bindings }>()
 /**
  * Global Middlewares
  */
+app.use(htmlMinifier()) // HTML配信時に不要なコメントアウトを削除
 app.use(renderer) // Apply common layout
 
 /**
