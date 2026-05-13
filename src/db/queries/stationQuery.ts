@@ -19,8 +19,8 @@ export const calculateNearestStations = async (
 ): Promise<StationCandidate[]> => {
   // --- 1. 【範囲絞り込み】 ---
   // D1の計算負荷を下げるため、インデックスが効く単純な数値比較(BETWEEN)を使用。
-  // 約2km圏内を検索対象とする (1度 ≒ 111km なので 2km ≒ 0.018度)
-  const range = 0.018; 
+  // 約5km圏内を検索対象とする (1度 ≒ 111km なので 2km ≒ 0.018度)
+  const range = 0.090; 
   const minLat = lat - range;
   const maxLat = lat + range;
   const minLng = lng - range;

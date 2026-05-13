@@ -81,7 +81,7 @@ const CONFIG = {
   WALK_SPEED_PER_MIN: 80,    // 80m/分
   CAR_SPEED_PER_MIN: 400,    // 400m/分
   DETOUR_FACTOR: 1.25,       // 直線距離 -> 道路距離 補正
-  WALK_LIMIT_MIN: 20,        // 徒歩表示の閾値
+  WALK_LIMIT_MIN: 30,        // 徒歩表示の閾値
 } as const;
 
 export type AccessInfo = {
