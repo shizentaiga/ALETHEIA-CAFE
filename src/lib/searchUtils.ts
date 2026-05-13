@@ -100,7 +100,9 @@ export const normalizeAddress = (address: string): string => {
  * 3: "10-13-A001" (市区町村)
  */
 export const getAreaLevel = (areaId: string | null | undefined): number => {
-  if (!areaId) return 0;
+  // 💡 areaId が null, undefined, または "00" の場合はレベル 0 (全国) とみなす
+  if (!areaId || areaId === '00') return 0;
+  
   const hyphenCount = (areaId.match(/-/g) || []).length;
   return hyphenCount + 1;
 };

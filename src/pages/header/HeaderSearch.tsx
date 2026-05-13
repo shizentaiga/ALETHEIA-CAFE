@@ -74,7 +74,8 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
             <span class="search-chip area-chip">
               📍 {areaName}
               <a 
-                href={createSearchUrl(currentParams, { area: null, areaName: null })} 
+                // 💡 area: '00'(全国、未指定) を明示的に指定
+                href={createSearchUrl(currentParams, { area: '00', areaName: null })} 
                 class="search-chip-delete"
               >×</a>
             </span>

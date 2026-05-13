@@ -7,7 +7,10 @@ const areaApi = new Hono<{ Bindings: { ALETHEIA_CAFE_DB: D1Database } }>()
 
 areaApi.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB
-  const parentId = c.req.query('parent_id') || null
+
+  // 💡 '00' が来た場合も parentId は null として扱い、初期リストを表示させる
+  const rawParentId = c.req.query('parent_id');
+  const parentId = (rawParentId === '00' || !rawParentId) ? null : rawParentId;
   
   const currentParams = new URLSearchParams(c.req.query());
   const searchBaseParams = new URLSearchParams(currentParams.toString());
@@ -43,6 +46,24 @@ areaApi.get('/', async (c) => {
         </div>
 
         <div class="area-list-scroll">
+            <!-- 💡 1. 初期状態（地方選択）の時だけ「全国」ボタンを先頭に出現させる -->
+            ${!parentId ? html`
+                <button class="area-item-ui area-item-all" 
+                    onclick="window.location.href='${createSearchUrl(searchBaseParams, { area: '00', areaName: null })}'">
+                    <span>📍 全国（すべて）</span>
+                    <span style="font-size: 0.7rem; color: #d1d5db;">❯</span>
+                </button>
+            ` : ''}
+
+            <!-- 💡 2. 各地方・都道府県の「すべて」対応 -->
+            ${parentArea ? html`
+                <button class="area-item-ui area-item-all" 
+                    onclick="window.location.href='${createSearchUrl(searchBaseParams, { area: parentArea.area_id, areaName: parentArea.name })}'">
+                    <span>📍 ${parentArea.name}すべて</span>
+                    <span style="font-size: 0.7rem; color: #d1d5db;">❯</span>
+                </button>
+            ` : ''}
+
             ${subAreas.map(area => {
                 // 💡 常に検索URLを作成し、かつ parent_id を付与してリロードさせる
                 const nextUrl = createSearchUrl(searchBaseParams, { area: area.area_id });

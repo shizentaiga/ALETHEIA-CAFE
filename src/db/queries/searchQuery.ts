@@ -3,12 +3,27 @@
  * [Role] Build search conditions and execute queries against D1.
  * [Notes] Handles multi-keyword search, soft-deletion, and pagination.
  */
-import { getNormalizedKeywords } from '../../lib/searchUtils';
-// import { cleanSql } from './utils'; // 必要に応じて有効化
+import { getNormalizedKeywords, generateAreaLikePattern } from '../../lib/searchUtils';
 
 // --- CONFIGURATION ---
 const DEFAULT_LIMIT = 30; // Default records per page
 // -------------------
+
+// fetchServicesの外側に定義
+async function resolveAreaName(db: D1Database, area?: string): Promise<string> {
+  if (!area) return "エリアを選択";
+  if (area === '00') return "";
+
+  try {
+    const record = await db.prepare(`SELECT name FROM areas WHERE area_id = ?`)
+      .bind(area)
+      .first<{ name: string }>();
+    return record?.name ?? "エリアを選択";
+  } catch (e) {
+    console.error("Area name fetch error:", e);
+    return "エリアを選択";
+  }
+}
 
 /**
  * Main service search function.
@@ -28,9 +43,7 @@ export const fetchServices = async (
   const offset = (page - 1) * limit;
 
   /**
-   * 1. 計画書 v1.1 に基づくキーワードの正規化
-   * lib/search.ts の getNormalizedKeywords を使用することで、
-   * 文字列・配列のどちらが来ても「重複なし・空文字なし・最大5件」の配列に変換されます。
+   * 1. キーワードの正規化：「重複なし・空文字なし・最大5件」
    */
   const keywords = getNormalizedKeywords(q);
   
@@ -52,8 +65,12 @@ export const fetchServices = async (
 
   // 3. エリア検索 (前方一致)
   if (area) {
-    conditions.push(`area_id LIKE ?`);
-    params.push(`${area}%`); 
+    const areaPattern = generateAreaLikePattern(area);
+    // areaPattern が '%' の場合は「全国」なので、WHERE句に条件を追加しない
+    if (areaPattern !== '%') {
+      conditions.push(`area_id LIKE ?`);
+      params.push(areaPattern); 
+    }
   }
 
   const whereSql = `WHERE ${conditions.join(' AND ')}`;
@@ -83,21 +100,8 @@ export const fetchServices = async (
       LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset).all();
 
-  // --- 💡 今回追加する「エリア名取得」ロジック ---
-  let areaName = "エリアを選択";
-  if (area) {
-    try {
-      const areaRecord = await db.prepare(`SELECT name FROM areas WHERE area_id = ?`)
-        .bind(area)
-        .first<{ name: string }>();
-      if (areaRecord) {
-        areaName = areaRecord.name;
-      }
-    } catch (e) {
-      console.error("Area name fetch error:", e);
-      // エラー時も「エリアを選択」を維持して処理を続行させる（ビルド・実行エラー防止）
-    }
-  }
+  // --- 💡 「エリア名取得」ロジック ---
+  const areaName = await resolveAreaName(db, area);
 
   // 既存の View コンポーネントとの互換性を保つため、同じオブジェクト形式で返却
   return {
