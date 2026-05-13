@@ -108,7 +108,13 @@ scripts/
 | エッジ最適化 | `src/middleware/htmlMinifier.ts` により Cloudflare Workers 上での配信パフォーマンスを最大化 |
 
 ---
+💡 新規機能追加時のワークフロー例
+データ準備: scripts/ でデータを取得・変換し、src/db/seed/ に配置。
 
-*本資料はファイル構成のみを記載した内部資料です。新規機能の実装時における依存関係の確認・フォルダ配置の検討を目的とし、不定期に更新されます。*
+DB実装: src/db/queries/ に関数を追加し、main.ts から export。
 
-*last updated: 2026-04*
+API実装: HTMX から叩く場合は src/api/ にエンドポイントを作成。
+
+UI実装: src/components/ にパーツを作り、src/pages/ で配置。
+
+---
