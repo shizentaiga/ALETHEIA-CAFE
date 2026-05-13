@@ -21,9 +21,10 @@ const SITE_CONFIG = {
  */
 const GLOBAL_STYLE = `
   :root {
-    --bg-color: #ffffff;
-    --text-color: #333333;
-    --accent-color: #0070f3;
+    // --bg-color: #fafafa;  // 背景を純白から少し落とす
+    --bg-color: #ffffff;  // 背純白
+    --text-color: #1f2937;
+    --accent-color: #374151;
   }
 
   body { 
@@ -41,7 +42,12 @@ const GLOBAL_STYLE = `
     line-height: 1.2;
   }
 
-  h1 { font-size: 2rem; margin-bottom: 1rem; }
+  // h1 { font-size: 2rem; margin-bottom: 1rem; }
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 
   main {
     max-width: 800px;
@@ -54,7 +60,8 @@ const GLOBAL_STYLE = `
     text-decoration: none;
   }
 
-  a:hover { text-decoration: underline; }
+  // a:hover { text-decoration: underline; }
+  a:hover { opacity: 0.72;}
 
   button { cursor: pointer; }
 
