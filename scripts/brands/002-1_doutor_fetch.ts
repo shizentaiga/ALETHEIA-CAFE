@@ -1,7 +1,10 @@
 /**
  * Doutor Coffee Shop Data Fetcher (Hybrid Deduplication Mode)
- * 
  * Usage: npx tsx scripts/brands/002-1_doutor_fetch.ts
+ * 
+ * 【主キー生成戦略: service_id の不変性確保】
+ * 1. 優先：電話番号（ハイフン除去）
+ * 2. 次点：店名 ＋ 住所 のハッシュ値
  */
 
 import fs from 'fs';

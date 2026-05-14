@@ -14,8 +14,8 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 const MAX_REPAIRS = 3000;   // 最大の修正数
-const INPUT_FILE = 'src/db/seed/chains/komeda.sql';
-const OUTPUT_FILE = 'src/db/seed/chains/komeda2.sql';
+const INPUT_FILE = 'src/db/seed/brands/003-1_komeda.sql';
+const OUTPUT_FILE = 'src/db/seed/brands/003-2_komeda.sql';
 const SLEEP_MS = 100; 
 
 const envPath = path.resolve(process.cwd(), '.dev.vars');
