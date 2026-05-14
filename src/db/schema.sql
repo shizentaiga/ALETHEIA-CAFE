@@ -149,8 +149,8 @@ CREATE TABLE stations (
     pref_cd        INTEGER,
     post           TEXT,
     address        TEXT,
-    lon          REAL NOT NULL,    -- 経度 (X)
-    lat          REAL NOT NULL,    -- 経度 (X) ※システム内では 'lng' として扱う
+    lon          REAL NOT NULL,    -- 経度 (X) ※システム内では 'lng' として扱う
+    lat          REAL NOT NULL,    -- 緯度 (Y)
     open_ymd       TEXT,
     close_ymd      TEXT,
     e_status       INTEGER DEFAULT 0,
