@@ -88,7 +88,7 @@ CREATE TABLE services (
     -- - category       : (string)  'cat_cafe', 'cat_restaurant', 'cat_bar' など
     -- - wifi           : (boolean) Wi-Fiの有無
     -- - outlets        : (boolean) 電源の有無
-    -- - business_hours : (string)  開閉時間（例: '09:00-21:00'）
+    -- - business_hours : (string)  基本営業時間（例: '09:00〜21:00'）
     -- - payment        : (array)   利用可能な決済手段（例: ['CASH_ONLY'], ['PayPay', 'Credit Card']）
     -- - buffet         : (boolean) 食べ放題（ミスドビュッフェ等）の有無
     -- - baby           : (boolean) 赤ちゃん対応・ベビーカー入店の可否
