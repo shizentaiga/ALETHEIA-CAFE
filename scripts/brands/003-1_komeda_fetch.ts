@@ -16,7 +16,7 @@ import { PREFECTURE_MASTER } from '../../src/lib/constants';
 const PROVIDER_CONFIG = {
     BRAND_ID: '003',
     BRAND_NAME: 'komeda',
-    OUTPUT_SQL_NAME: '003-1_komeda.sql', // 最終的に出力されるSQLファイル名
+    OUTPUT_SQL_NAME: '003_komeda.json', // 最終的に出力されるSQLファイル名
     BASE_URL: 'https://eu.komeda.co.jp/v1/hp/shop',
     BRAND_TYPE: 1,      // コメダ珈琲店
     OFFSET_STEP: 20,    // 1回のリクエストで取得する件数

@@ -16,7 +16,7 @@ import { PREFECTURE_MASTER } from '../../src/lib/constants';
 const PROVIDER_CONFIG = {
     BRAND_ID: '004',
     BRAND_NAME: 'misterdonuts',
-    OUTPUT_SQL_NAME: '004-1_misterdonuts.sql', // 最終的に出力されるSQLファイル名
+    OUTPUT_SQL_NAME: '004_misterdonuts.json', // 最終的に出力されるSQLファイル名
     BASE_URL: 'https://md.mapion.co.jp/b/misterdonut/attr/',
     ITEMS_PER_PAGE: 20,
 };

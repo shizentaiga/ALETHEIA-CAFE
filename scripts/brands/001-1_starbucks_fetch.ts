@@ -19,7 +19,7 @@ import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
 const PROVIDER_CONFIG = {
     BRAND_ID: '001',
     BRAND_NAME: 'starbucks',
-    OUTPUT_SQL_NAME: '001-1_starbucks.sql', // 最終的に出力されるSQLファイル名
+    OUTPUT_SQL_NAME: '001_starbucks.json', // 最終的に出力されるSQLファイル名
     BASE_URL: 'https://hn8madehag.execute-api.ap-northeast-1.amazonaws.com/prd-2019-08-21/storesearch',
     ORIGIN: 'https://store.starbucks.co.jp',
     REFERER: 'https://store.starbucks.co.jp/',

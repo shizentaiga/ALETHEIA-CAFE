@@ -15,7 +15,7 @@ import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
 const PROVIDER_CONFIG = {
     BRAND_ID: '002',
     BRAND_NAME: 'doutor',
-    OUTPUT_SQL_NAME: '002-1_doutor.sql', // 最終的に出力されるSQLファイル名
+    OUTPUT_SQL_NAME: '002_doutor.json', // 最終的に出力されるSQLファイル名
     BASE_URL: 'https://shop.doutor.co.jp/doutor/spot/list',
     SELECTOR: '.copper-list-items',
     LIMIT_STEP: 50,         // 1回のリクエストで増加させる件数
