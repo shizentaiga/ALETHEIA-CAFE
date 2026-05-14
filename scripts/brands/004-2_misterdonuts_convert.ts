@@ -1,7 +1,6 @@
 /**
- * Mister Donuts Data Converter (SQL Generator with D1 Area Lookup)
- * 
- * Usage: npx tsx scripts/brands/004-2_misterdonuts_convert.ts
+ * ミスタードーナツ データコンバーター (D1エリア参照付きSQL生成)
+ * * 使用方法: npx tsx scripts/brands/004-2_misterdonuts_convert.ts
  */
 
 import fs from 'fs';
@@ -10,6 +9,23 @@ import { Miniflare } from "miniflare";
 import { PATHS, CONFIG, ensureDirectory } from '../utils.js';
 import { normalizeAddress } from '../../src/lib/searchUtils.js';
 
+/**
+ * プロバイダー固有の設定
+ */
+const CONVERTER_CONFIG = {
+    BRAND_ID: 'MISTERDONUTS',
+    INPUT_FILE: '004_misterdonuts.json',
+    OUTPUT_FILE: '004-1_misterdonuts.sql', // 最終出力用SQL
+    D1_BINDING: 'ALETHEIA_CAFE_DB',
+    D1_DATABASE_ID: '70ed05d4-20d7-484d-bdc1-3a5e9ea63086',
+    D1_PERSIST_PATH: '.wrangler/state/v3/d1',
+    AREA_LEVEL_TARGET: 3,
+    BRAND_PREFIX: 'ミスタードーナツ'
+};
+
+/**
+ * DBから取得したエリアマスターの型
+ */
 interface AreaMaster {
     area_id: string;
     name: string;
@@ -24,11 +40,13 @@ function cleanDisplayAddress(str: string) {
     return str.replace(/\t/g, ' ').replace(/　/g, ' ').replace(/\r?\n/g, ' ').trim();
 }
 
+/**
+ * 生のAPIデータをデータベーススキーマ用のSQLに変換します
+ */
 function convertToSql(items: any[], areas: AreaMaster[]) {
     return items.map((item) => {
         // ブランド名を冠した店名（例: ミスタードーナツ けやきウォーク前橋 ショップ）
-        const brandPrefix = 'ミスタードーナツ';
-        const rawName = item.name ? `${brandPrefix} ${item.name}` : brandPrefix;
+        const rawName = item.name ? `${CONVERTER_CONFIG.BRAND_PREFIX} ${item.name}` : CONVERTER_CONFIG.BRAND_PREFIX;
         
         const rawAddr = item.address || '';
         const mdId = item.id;
@@ -43,17 +61,16 @@ function convertToSql(items: any[], areas: AreaMaster[]) {
         // サービスIDの生成
         const serviceId = `MSD_${mdId}`;
 
-        // schema.sqlの厳選されたキーに基づき attributes_json を構成
+        // schema.sqlの仕様に基づき attributes_json を構成
         const attributes = {
             category: "cat_cafe",
             wifi: item.raw_icons?.some((s: string) => s.includes('Wi-Fi')) || false,
             outlets: false, // スクレイピング項目にないためデフォルトfalse
-            business_hours: "", // Rawデータに含まれないため空文字（必要に応じ詳細パース）
+            business_hours: "", // Rawデータに含まれないため空文字
             payment: [], // 後の拡張用
             buffet: item.services?.has_buffet || false, // ドーナツビュッフェ
             baby: false, // 後の拡張用
-            // おまけの拡張項目
-            pop_buffet: item.services?.has_pop_buffet || false 
+            pop_buffet: item.services?.has_pop_buffet || false // ドーナツポップつめ放題
         };
 
         const escapedTitle = rawName.replace(/'/g, "''");
@@ -68,19 +85,19 @@ function convertToSql(items: any[], areas: AreaMaster[]) {
 }
 
 async function main() {
-    console.log("🛠 Starting Mister Donuts Conversion with D1 Area Lookup...");
+    console.log("🛠 ミスタードーナツの変換処理を開始します（D1エリア検索）...");
 
     const mf = new Miniflare({
-        d1Databases: { ALETHEIA_CAFE_DB: "70ed05d4-20d7-484d-bdc1-3a5e9ea63086" },
+        d1Databases: { [CONVERTER_CONFIG.D1_BINDING]: CONVERTER_CONFIG.D1_DATABASE_ID },
         modules: true,
         script: `export default { fetch: () => new Response("ok") }`,
-        d1Persist: ".wrangler/state/v3/d1",
+        d1Persist: CONVERTER_CONFIG.D1_PERSIST_PATH,
     });
 
     let areas: AreaMaster[] = [];
     try {
-        const db = await mf.getD1Database("ALETHEIA_CAFE_DB");
-        const res = await db.prepare("SELECT area_id, name FROM areas WHERE area_level = 3").all();
+        const db = await mf.getD1Database(CONVERTER_CONFIG.D1_BINDING);
+        const res = await db.prepare("SELECT area_id, name FROM areas WHERE area_level = ?").bind(CONVERTER_CONFIG.AREA_LEVEL_TARGET).all();
         
         areas = (res.results || []).map((a: any) => ({
             area_id: a.area_id,
@@ -88,28 +105,29 @@ async function main() {
             normalizedName: normalizeAddress(a.name)
         })).sort((a, b) => b.name.length - a.name.length);
         
-        console.log(`✅ Loaded ${areas.length} areas.`);
+        console.log(`✅ ${areas.length} 件のエリアをロードしました。`);
     } catch (error) {
-        console.error("❌ Failed to fetch Area Master.");
+        console.error("❌ エリアマスターの取得に失敗しました。");
         process.exit(1);
     }
 
-    const rawPath = path.join(PATHS.RAW_DATA, '004_misterdonuts.json');
+    const rawPath = path.join(PATHS.RAW_DATA, CONVERTER_CONFIG.INPUT_FILE);
     if (!fs.existsSync(rawPath)) {
-        console.error("❌ Raw data not found at " + rawPath);
+        console.error("❌ 生データが見つかりません: " + rawPath);
         return;
     }
 
     const rawData = JSON.parse(fs.readFileSync(rawPath, 'utf-8'));
     
+    // SQL生成
     let totalSql = "-- ALETHEIA Mister Donuts Seed (Area-ID Pre-Mapped)\n\n";
     totalSql += convertToSql(rawData, areas);
 
     ensureDirectory(PATHS.DB_SEED);
-    const outputPath = path.join(PATHS.DB_SEED, 'misterdonuts.sql');
+    const outputPath = path.join(PATHS.DB_SEED, CONVERTER_CONFIG.OUTPUT_FILE);
     fs.writeFileSync(outputPath, totalSql);
 
-    console.log(`\n✨ SQL Seed generated at: ${outputPath}`);
+    console.log(`\n✨ SQLシードが生成されました: ${outputPath}`);
     await mf.dispose();
 }
 

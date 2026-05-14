@@ -1,7 +1,6 @@
 /**
- * Starbucks Data Converter (SQL Generator with D1 Area Lookup)
- * 
- * Usage: npx tsx scripts/brands/001-2_starbucks_convert.ts
+ * スターバックス データコンバーター (D1エリア参照付きSQL生成)
+ * * 使用方法: npx tsx scripts/brands/001-2_starbucks_convert.ts
  */
 
 import fs from 'fs';
@@ -9,6 +8,19 @@ import path from 'path';
 import { Miniflare } from "miniflare";
 import { PATHS, CONFIG, ensureDirectory } from '../utils.js';
 import { normalizeAddress } from '../../src/lib/searchUtils.js';
+
+/**
+ * プロバイダー固有の設定
+ */
+const CONVERTER_CONFIG = {
+    BRAND_ID: 'STARBUCKS',
+    INPUT_FILE: '001_starbucks.json',
+    OUTPUT_FILE: '001-1_starbucks.sql',
+    D1_BINDING: 'ALETHEIA_CAFE_DB',
+    D1_DATABASE_ID: '70ed05d4-20d7-484d-bdc1-3a5e9ea63086',
+    D1_PERSIST_PATH: '.wrangler/state/v3/d1',
+    AREA_LEVEL_TARGET: 3
+};
 
 /**
  * DBから取得したエリアマスターの型
@@ -20,7 +32,7 @@ interface AreaMaster {
 }
 
 /**
- * Maps raw API fields to the database schema.
+ * 生のAPIフィールドをデータベーススキーマにマップします。
  */
 function convertToSql(hits: any[], areas: AreaMaster[]) {
     return hits.map(hit => {
@@ -58,27 +70,27 @@ function convertToSql(hits: any[], areas: AreaMaster[]) {
         const escapedAddress = displayAddress.replace(/'/g, "''"); // 保存にはdisplayAddressを使用
         const jsonString = JSON.stringify(attributes).replace(/'/g, "''");
 
-        // pref, city を削除
+        // pref, city を削除したテーブル構造に合わせて出力
         return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.STARBUCKS}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddress}', ${lat}, ${lng}, '${jsonString}');`;
     }).join('\n');
 }
 
 async function main() {
-    console.log("🛠 Starting Starbucks Conversion with D1 Area Lookup...");
+    console.log("🛠 スターバックスの変換処理を開始します（D1エリア検索）...");
 
     // 1. MiniflareでD1にアクセス
     const mf = new Miniflare({
-        d1Databases: { ALETHEIA_CAFE_DB: "70ed05d4-20d7-484d-bdc1-3a5e9ea63086" },
+        d1Databases: { [CONVERTER_CONFIG.D1_BINDING]: CONVERTER_CONFIG.D1_DATABASE_ID },
         modules: true,
         script: `export default { fetch: () => new Response("ok") }`,
-        d1Persist: ".wrangler/state/v3/d1", 
+        d1Persist: CONVERTER_CONFIG.D1_PERSIST_PATH, 
     });
 
     let areas: AreaMaster[] = [];
     try {
-        const db = await mf.getD1Database("ALETHEIA_CAFE_DB");
-        console.log("⏳ Fetching area master from D1...");
-        const res = await db.prepare("SELECT area_id, name FROM areas WHERE area_level = 3").all();
+        const db = await mf.getD1Database(CONVERTER_CONFIG.D1_BINDING);
+        console.log("⏳ D1からエリアマスターを取得中...");
+        const res = await db.prepare("SELECT area_id, name FROM areas WHERE area_level = ?").bind(CONVERTER_CONFIG.AREA_LEVEL_TARGET).all();
         
         areas = (res.results || []).map((a: any) => ({
             area_id: a.area_id,
@@ -86,16 +98,16 @@ async function main() {
             normalizedName: normalizeAddress(a.name) // エリア名も比較用に正規化
         })).sort((a, b) => b.name.length - a.name.length);
         
-        console.log(`✅ Loaded ${areas.length} areas.`);
+        console.log(`✅ ${areas.length} 件のエリアをロードしました。`);
     } catch (error) {
-        console.error("❌ Failed to access D1.");
+        console.error("❌ D1へのアクセスに失敗しました。");
         process.exit(1);
     }
 
-    // 2. 原資JSONの読み込み
-    const rawPath = path.join(PATHS.RAW_DATA, '001_starbucks.json');
+    // 2. 元データのJSONを読み込み
+    const rawPath = path.join(PATHS.RAW_DATA, CONVERTER_CONFIG.INPUT_FILE);
     if (!fs.existsSync(rawPath)) {
-        console.error("❌ Raw data not found at:", rawPath);
+        console.error("❌ 生データが見つかりません:", rawPath);
         return;
     }
 
@@ -107,11 +119,11 @@ async function main() {
     totalSql += convertToSql(rawData, areas);
 
     ensureDirectory(PATHS.DB_SEED);
-    const outputPath = path.join(PATHS.DB_SEED, 'starbucks.sql');
+    const outputPath = path.join(PATHS.DB_SEED, CONVERTER_CONFIG.OUTPUT_FILE);
     fs.writeFileSync(outputPath, totalSql);
 
-    console.log(`\n✨ SQL Seed generated at: ${outputPath}`);
-    console.log(`📊 Total Records: ${rawData.length}`);
+    console.log(`\n✨ SQLシードが生成されました: ${outputPath}`);
+    console.log(`📊 総レコード数: ${rawData.length}`);
 
     await mf.dispose();
 }

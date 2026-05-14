@@ -1,15 +1,31 @@
 /**
- * Komeda Data Converter (SQL Generator with D1 Area Lookup)
- * 
- * Usage: npx tsx scripts/003-2_komeda_convert.ts
+ * コメダ珈琲店 データコンバーター (D1エリア参照付きSQL生成)
+ * * 使用方法: npx tsx scripts/brands/003-2_komeda_convert.ts
  */
 
 import fs from 'fs';
 import path from 'path';
 import { Miniflare } from "miniflare";
-import { PATHS, CONFIG, ensureDirectory } from './utils.js';
-import { normalizeAddress } from '../src/lib/searchUtils.js';
+import { PATHS, CONFIG, ensureDirectory } from '../utils.js';
+import { normalizeAddress } from '../../src/lib/searchUtils.js';
 
+/**
+ * プロバイダー固有の設定
+ */
+const CONVERTER_CONFIG = {
+    BRAND_ID: 'KOMEDA',
+    INPUT_FILE: '003_komeda.json',
+    OUTPUT_FILE: '003-1_komeda.sql', // 緯度経度更新前の一次出力SQL
+    D1_BINDING: 'ALETHEIA_CAFE_DB',
+    D1_DATABASE_ID: '70ed05d4-20d7-484d-bdc1-3a5e9ea63086',
+    D1_PERSIST_PATH: '.wrangler/state/v3/d1',
+    AREA_LEVEL_TARGET: 3,
+    BRAND_PREFIX: 'コメダ珈琲店'
+};
+
+/**
+ * DBから取得したエリアマスターの型
+ */
 interface AreaMaster {
     area_id: string;
     name: string;
@@ -24,11 +40,13 @@ function cleanDisplayAddress(str: string) {
     return str.replace(/\t/g, ' ').replace(/　/g, ' ').replace(/\r?\n/g, ' ').trim();
 }
 
+/**
+ * 生のAPIデータをデータベーススキーマ用のSQLに変換します
+ */
 function convertToSql(items: any[], areas: AreaMaster[]) {
     return items.map((item) => {
-        // --- 修正箇所：ブランド名を店名の前に付与 ---
-        const brandPrefix = 'コメダ珈琲店';
-        const rawName = item.name ? `${brandPrefix} ${item.name}` : brandPrefix;
+        // 店名の前にブランド名を付与
+        const rawName = item.name ? `${CONVERTER_CONFIG.BRAND_PREFIX} ${item.name}` : CONVERTER_CONFIG.BRAND_PREFIX;
         
         const rawAddr = item.address || '';
         const komedaId = item.id;
@@ -45,11 +63,11 @@ function convertToSql(items: any[], areas: AreaMaster[]) {
         // サービスIDの生成（Komeda公式のIDを使用）
         const serviceId = `KMD_${komedaId}`;
 
+        // 属性オブジェクト
         const attributes = {
             category: "cat_cafe",
             ext_source: "komeda_official",
             ext_place_id: `KMD_OFFICIAL_${komedaId}`,
-            // JSONから取得できない情報は必要に応じてデフォルト値を設定
             brand_type: item.brand_type || 1
         };
 
@@ -57,54 +75,56 @@ function convertToSql(items: any[], areas: AreaMaster[]) {
         const escapedAddr = displayAddress.replace(/'/g, "''");
         const jsonString = JSON.stringify(attributes).replace(/'/g, "''");
 
+        // ※緯度経度は別途更新するため、ここではNULLで出力
         return `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, attributes_json) VALUES ('${serviceId}', '${CONFIG.BRANDS.KOMEDA}', '${CONFIG.OWNER_ID}', 'free', ${areaId}, '${escapedTitle}', '${escapedAddr}', NULL, NULL, '${jsonString}');`;
     }).join('\n');
 }
 
 async function main() {
-    console.log("🛠 Starting Komeda Conversion with D1 Area Lookup...");
+    console.log("🛠 コメダ珈琲店の変換処理を開始します（D1エリア検索）...");
 
     const mf = new Miniflare({
-        d1Databases: { ALETHEIA_CAFE_DB: "70ed05d4-20d7-484d-bdc1-3a5e9ea63086" },
+        d1Databases: { [CONVERTER_CONFIG.D1_BINDING]: CONVERTER_CONFIG.D1_DATABASE_ID },
         modules: true,
         script: `export default { fetch: () => new Response("ok") }`,
-        d1Persist: ".wrangler/state/v3/d1",
+        d1Persist: CONVERTER_CONFIG.D1_PERSIST_PATH,
     });
 
     let areas: AreaMaster[] = [];
     try {
-        const db = await mf.getD1Database("ALETHEIA_CAFE_DB");
+        const db = await mf.getD1Database(CONVERTER_CONFIG.D1_BINDING);
         // 市区町村レベル（area_level = 3）のマスターを取得
-        const res = await db.prepare("SELECT area_id, name FROM areas WHERE area_level = 3").all();
+        const res = await db.prepare("SELECT area_id, name FROM areas WHERE area_level = ?").bind(CONVERTER_CONFIG.AREA_LEVEL_TARGET).all();
         
         areas = (res.results || []).map((a: any) => ({
             area_id: a.area_id,
             name: a.name,
             normalizedName: normalizeAddress(a.name)
-        })).sort((a, b) => b.name.length - a.name.length); // 名前の長い順（詳細な地名）にソートして誤判定を防ぐ
+        })).sort((a, b) => b.name.length - a.name.length); // 名前の長い順にソートして誤判定を防ぐ
         
-        console.log(`✅ Loaded ${areas.length} areas.`);
+        console.log(`✅ ${areas.length} 件のエリアをロードしました。`);
     } catch (error) {
-        console.error("❌ Failed to fetch Area Master.");
+        console.error("❌ エリアマスターの取得に失敗しました。");
         process.exit(1);
     }
 
-    const rawPath = path.join(PATHS.RAW_DATA, '003_komeda.json');
+    const rawPath = path.join(PATHS.RAW_DATA, CONVERTER_CONFIG.INPUT_FILE);
     if (!fs.existsSync(rawPath)) {
-        console.error("❌ Raw data not found at " + rawPath);
+        console.error("❌ 生データが見つかりません: " + rawPath);
         return;
     }
 
     const rawData = JSON.parse(fs.readFileSync(rawPath, 'utf-8'));
     
+    // SQL生成
     let totalSql = "-- ALETHEIA Komeda Seed (Area-ID Pre-Mapped)\n\n";
     totalSql += convertToSql(rawData, areas);
 
     ensureDirectory(PATHS.DB_SEED);
-    const outputPath = path.join(PATHS.DB_SEED, 'komeda.sql');
+    const outputPath = path.join(PATHS.DB_SEED, CONVERTER_CONFIG.OUTPUT_FILE);
     fs.writeFileSync(outputPath, totalSql);
 
-    console.log(`\n✨ SQL Seed generated at: ${outputPath}`);
+    console.log(`\n✨ SQLシードが生成されました: ${outputPath}`);
     await mf.dispose();
 }
 
