@@ -10,13 +10,19 @@ import { chromium, BrowserContext, Page } from 'playwright';
 import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
 import { PREFECTURE_MASTER } from '../../src/lib/constants';
 
-const MISTERDONUT_CONFIG = {
+/**
+ * プロバイダー固有の設定
+ */
+const PROVIDER_CONFIG = {
+    BRAND_ID: '004',
+    BRAND_NAME: 'misterdonuts',
+    OUTPUT_SQL_NAME: '004-1_misterdonuts.sql', // 最終的に出力されるSQLファイル名
     BASE_URL: 'https://md.mapion.co.jp/b/misterdonut/attr/',
     ITEMS_PER_PAGE: 20,
 };
 
 /**
- * [Level 1] 1ページから店舗リストとこだわり条件を抽出
+ * [レベル 1] 1ページから店舗リストとこだわり条件を抽出
  */
 async function scrapeShopList(page: Page): Promise<any[]> {
     return await page.$$eval('li.list-item', (items) => {
@@ -64,7 +70,7 @@ async function scrapeShopList(page: Page): Promise<any[]> {
 }
 
 /**
- * [Level 2] 都道府県内の全ページをクロール
+ * [レベル 2] 都道府県内の全ページをクロール
  */
 async function fetchPrefectureFull(context: BrowserContext, prefCode: string, globalSeen: Set<string>): Promise<any[]> {
     const page = await context.newPage();
@@ -73,7 +79,7 @@ async function fetchPrefectureFull(context: BrowserContext, prefCode: string, gl
 
     try {
         while (true) {
-            const url = `${MISTERDONUT_CONFIG.BASE_URL}?kencode=${prefCode}&t=attr_con&start=${currentPage}`;
+            const url = `${PROVIDER_CONFIG.BASE_URL}?kencode=${prefCode}&t=attr_con&start=${currentPage}`;
             await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
             // ページ情報の取得 (window.pageState を利用)
@@ -84,7 +90,7 @@ async function fetchPrefectureFull(context: BrowserContext, prefCode: string, gl
             
             let newCount = 0;
             for (const shop of pageShops) {
-                const uniqueKey = `md_${shop.id}`;
+                const uniqueKey = `${PROVIDER_CONFIG.BRAND_NAME}_${shop.id}`;
                 if (!globalSeen.has(uniqueKey)) {
                     globalSeen.add(uniqueKey);
                     shopsInPref.push({
@@ -99,10 +105,10 @@ async function fetchPrefectureFull(context: BrowserContext, prefCode: string, gl
 
             if (currentPage >= pageState.endPage) break;
             currentPage++;
-            await sleep(CONFIG.WAIT_SHORT); // 2000ms
+            await sleep(CONFIG.WAIT_SHORT); // デフォルト 2000ms
         }
     } catch (e) {
-        console.error(`  ⚠️ Error processing pref ${prefCode} at page ${currentPage}:`, e);
+        console.error(`  ⚠️ 都道府県 ${prefCode} のページ ${currentPage} でエラーが発生しました:`, e);
     } finally {
         await page.close();
     }
@@ -111,10 +117,10 @@ async function fetchPrefectureFull(context: BrowserContext, prefCode: string, gl
 }
 
 /**
- * [Level 3] メインオーケストレーター
+ * [レベル 3] メインオーケストレーター
  */
 async function main() {
-    console.log("🍩 Starting Mister Donuts Data Fetch...");
+    console.log("🍩 ミスタードーナツのデータ取得を開始します...");
 
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
@@ -125,10 +131,10 @@ async function main() {
     const prefCodes = Object.keys(PREFECTURE_MASTER).filter(key => !isNaN(Number(key)));
     const allHits: any[] = [];
 
-    // 並行実行（utils.tsのCONFIG.CONCURRENCY = 3 を使用）
+    // 並行実行（utils.tsのCONFIG.CONCURRENCYを使用）
     for (let i = 0; i < prefCodes.length; i += CONFIG.CONCURRENCY) {
         const chunk = prefCodes.slice(i, i + CONFIG.CONCURRENCY);
-        console.log(`📦 Processing Batch: ${chunk.join(', ')}...`);
+        console.log(`📦 バッチ処理中: ${chunk.join(', ')}...`);
 
         const results = await Promise.all(chunk.map(code => {
             return fetchPrefectureFull(context, code, globalSeen);
@@ -145,16 +151,21 @@ async function main() {
     saveResults(allHits);
 }
 
+/**
+ * 取得結果を保存
+ */
 function saveResults(data: any[]) {
     ensureDirectory(PATHS.RAW_DATA);
-    const savePath = path.join(PATHS.RAW_DATA, '004_misterdonuts.json');
+    const fileName = PROVIDER_CONFIG.OUTPUT_SQL_NAME; // 設定からファイル名を取得
+    const savePath = path.join(PATHS.RAW_DATA, fileName);
+    
     fs.writeFileSync(savePath, JSON.stringify(data, null, 2));
     
-    console.log(`\n✨ Done! Total Unique Records: ${data.length}`);
-    console.log(`💾 Saved to: ${savePath}`);
+    console.log(`\n✨ 完了！総ユニークレコード数: ${data.length}`);
+    console.log(`💾 保存先: ${savePath}`);
 }
 
 main().catch(err => {
-    console.error("❌ Fatal Error:", err);
+    console.error("❌ 致命的なエラー:", err);
     process.exit(1);
 });

@@ -7,22 +7,29 @@
 import fs from 'fs';
 import path from 'path';
 import { chromium, BrowserContext, Page } from 'playwright';
-import { PATHS, CONFIG, sleep, ensureDirectory } from './utils.js';
-import { PREFECTURE_MASTER } from '../src/lib/constants';
+import { PATHS, sleep, ensureDirectory } from '../utils.js';
+import { PREFECTURE_MASTER } from '../../src/lib/constants';
 
-const KOMEDA_CONFIG = {
+/**
+ * プロバイダー固有の設定
+ */
+const PROVIDER_CONFIG = {
+    BRAND_ID: '003',
+    BRAND_NAME: 'komeda',
+    OUTPUT_SQL_NAME: '003-1_komeda.sql', // 最終的に出力されるSQLファイル名
     BASE_URL: 'https://eu.komeda.co.jp/v1/hp/shop',
-    BRAND_TYPE: 1, // コメダ珈琲店
-    OFFSET_STEP: 20,
-    MAX_PAGES: 50, // 1000件（20件×50回）までのセーフティリミット
+    BRAND_TYPE: 1,      // コメダ珈琲店
+    OFFSET_STEP: 20,    // 1回のリクエストで取得する件数
+    MAX_PAGES: 50,      // セーフティリミット: 1000件（20件×50回）まで
+    BATCH_SIZE: 3       // 同時実行数
 };
 
 /**
- * [Level 1] Fetch JSON data via API
+ * [レベル 1] API経由でJSONデータを取得
  */
 async function getKomedaPageData(page: Page, prefName: string, offset: number): Promise<any> {
     const encodedPref = encodeURIComponent(prefName);
-    const url = `${KOMEDA_CONFIG.BASE_URL}?prefecture=${encodedPref}&brand_type=${KOMEDA_CONFIG.BRAND_TYPE}&offset=${offset}`;
+    const url = `${PROVIDER_CONFIG.BASE_URL}?prefecture=${encodedPref}&brand_type=${PROVIDER_CONFIG.BRAND_TYPE}&offset=${offset}`;
     
     try {
         const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
@@ -31,13 +38,13 @@ async function getKomedaPageData(page: Page, prefName: string, offset: number): 
         const data = await response.json();
         return data;
     } catch (e) {
-        console.error(`  ⚠️ Fetch Error at offset ${offset}:`, e);
+        console.error(`  ⚠️ オフセット ${offset} での取得エラー:`, e);
         return null;
     }
 }
 
 /**
- * [Level 2] Fetch all stores in a prefecture with paging
+ * [レベル 2] 都道府県内の全店舗をページングしながら取得
  */
 async function fetchPrefectureFull(context: BrowserContext, prefName: string, globalSeen: Set<string>): Promise<any[]> {
     const page = await context.newPage();
@@ -45,7 +52,7 @@ async function fetchPrefectureFull(context: BrowserContext, prefName: string, gl
     let currentOffset = 0;
     let pageCount = 0;
 
-    while (pageCount < KOMEDA_CONFIG.MAX_PAGES) {
+    while (pageCount < PROVIDER_CONFIG.MAX_PAGES) {
         const data = await getKomedaPageData(page, prefName, currentOffset);
         
         if (!data || !data.items || data.items.length === 0) {
@@ -54,8 +61,8 @@ async function fetchPrefectureFull(context: BrowserContext, prefName: string, gl
 
         let addedInThisLoop = 0;
         for (const item of data.items) {
-            // IDまたは店舗名+住所でユニークキーを作成
-            const uniqueKey = `komeda_${item.id}`;
+            // IDを使用してユニークキーを作成
+            const uniqueKey = `${PROVIDER_CONFIG.BRAND_NAME}_${item.id}`;
             if (!globalSeen.has(uniqueKey)) {
                 globalSeen.add(uniqueKey);
                 hitsInPref.push({
@@ -66,14 +73,14 @@ async function fetchPrefectureFull(context: BrowserContext, prefName: string, gl
             }
         }
 
-        console.log(`  📍 ${prefName} (Offset:${currentOffset}) - Found: ${data.items.length}, Total Expected: ${data.total}, New: ${addedInThisLoop}`);
+        console.log(`  📍 ${prefName} (オフセット:${currentOffset}) - 発見: ${data.items.length}, 総期待件数: ${data.total}, 新規: ${addedInThisLoop}`);
 
         // オフセットがトータル件数を超えた、または全件取得したら終了
-        if (currentOffset + KOMEDA_CONFIG.OFFSET_STEP >= data.total) {
+        if (currentOffset + PROVIDER_CONFIG.OFFSET_STEP >= data.total) {
             break;
         }
 
-        currentOffset += KOMEDA_CONFIG.OFFSET_STEP;
+        currentOffset += PROVIDER_CONFIG.OFFSET_STEP;
         pageCount++;
         await sleep(500); // サーバー負荷軽減
     }
@@ -83,10 +90,10 @@ async function fetchPrefectureFull(context: BrowserContext, prefName: string, gl
 }
 
 /**
- * [Level 3] Main orchestrator
+ * [レベル 3] メインオーケストレーター
  */
 async function main() {
-    console.log("🚀 Starting Komeda Data Fetch (API Paging Mode)...");
+    console.log("🚀 コメダ珈琲店のデータ取得を開始します（APIページングモード）...");
 
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
@@ -99,12 +106,12 @@ async function main() {
     const prefCodes = Object.keys(PREFECTURE_MASTER).filter(key => !isNaN(Number(key)));
     const allHits: any[] = [];
 
-    // 同時実行数は3に制限
-    const BATCH_SIZE = 3; 
+    // メモリ消費を抑えるためバッチ処理
+    const BATCH_SIZE = PROVIDER_CONFIG.BATCH_SIZE; 
 
     for (let i = 0; i < prefCodes.length; i += BATCH_SIZE) {
         const chunk = prefCodes.slice(i, i + BATCH_SIZE);
-        console.log(`📦 Processing Batch: ${chunk.join(', ')}...`);
+        console.log(`📦 バッチ処理中: ${chunk.join(', ')}...`);
 
         const results = await Promise.all(chunk.map(code => {
             const prefName = PREFECTURE_MASTER[code];
@@ -123,18 +130,20 @@ async function main() {
 }
 
 /**
- * Saves the results to JSON
+ * 取得結果を JSON に保存
  */
 function saveResults(data: any[]) {
     ensureDirectory(PATHS.RAW_DATA);
-    const savePath = path.join(PATHS.RAW_DATA, '003_komeda.json');
+    const fileName = PROVIDER_CONFIG.OUTPUT_SQL_NAME; // 設定からファイル名を取得
+    const savePath = path.join(PATHS.RAW_DATA, fileName);
+    
     fs.writeFileSync(savePath, JSON.stringify(data, null, 2));
     
-    console.log(`\n✨ Done! Total Unique Records: ${data.length}`);
-    console.log(`💾 Saved to: ${savePath}`);
+    console.log(`\n✨ 完了！総ユニークレコード数: ${data.length}`);
+    console.log(`💾 保存先: ${savePath}`);
 }
 
 main().catch(err => {
-    console.error("❌ Fatal Error:", err);
+    console.error("❌ 致命的なエラー:", err);
     process.exit(1);
 });

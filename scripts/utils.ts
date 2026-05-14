@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
  */
 export const PATHS = {
     RAW_DATA: path.resolve(__dirname, 'data/raw'),
-    DB_SEED: path.resolve(__dirname, '../src/db/seed/chains'),
+    DB_SEED: path.resolve(__dirname, '../src/db/seed/brands'),
 };
 
 /**

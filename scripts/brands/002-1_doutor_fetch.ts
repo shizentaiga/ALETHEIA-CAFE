@@ -9,27 +9,34 @@ import path from 'path';
 import { chromium, BrowserContext, Page } from 'playwright';
 import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
 
-const DOUTOR_CONFIG = {
+/**
+ * プロバイダー固有の設定
+ */
+const PROVIDER_CONFIG = {
+    BRAND_ID: '002',
+    BRAND_NAME: 'doutor',
+    OUTPUT_SQL_NAME: '002-1_doutor.sql', // 最終的に出力されるSQLファイル名
     BASE_URL: 'https://shop.doutor.co.jp/doutor/spot/list',
     SELECTOR: '.copper-list-items',
-    LIMIT: 50,
-    MAX_PAGES: 20 // Safety limit: Max 1,000 records per prefecture
+    LIMIT_STEP: 50,         // 1回のリクエストで増加させる件数
+    MAX_PAGES: 20,          // セーフガード: 1つの都道府県につき最大 1,000 件まで
+    BATCH_SIZE: 3           // メモリ消費を抑えるための並行実行数
 };
 
 /**
- * [Level 1] Fetch page data by increasing the "limit" parameter.
- * Doutor's API returns all records up to the specified limit from the start.
+ * [レベル 1] "limit" パラメータを増やしてページデータを取得
+ * ドトールのAPIは、開始地点から指定されたリミットまでの全レコードを返します。
  */
 async function getDoutorPageData(page: Page, prefCode: string, currentTotalExpected: number): Promise<any[]> {
-    // Request all records from offset 0 up to current limit to handle dynamic rendering
-    const url = `${DOUTOR_CONFIG.BASE_URL}?limit=${currentTotalExpected}&address=${prefCode}&offset=0`;
+    // 動的なレンダリングに対応するため、オフセット0から現在のリミットまでの全レコードを要求
+    const url = `${PROVIDER_CONFIG.BASE_URL}?limit=${currentTotalExpected}&address=${prefCode}&offset=0`;
     
     try {
         await page.goto(url, { waitUntil: 'load', timeout: 20000 });
-        await page.waitForTimeout(1500); // Allow time for client-side rendering
-        await page.waitForSelector(DOUTOR_CONFIG.SELECTOR, { timeout: 8000 });
+        await page.waitForTimeout(1500); // クライアントサイドのレンダリング時間を確保
+        await page.waitForSelector(PROVIDER_CONFIG.SELECTOR, { timeout: 8000 });
         
-        const spotRows = await page.locator(DOUTOR_CONFIG.SELECTOR).all();
+        const spotRows = await page.locator(PROVIDER_CONFIG.SELECTOR).all();
         const extractedData = [];
 
         for (const row of spotRows) {
@@ -49,26 +56,26 @@ async function getDoutorPageData(page: Page, prefCode: string, currentTotalExpec
 }
 
 /**
- * [Level 2] Fetch all stores in a prefecture with deduplication.
+ * [レベル 2] 都道府県内の全店舗を重複排除しながら取得
  */
 async function fetchPrefectureFull(context: BrowserContext, prefCode: string, globalSeen: Set<string>): Promise<any[]> {
     const page = await context.newPage();
     const hitsInPref: any[] = [];
-    let currentLimit = 50; 
+    let currentLimit = PROVIDER_CONFIG.LIMIT_STEP; 
     let pageCount = 0;
     let lastTotalCount = -1;
 
-    while (pageCount < DOUTOR_CONFIG.MAX_PAGES) {
+    while (pageCount < PROVIDER_CONFIG.MAX_PAGES) {
         const data = await getDoutorPageData(page, prefCode, currentLimit);
         
         if (data.length === 0) break;
 
-        // Stop if no new data is loaded (DOM count remains unchanged)
+        // 新しいデータがロードされなかった場合（DOMの件数が変わらない場合）は終了
         if (data.length === lastTotalCount) break;
 
         let addedInThisLoop = 0;
         for (const item of data) {
-            // Create a unique key using "Name + Address" to prevent duplicates
+            // 重複を防ぐため「名称 + 住所」で一意のキーを作成
             const uniqueKey = `${item.rawLines[0]}_${item.rawLines[1]}`;
             if (!globalSeen.has(uniqueKey)) {
                 globalSeen.add(uniqueKey);
@@ -77,15 +84,15 @@ async function fetchPrefectureFull(context: BrowserContext, prefCode: string, gl
             }
         }
 
-        console.log(`  📍 Pref:${prefCode} (Limit:${currentLimit}) - DOM Total: ${data.length}, New Unique: ${addedInThisLoop}`);
+        console.log(`  📍 都道府県:${prefCode} (Limit:${currentLimit}) - DOM合計: ${data.length}, 新規ユニーク: ${addedInThisLoop}`);
 
-        // If returned data is less than requested limit, we have reached the end
+        // 返ってきたデータが要求したリミットより少ない場合は、全件取得完了とみなす
         if (data.length < currentLimit) {
             break;
         }
 
         lastTotalCount = data.length;
-        currentLimit += 50; // Increase limit for the next iteration
+        currentLimit += PROVIDER_CONFIG.LIMIT_STEP; // 次のイテレーションでリミットを増加
         pageCount++;
         await sleep(1000);
     }
@@ -95,10 +102,10 @@ async function fetchPrefectureFull(context: BrowserContext, prefCode: string, gl
 }
 
 /**
- * [Level 3] Main orchestrator
+ * [レベル 3] メインオーケストレーター
  */
 async function main() {
-    console.log("🚀 Starting Doutor Data Fetch (Persistent Deduplication Mode)...");
+    console.log("🚀 ドトールのデータ取得を開始します（永続重複排除モード）...");
 
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
@@ -109,12 +116,12 @@ async function main() {
     const prefList = Array.from({ length: 47 }, (_, i) => (i + 1).toString().padStart(2, '0'));
     const allHits: any[] = [];
 
-    // Limit concurrency to 3 to prevent memory exhaustion
-    const BATCH_SIZE = 3; 
+    // メモリ枯渇を防ぐため、並行数を制限してバッチ処理
+    const BATCH_SIZE = PROVIDER_CONFIG.BATCH_SIZE; 
 
     for (let i = 0; i < prefList.length; i += BATCH_SIZE) {
         const chunk = prefList.slice(i, i + BATCH_SIZE);
-        console.log(`📦 Processing Batch: ${chunk.join(', ')}...`);
+        console.log(`📦 バッチ処理中: ${chunk.join(', ')}...`);
 
         const results = await Promise.all(chunk.map(pref => fetchPrefectureFull(context, pref, globalSeen)));
         allHits.push(...results.flat());
@@ -129,18 +136,20 @@ async function main() {
 }
 
 /**
- * Saves the final deduplicated dataset to a JSON file.
+ * 重複排除された最終的なデータセットを JSON ファイルに保存
  */
 function saveResults(data: any[]) {
     ensureDirectory(PATHS.RAW_DATA);
-    const savePath = path.join(PATHS.RAW_DATA, '002_doutor.json');
+    const fileName = PROVIDER_CONFIG.OUTPUT_SQL_NAME; // 設定からファイル名を取得
+    const savePath = path.join(PATHS.RAW_DATA, fileName);
+    
     fs.writeFileSync(savePath, JSON.stringify(data, null, 2));
     
-    console.log(`\n✨ Done! Total Unique Records: ${data.length}`);
-    console.log(`💾 Saved to: ${savePath}`);
+    console.log(`\n✨ 完了！総ユニークレコード数: ${data.length}`);
+    console.log(`💾 保存先: ${savePath}`);
 }
 
 main().catch(err => {
-    console.error("❌ Fatal Error:", err);
+    console.error("❌ 致命的なエラー:", err);
     process.exit(1);
 });

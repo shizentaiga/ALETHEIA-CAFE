@@ -52,7 +52,7 @@ async function fetchCoordinates(address: string): Promise<{ lat: number; lon: nu
       const location = data.results[0].geometry.location;
       return { 
         lat: location.lat, 
-        lng: location.lng // 内部的に lat, lon で返すように統一
+        lng: location.lng // 内部的に lat, lng で返すように統一
       } as any;
     }
 
