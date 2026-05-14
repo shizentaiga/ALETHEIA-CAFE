@@ -37,11 +37,12 @@ const moduleStyle = (scope: string) => `
     letter-spacing: 0.02em;
   }
 
-  /* スマホ2カラム設定 */
+  /* スマホのカラム設定(1カラム or 2カラム) */
   #search-results-target { 
     display: grid; 
-    grid-template-columns: repeat(2, 1fr); 
-    gap: 8px; 
+    /* grid-template-columns: repeat(2, 1fr); */ /* 2カラム */
+    grid-template-columns: 1fr; /* 1カラム */
+    gap: 12px; /* 1カラム：12px(広め)、2カラム：8px(狭め) *//
   }
 
   /* ⑥ PCは1カラム維持 */
