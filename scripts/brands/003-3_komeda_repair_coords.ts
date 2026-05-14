@@ -1,117 +1,156 @@
 /**
  * Komeda SQL Repair Script (Google Maps Edition)
- * 
- * SQL内の緯度経度 NULL を Google Maps Geocoding API で補完します。
- * .dev.vars から GOOGLE_MAPS_API_KEY を読み込みます。
- * 
- * Usage: npx tsx scripts/003-3_komeda_repair_coords.ts
- * 
- * ⭐️komeda2.sqlが出力(最後にkomeda.sqlを削除して、komeda.sqlにリネームすること)
+ * * 003-1_komeda.sql を読み込み、座標を補完・抽出して 
+ * 「主キー、緯度、経度」のみを更新する SQL (003-2_komeda.sql) を生成します。
+ * * Usage: npx tsx scripts/brands/003-3_komeda_repair_coords.ts
  */
 
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 
-const MAX_REPAIRS = 3000;   // 最大の修正数
-const INPUT_FILE = 'src/db/seed/brands/003-1_komeda.sql';
-const OUTPUT_FILE = 'src/db/seed/brands/003-2_komeda.sql';
-const SLEEP_MS = 100; 
+/**
+ * 基本設定
+ */
+const CONFIG = {
+    MAX_REPAIRS: 3000,
+    INPUT_FILE: 'src/db/seed/brands/003-1_komeda.sql',
+    OUTPUT_FILE: 'src/db/seed/brands/003-2_komeda.sql',
+    SLEEP_MS: 100, // Google Maps APIのスロットリング用
+};
 
+// .dev.vars の読み込み
 const envPath = path.resolve(process.cwd(), '.dev.vars');
 const env = dotenv.parse(fs.readFileSync(envPath));
 const API_KEY = env.GOOGLE_MAPS_API_KEY;
 
 if (!API_KEY) {
-  console.error('GOOGLE_MAPS_API_KEY is not defined in .dev.vars');
-  process.exit(1);
+    console.error('❌ Error: GOOGLE_MAPS_API_KEY が .dev.vars に定義されていません。');
+    process.exit(1);
 }
 
-function normalizeAddress(address: string): string {
-  return address.trim().replace(/\s+/g, ' ');
-}
-
+/**
+ * Google Maps Geocoding API 呼び出し
+ */
 async function fetchCoordinates(address: string): Promise<{ lat: number; lng: number } | null> {
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${API_KEY}&language=ja`;
-  
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${API_KEY}&language=ja`;
     
-    const data: any = await res.json();
-    
-    if (data.status === 'OK' && data.results && data.results.length > 0) {
-      const location = data.results[0].geometry.location;
-      return { 
-        lat: location.lat, 
-        lng: location.lng
-      };
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        
+        const data: any = await res.json();
+        
+        if (data.status === 'OK' && data.results && data.results.length > 0) {
+            const location = data.results[0].geometry.location;
+            return { 
+                lat: location.lat, 
+                lng: location.lng 
+            };
+        }
+        return null;
+    } catch (e) {
+        console.error(`    ⚠️ API接続エラー: ${e}`);
+        return null;
     }
-    return null;
-  } catch (e) {
-    console.error(`      ⚠️ API Error: ${e}`);
-  }
-  return null;
+}
+
+/**
+ * 住所の正規化
+ */
+function normalizeAddress(address: string): string {
+    return address.trim().replace(/\s+/g, ' ');
 }
 
 async function main() {
-  if (!fs.existsSync(INPUT_FILE)) {
-    console.error(`Input file not found: ${INPUT_FILE}`);
-    return;
-  }
-
-  const sqlContent = fs.readFileSync(INPUT_FILE, 'utf-8');
-  const lines = sqlContent.split('\n');
-  const repairedLines: string[] = [];
-  let repairCount = 0;
-  let failCount = 0;
-  let totalProcessed = 0; // 進捗計算用
-
-  console.log(`🚀 Starting repair with Google Maps API... (Max: ${MAX_REPAIRS})`);
-  console.log(`(Only failures will be displayed. Progress shown every 50 repairs)\n`);
-
-  for (let line of lines) {
-    if (line.includes('VALUES') && line.includes('NULL, NULL')) {
-      
-      if (repairCount < MAX_REPAIRS) {
-        // service_id のマッチングを DTR_ 以外にも対応できるよう汎用化
-        const idMatch = line.match(/'([^']+)'/); 
-        const addrMatch = line.match(/, '([^']+)', NULL, NULL/);
-
-        if (idMatch && addrMatch) {
-          const serviceId = idMatch[1];
-          const rawAddress = addrMatch[1];
-          const targetAddress = normalizeAddress(rawAddress);
-
-          const coords = await fetchCoordinates(targetAddress);
-
-          if (coords) {
-            line = line.replace('NULL, NULL', `${coords.lat}, ${coords.lng}`);
-            repairCount++;
-            process.stdout.write('.'); 
-          } else {
-            failCount++;
-            console.log(`\n❌ [NG] ${serviceId} | Address: ${rawAddress}`);
-          }
-
-          // 進捗表示のロジック
-          totalProcessed++;
-          if (totalProcessed % 50 === 0) {
-            console.log(`\n📦 Progress: ${repairCount} rows fixed...`);
-          }
-          
-          await new Promise(resolve => setTimeout(resolve, SLEEP_MS));
-        }
-      }
+    if (!fs.existsSync(CONFIG.INPUT_FILE)) {
+        console.error(`❌ 入力ファイルが見つかりません: ${CONFIG.INPUT_FILE}`);
+        return;
     }
-    repairedLines.push(line);
-  }
 
-  fs.writeFileSync(OUTPUT_FILE, repairedLines.join('\n'));
-  console.log(`\n\n✨ Repair Session Completed.`);
-  console.log(`✅ Fixed: ${repairCount} rows`);
-  console.log(`❌ Failed: ${failCount} rows`);
-  console.log(`💾 Saved to: ${OUTPUT_FILE}`);
+    const sqlContent = fs.readFileSync(CONFIG.INPUT_FILE, 'utf-8');
+    const lines = sqlContent.split('\n').filter(line => line.trim().startsWith('INSERT'));
+    
+    // --- 1. 統計情報の算出 ---
+    let totalCount = lines.length;
+    let existingCoordsCount = 0;
+    let nullCoordsCount = 0;
+
+    for (const line of lines) {
+        if (line.includes('NULL, NULL')) {
+            nullCoordsCount++;
+        } else {
+            existingCoordsCount++;
+        }
+    }
+
+    console.log(`📊 --- 統計情報 (コメダ) ---`);
+    console.log(`総レコード数: ${totalCount}`);
+    console.log(`座標あり: ${existingCoordsCount}`);
+    console.log(`座標なし (NULL): ${nullCoordsCount}`);
+    console.log(`最大補完制限 (MAX_REPAIRS): ${CONFIG.MAX_REPAIRS}`);
+    console.log(`------------------\n`);
+
+    const updateStatements: string[] = [];
+    let repairSuccess = 0;
+    let repairFail = 0;
+    let skipCount = 0;
+
+    console.log(`🚀 処理を開始します...`);
+
+    for (let line of lines) {
+        // service_id, title, address を抽出
+        // 汎用的なマッチングパターンを使用
+        const match = line.match(/VALUES \('([^']+)', '[^']+', '[^']+', '[^']+', (?:'[^']+'|NULL), '([^']+)', '([^']+)',/);
+
+        if (!match) continue;
+
+        const serviceId = match[1];
+        const title = match[2];
+        const rawAddress = match[3];
+        
+        // 既存の緯度経度をチェック
+        const isNull = line.includes('NULL, NULL');
+
+        if (!isNull) {
+            // すでに座標がある場合は、その値を抽出して UPDATE 文を作成
+            const coordsMatch = line.match(/, ([\d.-]+), ([\d.-]+), '\{/);
+            if (coordsMatch) {
+                updateStatements.push(`UPDATE services SET lat = ${coordsMatch[1]}, lng = ${coordsMatch[2]} WHERE service_id = '${serviceId}'; -- ${title}`);
+            }
+        } else {
+            // 座標が NULL の場合
+            if (repairSuccess < CONFIG.MAX_REPAIRS) {
+                const targetAddress = normalizeAddress(rawAddress);
+                const coords = await fetchCoordinates(targetAddress);
+
+                if (coords) {
+                    updateStatements.push(`UPDATE services SET lat = ${coords.lat}, lng = ${coords.lng} WHERE service_id = '${serviceId}'; -- ${title}`);
+                    repairSuccess++;
+                    process.stdout.write('.'); // 進捗表示
+                } else {
+                    repairFail++;
+                    console.log(`\n❌ [取得失敗] ID: ${serviceId} | Name: ${title}`);
+                }
+                
+                // API負荷軽減
+                await new Promise(resolve => setTimeout(resolve, CONFIG.SLEEP_MS));
+            } else {
+                skipCount++;
+            }
+        }
+    }
+
+    // --- ファイル出力 ---
+    const header = `-- Komeda Coordinates Patch -- Generated: ${new Date().toLocaleString()}\n\n`;
+    fs.writeFileSync(CONFIG.OUTPUT_FILE, header + updateStatements.join('\n'));
+
+    console.log(`\n\n✨ 処理が完了しました。`);
+    console.log(`✅ 既存座標の維持・抽出: ${existingCoordsCount} 件`);
+    console.log(`補完成功 (Google API): ${repairSuccess} 件`);
+    if (repairFail > 0) console.log(`❌ 補完失敗: ${repairFail} 件`);
+    if (skipCount > 0) console.log(`⚠️ 制限超過によるスキップ: ${skipCount} 件`);
+    console.log(`💾 保存先: ${CONFIG.OUTPUT_FILE}`);
 }
 
 main().catch(console.error);
