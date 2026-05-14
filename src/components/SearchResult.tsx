@@ -2,7 +2,7 @@
  * [File Path] src/components/SearchResult.tsx
  */
 import type { FC } from 'hono/jsx'
-import { formatAttributes } from '../db/queries/main'
+import { formatAttributes } from '../db/queries/main' // 特徴表示用(チップ形式)
 
 // --- Types ---
 export interface ServiceResult {

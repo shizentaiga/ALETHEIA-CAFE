@@ -3,7 +3,7 @@
  */
 import { isTruthy } from './utils';
 
-const MAX_TAG_DISPLAY = 5;  // 表示するタグ数
+const MAX_TAG_DISPLAY = 3;  // 表示するタグ数
 
 // 優先順位に基づいたラベル定義（上に書いたものほど優先される）
 const FEATURE_PRIORITY = [

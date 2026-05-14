@@ -6,7 +6,7 @@
 import { getNormalizedKeywords, generateAreaLikePattern } from '../../lib/searchUtils';
 
 // --- CONFIGURATION ---
-const DEFAULT_LIMIT = 30; // 1ページあたりのデフォルト表示件数
+const DEFAULT_LIMIT = 20; // 1ページあたりのデフォルト表示件数
 // -------------------
 
 /**
