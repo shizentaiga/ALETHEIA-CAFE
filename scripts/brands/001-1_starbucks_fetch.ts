@@ -1,7 +1,7 @@
 /**
  * Starbucks Data Fetcher (Refactored & Secure Version)
  * 
- * Usage: npx tsx scripts/001-1_starbucks_fetch.ts
+ * Usage: npx tsx scripts/brands/001-1_starbucks_fetch.ts
  * 
  * Features:
  * - Functional decomposition (Lower nesting levels)
@@ -11,7 +11,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { PATHS, CONFIG, sleep, ensureDirectory } from './utils.js';
+import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
 
 interface StarbucksApiResponse {
     hits?: {

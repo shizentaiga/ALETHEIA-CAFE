@@ -1,14 +1,14 @@
 /**
  * Mister Donuts Data Converter (SQL Generator with D1 Area Lookup)
  * 
- * Usage: npx tsx scripts/004-2_misterdonuts_convert.ts
+ * Usage: npx tsx scripts/brands/004-2_misterdonuts_convert.ts
  */
 
 import fs from 'fs';
 import path from 'path';
 import { Miniflare } from "miniflare";
-import { PATHS, CONFIG, ensureDirectory } from './utils.js';
-import { normalizeAddress } from '../src/lib/searchUtils.js';
+import { PATHS, CONFIG, ensureDirectory } from '../utils.js';
+import { normalizeAddress } from '../../src/lib/searchUtils.js';
 
 interface AreaMaster {
     area_id: string;

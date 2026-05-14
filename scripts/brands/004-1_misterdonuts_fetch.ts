@@ -1,14 +1,14 @@
 /**
  * Mister Donuts Fetcher (HTML Scraping Mode)
  * 
- * Usage: npx tsx scripts/004-1_misterdonuts_fetch.ts
+ * Usage: npx tsx scripts/brands/004-1_misterdonuts_fetch.ts
  */
 
 import fs from 'fs';
 import path from 'path';
 import { chromium, BrowserContext, Page } from 'playwright';
-import { PATHS, CONFIG, sleep, ensureDirectory } from './utils.js';
-import { PREFECTURE_MASTER } from '../src/lib/constants';
+import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
+import { PREFECTURE_MASTER } from '../../src/lib/constants';
 
 const MISTERDONUT_CONFIG = {
     BASE_URL: 'https://md.mapion.co.jp/b/misterdonut/attr/',

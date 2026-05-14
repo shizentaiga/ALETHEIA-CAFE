@@ -31,9 +31,9 @@ npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/stations.sql $FL
 echo "--- 2. Master Data (Areas) のインポート ---"
 npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/areas.sql $FLAGS -y
 
-echo "--- 3. Chains (*.sql) の一括インポート ---"
+echo "--- 3. Brands (*.sql) の一括インポート ---"
 # 指定ディレクトリ内の .sql ファイルをループで処理
-for file in ./src/db/seed/chains/*.sql; do
+for file in ./src/db/seed/brands/*.sql; do
   # ファイルが存在するかチェック（ファイルがない場合の正規表現エラー防止）
   [ -e "$file" ] || continue
   

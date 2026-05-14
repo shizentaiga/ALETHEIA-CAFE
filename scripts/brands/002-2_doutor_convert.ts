@@ -8,9 +8,9 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv'; // .dev.vars 読み込み用
 import { Miniflare } from "miniflare";
-import { PATHS, CONFIG, ensureDirectory } from './utils.js';
-import { normalizeAddress } from '../src/lib/searchUtils.js';
-import { fetchCoordinatesFromYahoo } from '../src/lib/geo.js';
+import { PATHS, CONFIG, ensureDirectory } from '../utils.js';
+import { normalizeAddress } from '../../src/lib/searchUtils.js';
+import { fetchCoordinatesFromYahoo } from '../../src/lib/geo.js';
 
 // ==========================================
 // 実行件数の制限 (テスト時は 10, 本番は 5000 などに変更)
@@ -68,7 +68,7 @@ async function convertToSql(items: any[], areas: AreaMaster[], clientId: string)
             const coords = await fetchCoordinatesFromYahoo(displayAddress, clientId);
             if (coords) {
                 latVal = coords.lat.toString();
-                lngVal = coords.lon.toString();
+                lngVal = coords.lng.toString();
             }
             // レート制限考慮
             await sleep(50);

@@ -1,13 +1,13 @@
 /**
  * Doutor Coffee Shop Data Fetcher (Hybrid Deduplication Mode)
  * 
- * Usage: npx tsx scripts/002-1_doutor_fetch.ts
+ * Usage: npx tsx scripts/brands/002-1_doutor_fetch.ts
  */
 
 import fs from 'fs';
 import path from 'path';
 import { chromium, BrowserContext, Page } from 'playwright';
-import { PATHS, CONFIG, sleep, ensureDirectory } from './utils.js';
+import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
 
 const DOUTOR_CONFIG = {
     BASE_URL: 'https://shop.doutor.co.jp/doutor/spot/list',
