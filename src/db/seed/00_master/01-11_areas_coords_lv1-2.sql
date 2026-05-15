@@ -1,1 +1,64 @@
--- 作成中
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/01-11_areas_coords_lv1-2.sql --local
+
+-- ALETHEIA Areas Coords Data (L1 & L2)
+-- Generated: 2026/5/15 14:37:48
+
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('00', '全国', 0, 35.6894, 139.6917);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('01', '北海道', 1, 43.0641, 141.3469);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('01-V10', '道央', 2, 43.0641, 141.3469);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('01-V20', '道南', 2, 41.7687, 140.7288);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('01-V30', '道北', 2, 43.7706, 142.3648);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('01-V40', '道東', 2, 42.9239, 143.1961);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('02', '東北', 1, 38.2682, 140.8694);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('02-02', '青森県', 2, 40.8244, 140.74);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('02-03', '岩手県', 2, 39.7036, 141.1526);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('02-04', '宮城県', 2, 38.2682, 140.8694);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('02-05', '秋田県', 2, 39.7186, 140.1024);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('02-06', '山形県', 2, 38.2554, 140.3396);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('02-07', '福島県', 2, 37.7503, 140.4675);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('10', '関東', 1, 35.6894, 139.6917);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('10-08', '茨城県', 2, 36.3418, 140.4468);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('10-09', '栃木県', 2, 36.5651, 139.8836);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('10-10', '群馬県', 2, 36.3907, 139.0604);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('10-11', '埼玉県', 2, 35.857, 139.6489);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('10-12', '千葉県', 2, 35.6046, 140.1232);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('10-13', '東京都', 2, 35.6894, 139.6917);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('10-14', '神奈川県', 2, 35.4477, 139.6425);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20', '中部', 1, 35.1814, 136.9064);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-15', '新潟県', 2, 37.9022, 139.0236);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-16', '富山県', 2, 36.6953, 137.2113);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-17', '石川県', 2, 36.5947, 136.6256);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-18', '福井県', 2, 36.0652, 136.2216);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-19', '山梨県', 2, 35.6639, 138.5683);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-20', '長野県', 2, 36.6513, 138.181);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-21', '岐阜県', 2, 35.3912, 136.7223);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-22', '静岡県', 2, 34.9769, 138.3831);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('20-23', '愛知県', 2, 35.1814, 136.9064);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('30', '近畿', 1, 34.6937, 135.5022);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('30-24', '三重県', 2, 34.7303, 136.5086);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('30-25', '滋賀県', 2, 35.0045, 135.8686);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('30-26', '京都府', 2, 35.0212, 135.7556);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('30-27', '大阪府', 2, 34.6937, 135.5022);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('30-28', '兵庫県', 2, 34.6913, 135.183);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('30-29', '奈良県', 2, 34.6851, 135.8327);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('30-30', '和歌山県', 2, 34.226, 135.1675);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('40', '中国', 1, 34.3852, 132.4553);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('40-31', '鳥取県', 2, 35.5039, 134.2383);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('40-32', '島根県', 2, 35.4723, 133.0505);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('40-33', '岡山県', 2, 34.6618, 133.9344);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('40-34', '広島県', 2, 34.3852, 132.4553);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('40-35', '山口県', 2, 34.1785, 131.4737);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('50', '四国', 1, 33.8416, 132.7653);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('50-36', '徳島県', 2, 34.0703, 134.5548);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('50-37', '香川県', 2, 34.3401, 134.0434);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('50-38', '愛媛県', 2, 33.8416, 132.7653);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('50-39', '高知県', 2, 33.5597, 133.5311);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60', '九州・沖縄', 1, 33.5902, 130.4017);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60-40', '福岡県', 2, 33.5902, 130.4017);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60-41', '佐賀県', 2, 33.2635, 130.3009);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60-42', '長崎県', 2, 32.7501, 129.8777);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60-43', '熊本県', 2, 32.7898, 130.7417);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60-44', '大分県', 2, 33.2382, 131.6126);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60-45', '宮崎県', 2, 31.9111, 131.4239);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60-46', '鹿児島県', 2, 31.5602, 130.5581);
+INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('60-47', '沖縄県', 2, 26.2124, 127.6809);
