@@ -82,12 +82,13 @@ export const fetchServices = async (options: SearchOptions) => {
   if (sortBy === 'near' && hasValidCoords && userCoords) {
     const { lat, lng } = userCoords;
     
-    // インデックスを効かせるため、10km圏内の矩形で絞り込み
+    /* // インデックスを効かせるため、10km圏内の矩形で絞り込み
     const bbox = getBoundingBox(lat, lng, 10);
     conditions.push(`lat BETWEEN ? AND ?`);
     params.push(bbox.minLat, bbox.maxLat);
     conditions.push(`lng BETWEEN ? AND ?`);
     params.push(bbox.minLng, bbox.maxLng);
+    */
 
     // 三平方の定理の簡略版（平方根なし）でソート
     // 💡 重要: SELECT句のプレースホルダ(?)は、WHERE句より先にバインドされる必要がある
