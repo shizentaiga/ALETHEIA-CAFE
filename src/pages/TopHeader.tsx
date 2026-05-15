@@ -48,11 +48,11 @@ export const TopHeader: FC<{
       />
 
       {/* 3. Authentication Links */}
-      <HeaderAuth 
+      {/* <HeaderAuth 
         user={user} 
         loginLabel={CONFIG.loginLabel} 
         logoutLabel={CONFIG.logoutLabel} 
-      />
+      /> */}
     </header>
   )
 }
