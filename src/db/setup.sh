@@ -24,12 +24,12 @@ fi
 # 各SQLファイルの実行
 echo "--- 1. Schema の適用(+駅名データベース) ---"
 npx wrangler d1 execute $DB_NAME --file=./src/db/schema.sql $FLAGS -y
-npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/companies.sql $FLAGS -y
-npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/lines.sql $FLAGS -y
-npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/stations.sql $FLAGS -y
+npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/02-10_companies.sql $FLAGS -y
+npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/02-20_lines.sql $FLAGS -y
+npx wrangler d1 execute $DB_NAME --file=./src/db/seed/src/db/seed/00_master/02-30_stations_base.sql $FLAGS -y
 
 echo "--- 2. Master Data (Areas) のインポート ---"
-npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/areas.sql $FLAGS -y
+npx wrangler d1 execute $DB_NAME --file=./src/db/seed/00_master/01-10_areas_master.sql $FLAGS -y
 
 echo "--- 3. Brands (*.sql) の一括インポート ---"
 # 指定ディレクトリ内の .sql ファイルをループで処理

@@ -63,7 +63,7 @@ import * as fs from 'fs';
 import path from 'path';
 import { JP_REGIONS, PREFECTURE_MASTER } from '../src/lib/constants';
 
-const OUTPUT_PATH = 'src/db/seed/00_master/areas.sql';
+const OUTPUT_PATH = 'src/db/seed/00_master/01-10_areas_master.sql';
 const API_CITIES = 'https://geoapi.heartrails.com/api/json?method=getCities';
 const API_TOWNS = 'https://geoapi.heartrails.com/api/json?method=getTowns';
 

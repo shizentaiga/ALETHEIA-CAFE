@@ -1,4 +1,4 @@
--- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/lines.sql --local
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/02-20_lines.sql --local
 
 -- Generated from line20260409free.csv
 DELETE FROM lines;

@@ -1,4 +1,4 @@
--- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/stations_13_tokyo.sql --local
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/02-31_stations_13_tokyo.sql --local
 
 -- Google Maps API Optimized Coordinates (Station Center Focus)
 -- Generated at: 2026/5/14 16:59:22

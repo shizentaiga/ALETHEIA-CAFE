@@ -12,17 +12,17 @@ const OUTPUT_DIR = 'src/db/seed/00_master';
 const TARGETS = [
   {
     csv: 'company20260409.csv',
-    sql: 'companies.sql',
+    sql: '02-10_companies.sql',
     table: 'companies'
   },
   {
     csv: 'line20260409free.csv',
-    sql: 'lines.sql',
+    sql: '02-20_lines.sql',
     table: 'lines'
   },
   {
     csv: 'station20260430free.csv',
-    sql: 'stations.sql',
+    sql: '02-30_stations_base.sql',
     table: 'stations'
   }
 ];

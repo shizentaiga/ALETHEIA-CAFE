@@ -1,4 +1,4 @@
--- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/companies.sql --local
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/00_master/02-10_companies.sql --local
 
 -- Generated from company20260409.csv
 DELETE FROM companies;
