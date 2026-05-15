@@ -23,7 +23,7 @@ test01.get('/', async (c) => {
 
   try {
     // 1. サービスの基本情報を取得
-    const { results, total } = await fetchServices(db, q, page);
+    const { results, total } = await fetchServices({db, q, page});
 
     // 2. 各店舗ごとの最寄駅情報を並列で取得して合成
     const resultsWithAccess = await Promise.all(

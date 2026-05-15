@@ -9,6 +9,17 @@ import { getNormalizedKeywords, generateAreaLikePattern } from '../../lib/search
 const DEFAULT_LIMIT = 20; // 1ページあたりのデフォルト表示件数
 // -------------------
 
+// 💡 1. 引数の型定義をエクスポート
+export type SearchOptions = {
+  db: D1Database;
+  q: string | string[];
+  page: number;
+  area?: string;
+  limit?: number;
+  sortBy?: 'latest' | 'near';
+  userCoords?: { lat: number; lng: number };
+};
+
 /**
  * 補助関数: エリアIDから表示用のエリア名を解決する
  * fetchServicesの外側に定義することでメインロジックを簡潔に保つ
@@ -36,13 +47,18 @@ async function resolveAreaName(db: D1Database, area?: string): Promise<string> {
 /**
  * メイン関数: サービス検索実行
  */
-export const fetchServices = async (
-  db: D1Database, 
-  q: string | string[], // 検索クエリ（文字列または配列）
-  page: number,         // 現在のページ
-  area?: string,        // エリアID
-  limit: number = DEFAULT_LIMIT
-) => {
+export const fetchServices = async (options: SearchOptions) => {
+  // 💡 2. オブジェクトから値を抽出（デフォルト値を設定）
+  const { 
+    db, 
+    q, 
+    page, 
+    area, 
+    limit = DEFAULT_LIMIT,
+    sortBy = 'latest',
+    userCoords 
+  } = options;
+  
   // 1. 検索準備（オフセット計算とキーワードの正規化）
   const offset = (page - 1) * limit;
   const keywords = getNormalizedKeywords(q);

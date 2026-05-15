@@ -45,7 +45,7 @@ home.get('/', async (c) => {
   const user = userId ? {} : null;
   
   // 5. DBから店舗データと表示用エリア名を取得
-  const { results, total, areaName } = await fetchServices(db, q, 1, area);
+  const { results, total, areaName } = await fetchServices({db, q, page: 1, area});
 
   // --- 💡 取得した results に最寄駅情報を付与 ---
   const resultsWithAccess = await Promise.all(
