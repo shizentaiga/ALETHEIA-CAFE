@@ -14,8 +14,21 @@ export const isValidCoordinates = (lat: number, lng: number): boolean => {
 };
 
 /**
+ * 指定された中心座標と半径(km)から、SQLのBETWEEN句で使える境界値を算出します。
+ */
+export const getBoundingBox = (lat: number, lng: number, rangeKm: number) => {
+  const latDelta = rangeKm / 111.1; // 1度あたり約111.1km
+  const lngDelta = rangeKm / (111.3 * Math.cos(lat * Math.PI / 180));
+  return {
+    minLat: lat - latDelta,
+    maxLat: lat + latDelta,
+    minLng: lng - lngDelta,
+    maxLng: lng + lngDelta
+  };
+};
+
+/**
  * 2点間の距離をメートル単位で計算する（Haversine公式）
- * ※DBでのソートは近似計算で十分ですが、UI上で「現在地から○km」と出したい場合に使用。
  */
 export const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
   // 数値誤差によるエラーをガード

@@ -1,5 +1,7 @@
 // src/db/queries/stationQuery.ts
 
+import { getBoundingBox, calculateDistance } from '../../lib/geoUtils';
+
 export type StationCandidate = {
   stationName: string; // 駅名（例: "新宿"）
   distance: number;    // 計算された直線距離(m)
@@ -17,40 +19,25 @@ export const calculateNearestStations = async (
   lng: number,
   limit: number = 3
 ): Promise<StationCandidate[]> => {
-  // --- 1. 【範囲絞り込み】 ---
-  // D1の計算負荷を下げるため、インデックスが効く単純な数値比較(BETWEEN)を使用。
-  // 約5km圏内を検索対象とする (1度 ≒ 111km なので 2km ≒ 0.018度)
-  const range = 0.090; 
-  const minLat = lat - range;
-  const maxLat = lat + range;
-  const minLng = lng - range;
-  const maxLng = lng + range;
 
-  // 修正点: 同名駅（別場所）対策として station_g_cd を取得に追加
+  // --- 1. 【範囲絞り込み】 ---
+  // 約5km圏内 (10km四方の枠) を共通関数で計算
+  const { minLat, maxLat, minLng, maxLng } = getBoundingBox(lat, lng, 5);
+
+  // 同名駅の対策として station_g_cd を取得(💡 DBの lon を lng として扱うよう変更)
   const { results } = await db.prepare(`
-    SELECT 
-      s.station_g_cd,
-      s.station_name,
-      s.lat,
-      s.lon AS lng, -- 💡 DBの lon を lng として取得
-      l.line_name
+    SELECT s.station_g_cd, s.station_name, s.lat, s.lon AS lng, l.line_name
     FROM stations s
     JOIN lines l ON s.line_cd = l.line_cd
     WHERE s.lat BETWEEN ?1 AND ?2
-      AND s.lon BETWEEN ?3 AND ?4 -- 💡 DBカラム名は lon なのでそのままでOK
+      AND s.lon BETWEEN ?3 AND ?4 -- 💡 DBカラム名は lon のままでOK
       AND s.e_status = 0
   `).bind(minLat, maxLat, minLng, maxLng).all();
 
   if (!results || results.length === 0) return [];
 
   // --- 2. & 3. 【精密距離計算 & 駅名グループ化】 ---
-  // 修正点: 日本全土での誤差を減らすため、入力緯度に基づいて経度1度あたりの距離を補正
-  // 緯度が高くなるほど経度1度あたりの距離は短くなるため Math.cos を使用
-  const M_PER_LAT = 111111;
-  const mPerLon = Math.cos(lat * Math.PI / 180) * 111320; 
-
-  // 修正点: Mapのキーを station_name から station_g_cd (数値) に変更
-  // これにより、離れた場所にある同名の「市役所前駅」などが混同されるのを防ぐ
+  // Mapのキー： station_g_cd (数値) によって、駅名の重複による混同を防止
   const stationMap = new Map<number, StationCandidate>();
 
   for (const row of results as any[]) {
@@ -65,11 +52,8 @@ export const calculateNearestStations = async (
       continue;
     }
 
-    // 新規駅グループの場合は距離計算
-    // 三平方の定理に動的な経度補正を適用
-    const dy = (lat - row.lat) * M_PER_LAT;
-    const dx = (lng - row.lng) * mPerLon;
-    const distance = Math.round(Math.sqrt(dx * dx + dy * dy));
+    // 新規駅グループの場合は距離計算(Haversine公式)
+    const distance = Math.round(calculateDistance(lat, lng, row.lat, row.lng));
 
     stationMap.set(gCd, {
       stationName: row.station_name,
@@ -80,9 +64,8 @@ export const calculateNearestStations = async (
     });
   }
 
-  // --- 4. & 5. 【ソートとフィルタリング & 戻り値の生成】 ---
-  // 計算された距離が近い順に並び替え
-  // 引数のlimitに基づき、上位N件の駅グループを抽出
+  // --- 4. 【ソート】 ---
+  // 距離が近い順に並び替えて、上位N件(引数のlimit)の駅グループを抽出
   return Array.from(stationMap.values())
     .sort((a, b) => a.distance - b.distance)
     .slice(0, limit);
