@@ -1,35 +1,38 @@
 import type { FC } from 'hono/jsx'
 
+/**
+ * [File Path] src/pages/TopFooter.tsx
+ * [Role] Footer component with copyright link to home.
+ * [Notes] PSI（PageSpeed Insights）のコントラスト比を考慮した配色を維持。
+ */
+
 // --- Configuration ---
 const FOOTER_CONFIG = {
-  copyright: `© 2026 ${'ALETHEIA'}`,
-  homeLabel: 'トップページ', // 💡 ラベルを定義
+  copyright: `© 2026 ALETHEIA`,
 } as const
 
 // --- Styles ---
 const STYLES = {
   footer: {
     width: '100%',
-    padding: '32px 0 24px', // 💡 上の余白を少し増やしてバランス調整
-    borderTop: '1px solid #f1f1f1',
+    padding: '40px 0 32px',
+    borderTop: '1px solid #f8fafc',
     backgroundColor: '#ffffff',
     textAlign: 'center' as const,
-    marginTop: 'auto' // これにより、上のコンテンツが少なくても下に押し出されます
+    marginTop: 'auto'
   },
-  // 💡 トップへ戻るリンクのスタイル
+  /**
+   * PSIを考慮した濃いめの色（#475569）をベースに、
+   * わずかな文字間隔を加えてロゴとしての質感を調整。
+   */
   homeLink: {
     display: 'inline-block',
-    marginBottom: '12px',
     fontSize: '0.85rem',
-    color: '#475569', // コピーライトより少し濃い色にして視認性を確保
+    color: '#475569', // 視認性の高い濃いめのグレーを維持
     textDecoration: 'none',
-    fontWeight: 500
-  },
-  text: {
-    fontSize: '0.82rem',
-    color: '#64748b',
-    margin: 0,
-    fontWeight: 400
+    fontWeight: 500,
+    letterSpacing: '0.05em', // 💡 文字間隔を広げ、視認性とデザイン性を両立
+    transition: 'color 0.2s ease', // 💡 ホバー時の変化を滑らかに
   }
 } as const
 
@@ -37,16 +40,27 @@ const STYLES = {
 export const TopFooter: FC = () => {
   return (
     <footer style={STYLES.footer}>
-      {/* 💡 トップへ戻るリンクを追加 */}
-      <nav>
-        <a href="/" style={STYLES.homeLink}>
-          {FOOTER_CONFIG.homeLabel}
+      <nav aria-label="Footer Navigation">
+        {/* ロゴ（コピーライト）クリック時、トップへ戻る */}
+        <a 
+          href="/" 
+          style={STYLES.homeLink}
+          /**
+           * [TypeScript] as HTMLElement で型を明示し、
+           * かつ if 文で null チェックを行うことで安全にスタイルを変更
+           */
+          onMouseOver={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            if (el) el.style.color = '#0f172a'; // ホバー時はさらに濃い黒に
+          }}
+          onMouseOut={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            if (el) el.style.color = '#475569'; // 元のPSI配慮色に戻す
+          }}
+        >
+          {FOOTER_CONFIG.copyright}
         </a>
       </nav>
-      
-      <p style={STYLES.text}>
-        {FOOTER_CONFIG.copyright}
-      </p>
     </footer>
   )
 }
