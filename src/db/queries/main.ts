@@ -3,7 +3,7 @@
  * [Role] クエリ層の統合エクスポート窓口（Single Entry Point）
  */
 
-import { fetchServices } from './searchQuery';
+import { fetchServices, fetchAreaCoordInfo } from './searchQuery';
 import { formatAttributes } from './transformers';
 import * as areaQueries from './areaQuery';
 import * as stationQueries from './stationQuery'; // 駅マスタ系も統合
@@ -15,6 +15,7 @@ import * as stationQueries from './stationQuery'; // 駅マスタ系も統合
  */
 export const dbQueries = {
   fetchServices,
+  fetchAreaCoordInfo, // 追加
   formatAttributes,
   ...areaQueries,
   ...stationQueries,
@@ -24,6 +25,6 @@ export const dbQueries = {
  * 2. 名前付きエクスポート (個別のインポート用)
  * 使用例: import { resolveAreaByRegionCode } from '@/db/queries/main';
  */
-export { fetchServices, formatAttributes };
+export { fetchServices, fetchAreaCoordInfo, formatAttributes };
 export * from './areaQuery';
 export * from './stationQuery';

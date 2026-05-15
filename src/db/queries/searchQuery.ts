@@ -5,7 +5,7 @@
  */
 import { getNormalizedKeywords, generateAreaLikePattern } from '../../lib/searchUtils';
 import { getBoundingBox, calculateDistance, isValidCoordinates } from '../../lib/geoUtils';
-import { calculateNearestStations } from '../../db/queries/main';
+import { calculateNearestStations } from '../../db/queries/stationQuery';
 import { formatAccessTime } from '../../lib/geoUtils';
 
 // --- CONFIGURATION ---
@@ -22,6 +22,29 @@ export type SearchOptions = {
   sortBy?: 'latest' | 'near';
   userCoords?: { lat: number; lng: number };
 };
+
+/**
+ * 補助関数: エリアIDから「名前」と「基準座標」を解決する
+ */
+export async function fetchAreaCoordInfo(db: D1Database, areaId?: string) {
+  // areaIdがない場合はデフォルトで全国(00)として扱う
+  const targetId = areaId || '00';
+
+  try {
+    const record = await db.prepare(`SELECT name, lat, lng FROM areas WHERE area_id = ?`)
+      .bind(targetId)
+      .first<{ name: string; lat: number; lng: number }>();
+    
+    return {
+      name: record?.name ?? (targetId === '00' ? "" : "エリアを選択"),
+      lat: record?.lat ?? null,
+      lng: record?.lng ?? null
+    };
+  } catch (e) {
+    console.error("Area info fetch error:", e);
+    return { name: "", lat: null, lng: null };
+  }
+}
 
 /**
  * 補助関数: エリアIDから表示用のエリア名を解決する
@@ -79,22 +102,10 @@ export const fetchServices = async (options: SearchOptions) => {
     typeof userCoords.lng === 'number' &&
     isValidCoordinates(userCoords.lat, userCoords.lng);
 
-  if (sortBy === 'near' && hasValidCoords && userCoords) {
-    const { lat, lng } = userCoords;
-    
-    /* // インデックスを効かせるため、10km圏内の矩形で絞り込み
-    const bbox = getBoundingBox(lat, lng, 10);
-    conditions.push(`lat BETWEEN ? AND ?`);
-    params.push(bbox.minLat, bbox.maxLat);
-    conditions.push(`lng BETWEEN ? AND ?`);
-    params.push(bbox.minLng, bbox.maxLng);
-    */
-
-    // 三平方の定理の簡略版（平方根なし）でソート
-    // 💡 重要: SELECT句のプレースホルダ(?)は、WHERE句より先にバインドされる必要がある
-    selectFields += `, ((lat - ?) * (lat - ?) + (lng - ?) * (lng - ?)) AS dist_sq`;
-    params.unshift(lat, lat, lng, lng); // 配列の先頭に追加
-
+  if (hasValidCoords && sortBy === 'near') {
+    const { lat, lng } = userCoords!;
+    // 数値を直接埋め込むことで、params.unshift(lat, lat...) を完全に廃止
+    selectFields += `, ((lat - ${lat}) * (lat - ${lat}) + (lng - ${lng}) * (lng - ${lng})) AS dist_sq`;
     orderBy = `dist_sq ASC`;
   }
 
@@ -114,7 +125,7 @@ export const fetchServices = async (options: SearchOptions) => {
   // 6. 最寄駅と駅座標の取得
   const services = await Promise.all((results || []).map(async (row: any) => {
     // 6-1. ユーザー位置からの距離（ソート用）
-    const userDistance = hasValidCoords ? Math.round(calculateDistance(userCoords.lat, userCoords.lng, row.lat, row.lng)) : null;
+    const userDistance = hasValidCoords ? Math.round(calculateDistance(userCoords!.lat, userCoords.lng, row.lat, row.lng)) : null;
 
     // 6-2. 最寄駅とアクセス情報の取得(async関数は、awaitが必須)
     const stations = await calculateNearestStations(db, row.lat, row.lng, 1);
