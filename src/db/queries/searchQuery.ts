@@ -5,6 +5,8 @@
  */
 import { getNormalizedKeywords, generateAreaLikePattern } from '../../lib/searchUtils';
 import { getBoundingBox, calculateDistance, isValidCoordinates } from '../../lib/geoUtils';
+import { calculateNearestStations } from '../../db/queries/main';
+import { formatAccessTime } from '../../lib/geoUtils';
 
 // --- CONFIGURATION ---
 const DEFAULT_LIMIT = 20; // 1ページあたりのデフォルト表示件数
@@ -25,8 +27,8 @@ export type SearchOptions = {
  * 補助関数: エリアIDから表示用のエリア名を解決する
  */
 async function resolveAreaName(db: D1Database, area?: string): Promise<string> {
-  if (!area) return "エリアを選択";
-  if (area === '00') return "";
+  if (!area) return "エリアを選択"; // エリア選択なし
+  if (area === '00') return "";   // 全国(00)を選択
 
   try {
     const record = await db.prepare(`SELECT name FROM areas WHERE area_id = ?`)
@@ -43,21 +45,10 @@ async function resolveAreaName(db: D1Database, area?: string): Promise<string> {
  * メイン関数: サービス検索実行
  */
 export const fetchServices = async (options: SearchOptions) => {
-  const { 
-    db, 
-    q, 
-    page, 
-    area, 
-    limit = DEFAULT_LIMIT,
-    sortBy = 'latest',
-    userCoords 
-  } = options;
-
-  // 1. 検索準備
+  // 1. 変数の準備
+  const { db, q, page, area, limit = DEFAULT_LIMIT, sortBy = 'latest', userCoords } = options;
   const offset = (page - 1) * limit;
   const keywords = getNormalizedKeywords(q);
-  
-  // SQLの基本条件
   const conditions = ["deleted_at IS NULL"];
   const params: any[] = [];
 
@@ -119,17 +110,28 @@ export const fetchServices = async (options: SearchOptions) => {
     `SELECT ${selectFields} FROM services ${whereSql} ORDER BY ${orderBy} LIMIT ? OFFSET ?`
   ).bind(...params, limit, offset).all();
 
-  // 6. 付随情報の解決: 精密な距離計算とエリア名
-  const services = (results || []).map((row: any) => {
-    let distance = null;
-    if (hasValidCoords && userCoords) {
-      // geoUtilsの公式を使用して、メートル単位の正確な距離を付与
-      distance = Math.round(calculateDistance(userCoords.lat, userCoords.lng, row.lat, row.lng));
-    }
-    return { ...row, distance };
-  });
+  // 6. 最寄駅と駅座標の取得
+  const services = await Promise.all((results || []).map(async (row: any) => {
+    // 6-1. ユーザー位置からの距離（ソート用）
+    const userDistance = hasValidCoords ? Math.round(calculateDistance(userCoords.lat, userCoords.lng, row.lat, row.lng)) : null;
 
-  const areaName = await resolveAreaName(db, area);
+    // 6-2. 最寄駅とアクセス情報の取得(async関数は、awaitが必須)
+    const stations = await calculateNearestStations(db, row.lat, row.lng, 1);
+    const nearestStation = stations.length > 0 ? stations[0] : null;
+    
+    const access = nearestStation ? formatAccessTime(
+      nearestStation.distance,
+      nearestStation.lat, nearestStation.lng, // 駅座標
+      row.lat, row.lng                        // 店舗座標
+    ) : null;
+
+    return { 
+      ...row, 
+      userDistance, 
+      nearestStation, 
+      access 
+    };
+  }));
 
   // 7. レスポンス返却
   return {
@@ -137,6 +139,6 @@ export const fetchServices = async (options: SearchOptions) => {
     total: countRes?.count || 0,
     currentPage: page,
     limit: limit,
-    areaName: areaName
+    areaName: await resolveAreaName(db, area)
   };
 };
