@@ -1,67 +1,18 @@
-// scripts/000_gen_areas.ts
-// 実行コマンド: npx tsx scripts/000_gen_areas.ts
-// 出力先：src/db/seed/00_master/areas.sql
-
-/**
- * 1. 大エリア（Level 1）の定義と出力
- * -----------------------------------------------------------------------------
- * ID体系: '地方コード2桁' (例: '01' 北海道, '10' 関東)
- * 役割: 日本全体を地方単位で大きく区切る
- * 実装: 固定配列（北から順）に基づいて生成。lat/lngはNULL。
- */
-
-/**
- * 2. 中エリア（Level 2）の取得と出力
- * -----------------------------------------------------------------------------
- * ID体系: 
- * - 通常県: '地方ID-都道府県JIS2桁' (例: '10-13' 東京都)
- * - 北海道内の仮想エリア: '地方ID-V+連番' (例: '01-V10' 道央)
- * 役割: ドリルダウン検索の第2ステップ。階層構造の統一（全国最大3階層固定）。
- */
-
-/**
- * 3. 小エリア（Level 3）の取得と出力
- * -----------------------------------------------------------------------------
- * ID体系: '中エリアID-A+連番3桁' (例: '10-13-A001' 新宿区, '01-V10-A001' 小樽市)
- * 採番ルール: 
- * - HeartRails API (getTowns) から取得した市区町村をユニーク化し、出現順に A001, A002... と採番。
- * - 「A」は ALETHEIA 独自コードであることを示す。
- * データソース: HeartRails API (getTowns) ※市区町村名と代表座標を同時に取得するため
- * スコープ定義:
- * - 「市区町村」単位で集約。町域名（新宿三丁目等）はデータ量抑制のため含めない。
- */
-
-/**
- * 4. 特殊処理：北海道の「振興局・仮想エリア」マッピング
- * -----------------------------------------------------------------------------
- * 役割: 北海道の179市町村を「道央・道北・道東・道南」等の仮想L2へ振り分ける。
- * 実装: 
- * - getTowns で取得した市区町村名（city）をキーに、所属先の仮想エリアIDを判定する定数を用意。
- * - 市区町村(L3)生成時、親ID（Level 2）をこの判定に基づいて動的に差し替える。
- */
-
-/**
- * 5. 座標データの扱い
- * -----------------------------------------------------------------------------
- * L3（市区町村）: 
- * - getTowns APIで取得したリストの「最初の町域」が持つ x, y を代表点として採用。
- * L1・L2（広域エリア）: 
- * - 代表点を持たない（NULL）。店舗検索において広域の中心点は実用性が低いため。
- */
-
-/**
- * 6. SQL出力フォーマット
- * -----------------------------------------------------------------------------
- * 形式: INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES (...)
- * 考慮事項:
- * - 文字列エスケープ（' -> ''）の徹底。
- * - Aコードによる採番により、JISコード未取得によるスキップを防止し、全自治体を網羅する。
- */
-
 // scripts/000-01-10_gen_areas.ts
+// 実行コマンド: npx tsx scripts/000-01-10_gen_areas.ts
+// 出力先：src/db/seed/00_master/01-10_areas_master.sql
+
 import * as fs from 'fs';
 import path from 'path';
 import { JP_REGIONS, PREFECTURE_MASTER } from '../src/lib/constants';
+
+/**
+ * [設計思想]
+ * 1. 階層構造: 全国を「地方(L1) > 都道府県/仮想エリア(L2) > 市区町村(L3)」の最大3階層で固定。
+ * 2. ID体系: ALETHEIA独自コード（A+連番）を採用し、JISコードの有無に依存しない網羅性を確保。
+ * 3. 座標管理: L3（市区町村）は店舗検索の実用性を考慮し、HeartRails APIから取得した代表点を保持。
+ * 4. 特殊処理: 北海道の広大さを考慮し、独自の仮想エリア（道央・道南等）へL3を振り分ける。
+ */
 
 const OUTPUT_PATH = 'src/db/seed/00_master/01-10_areas_master.sql';
 const API_CITIES = 'https://geoapi.heartrails.com/api/json?method=getCities';
@@ -81,6 +32,11 @@ interface HeartRailsResponse {
   };
 }
 
+/**
+ * 1. 大エリア（Level 1）の定義データ
+ * ID体系: '地方コード2桁' (例: '01' 北海道, '10' 関東)
+ * 日本全体を地方単位で大きく区切る役割。
+ */
 const REGION_DEFINITIONS = [
   { id: '01', name: '北海道', key: 'hokkaido' },
   { id: '02', name: '東北',   key: 'tohoku' },
@@ -93,7 +49,9 @@ const REGION_DEFINITIONS = [
 ];
 
 /**
- * 北海道の仮想エリア（道央・道南・道北・道東）への振り分けロジック
+ * 4. 特殊処理：北海道の「振興局・仮想エリア」マッピング
+ * 役割: 北海道の179市町村を「道央・道北・道東・道南」等の仮想L2へ振り分ける。
+ * 実装: getTownsで取得した市区町村名をキーに、所属先の仮想エリアIDを判定。
  */
 const getHokkaidoVirtualId = (cityName: string): string => {
   const dooh = ['札幌', '江別', '千歳', '恵庭', '北広島', '石狩', '小樽', '岩見沢', '夕張', '空知', '石狩', '後志', '胆振', '日高'];
@@ -119,7 +77,6 @@ const fetchWithRetry = async (url: string, retries = 3): Promise<HeartRailsRespo
       }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       
-      // 型アサーションにより unknown 型エラーを回避
       const data = (await response.json()) as HeartRailsResponse;
       return data.response;
     } catch (error) {
@@ -135,14 +92,19 @@ const main = async () => {
 
   console.log("🚀 Starting Precise Area Generation...");
 
-  // --- L1 (Region) & L2 (Prefecture) の静的生成 ---
+  // --- 1. L1 (Region) & 2. L2 (Prefecture) の静的生成 ---
+  // L1/L2 座標データの扱い: 広域エリアのため lat/lng は NULL（実用性が低いため）
   for (const region of REGION_DEFINITIONS) {
+    // 大エリア（Level 1）の出力
     sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level) VALUES ('${region.id}', '${region.name}', 1);\n`;
+    
     if (region.key === 'hokkaido') {
+      // 中エリア（Level 2）: 北海道内の仮想エリアID体系 '01-V+連番'
       ['道央', '道南', '道北', '道東'].forEach((name, i) => {
         sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level) VALUES ('01-V${(i+1)*10}', '${name}', 2);\n`;
       });
     } else {
+      // 中エリア（Level 2）: 通常県 ID体系 '地方ID-都道府県JIS2桁'
       const prefs = JP_REGIONS[region.key as keyof typeof JP_REGIONS] || [];
       for (const prefName of prefs) {
         const jisCode = Object.entries(PREFECTURE_MASTER).find(([k, v]) => v === prefName && /^\d{2}$/.test(k))?.[0];
@@ -151,7 +113,9 @@ const main = async () => {
     }
   }
 
-  // --- L3 (City) の動的生成 ---
+  // --- 3. L3 (City) の動的生成 ---
+  // ID体系: '中エリアID-A+連番3桁' (例: '10-13-A001')
+  // 「A」は ALETHEIA 独自コードであることを示し、全自治体の網羅を担保する。
   let totalCities = 0;
 
   for (const region of REGION_DEFINITIONS) {
@@ -165,7 +129,7 @@ const main = async () => {
       const cityNames = locations.map(loc => loc.city).filter((c): c is string => !!c);
 
       if (cityNames.length === 0) {
-        console.warn(`   ⚠️ No cities found for ${prefName}.`);
+        console.warn(`    ⚠️ No cities found for ${prefName}.`);
         continue;
       }
 
@@ -173,15 +137,20 @@ const main = async () => {
       let cityCounter = 1;
 
       for (const cityName of cityNames) {
-        // 各自治体の代表座標を取得
+        // 5. 座標データの取得: HeartRails API (getTowns) から市区町村の代表点を取得
+        // データ抑制のため町域名（新宿三丁目等）は含めず、最初の町域の座標を採用。
         const townRes = await fetchWithRetry(`${API_TOWNS}&prefecture=${encodeURIComponent(prefName)}&city=${encodeURIComponent(cityName)}`);
         const firstTown = townRes?.location?.[0];
 
         if (firstTown && firstTown.x !== undefined && firstTown.y !== undefined) {
           const aCode = `A${String(cityCounter).padStart(3, '0')}`;
+          
+          // 北海道の場合は前述の判定に基づき親IDを差し替える（仮想L2マッピング）
           const parentId = region.key === 'hokkaido' ? getHokkaidoVirtualId(cityName) : `${region.id}-${jisCode}`;
           const areaId = `${parentId}-${aCode}`;
 
+          // 6. SQL出力フォーマット: INSERT OR REPLACE 形式
+          // 文字列エスケープ（' -> ''）を徹底し、SQLエラーを防止。
           sql += `INSERT OR REPLACE INTO areas (area_id, name, area_level, lat, lng) VALUES ('${areaId}', '${cityName.replace(/'/g, "''")}', 3, ${firstTown.y}, ${firstTown.x});\n`;
           cityCounter++;
           totalCities++;
@@ -190,7 +159,7 @@ const main = async () => {
         // 自治体ごとの待機（API制限回避）
         await new Promise(r => setTimeout(r, 200));
       }
-      console.log(`   ✅ ${prefName}: ${cityCounter - 1} cities added.`);
+      console.log(`    ✅ ${prefName}: ${cityCounter - 1} cities added.`);
       // 都道府県ごとの待機
       await new Promise(r => setTimeout(r, 1000));
     }
