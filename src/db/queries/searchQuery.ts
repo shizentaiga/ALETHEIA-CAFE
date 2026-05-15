@@ -4,7 +4,7 @@
  * [Notes] マルチキーワード検索、論理削除の考慮、ページネーション、エリア名解決を担当
  */
 import { getNormalizedKeywords, generateAreaLikePattern } from '../../lib/searchUtils';
-import { getBoundingBox, calculateDistance, isValidCoordinates } from '../../lib/geoUtils';
+import { calculateDistance, isValidCoordinates } from '../../lib/geoUtils';
 import { calculateNearestStations } from '../../db/queries/stationQuery';
 import { formatAccessTime } from '../../lib/geoUtils';
 
@@ -43,24 +43,6 @@ export async function fetchAreaCoordInfo(db: D1Database, areaId?: string) {
   } catch (e) {
     console.error("Area info fetch error:", e);
     return { name: "", lat: null, lng: null };
-  }
-}
-
-/**
- * 補助関数: エリアIDから表示用のエリア名を解決する
- */
-async function resolveAreaName(db: D1Database, area?: string): Promise<string> {
-  if (!area) return "エリアを選択"; // エリア選択なし
-  if (area === '00') return "";   // 全国(00)を選択
-
-  try {
-    const record = await db.prepare(`SELECT name FROM areas WHERE area_id = ?`)
-      .bind(area)
-      .first<{ name: string }>();
-    return record?.name ?? "エリアを選択";
-  } catch (e) {
-    console.error("Area name fetch error:", e);
-    return "エリアを選択";
   }
 }
 
@@ -151,6 +133,5 @@ export const fetchServices = async (options: SearchOptions) => {
     total: countRes?.count || 0,
     currentPage: page,
     limit: limit,
-    areaName: await resolveAreaName(db, area)
   };
 };

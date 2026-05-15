@@ -9,7 +9,7 @@ import { TopHeader } from './TopHeader';
 import { TopMain } from './TopMain';
 import { TopFooter } from './TopFooter';
 
-import { fetchServices, getAreaInfo, fetchAreaCoordInfo } from '../db/queries/main';
+import { fetchServices, fetchAreaCoordInfo } from '../db/queries/main';
 import { resolveDetectionArea } from '../lib/geo';
 import { getNormalizedKeywords, joinKeywords } from '../lib/searchUtils';
 
@@ -51,7 +51,7 @@ home.get('/', async (c) => {
   ? { lat: areaInfo!.lat, lng: areaInfo!.lng } 
   : undefined;
   
-  // 5. DBから店舗データと表示用エリア名を取得(resultsには、nearestStationとaccess含む)
+  // 5. DBから店舗データ取得(resultsには、nearestStationとaccess含む)
   const { results, total } = await fetchServices({
     db, 
     q, 
