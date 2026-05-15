@@ -1,4 +1,4 @@
--- src/db/add_tables/add_areas_table.sql
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/add_tables/20260504_01_create_areas.sql --local
 
 -- # テーブル作成
 -- npx wrangler d1 execute ALETHEIA-CAFE-DB --file=./src/db/add_tables/add_areas_table.sql --local

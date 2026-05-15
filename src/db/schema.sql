@@ -82,6 +82,12 @@ CREATE TABLE services (
     lat             REAL,                         -- Latitude
     lng             REAL,                         -- Longitude
 
+    -- Availability Schedule (iCalendar-based JSON)
+    -- -------------------------------------------------------------------------
+    -- 構造例: {"base": [{"days": ["MO"], "slots": [{"start": "07:00", "end": "12:00"}]}], "exclude_holidays": true}
+    -- -------------------------------------------------------------------------
+    schedule_json   TEXT DEFAULT '{}',
+
     -- Dynamic Attributes (JSON format)
     -- -------------------------------------------------------------------------
     -- 以下のキー名に厳選し、表記揺れを禁止する:

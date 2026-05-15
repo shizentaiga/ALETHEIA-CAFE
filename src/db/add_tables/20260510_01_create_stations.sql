@@ -1,4 +1,4 @@
--- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/add_tables/add_stations_tables.sql --local
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/add_tables/20260510_01_create_stations.sql --local
 
 -- =============================================================================
 -- 【 ALETHEIA - Station Master Schema 】
