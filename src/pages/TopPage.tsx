@@ -9,8 +9,7 @@ import { TopHeader } from './TopHeader';
 import { TopMain } from './TopMain';
 import { TopFooter } from './TopFooter';
 
-import { fetchServices, calculateNearestStations } from '../db/queries/main';
-import { formatAccessTime } from '../lib/geoUtils';
+import { fetchServices } from '../db/queries/main';
 import { resolveDetectionArea } from '../lib/geo';
 import { getNormalizedKeywords, joinKeywords } from '../lib/searchUtils';
 
@@ -31,11 +30,11 @@ home.get('/', async (c) => {
   const normalized = getNormalizedKeywords(queryArray);
   const q = joinKeywords(normalized);
 
-  // 3. エリア特定：URL指定がなければ現在地（CDN）をフォールバック
+  // 3. エリア特定：URL指定がなければCDN位置情報をフォールバック
   const urlArea = c.req.query('area');
   const area = urlArea || await resolveDetectionArea(c, db);
 
-  // 現在地が特定された場合、パラメータに反映してドリルダウンの初期値にする
+  // 取得した現在地をドリルダウンの初期値に反映
   if (!urlArea && area) {
     currentParams.set('area', area);
   }
@@ -44,32 +43,15 @@ home.get('/', async (c) => {
   const userId = getCookie(c, 'aletheia_session');
   const user = userId ? {} : null;
   
-  // 5. DBから店舗データと表示用エリア名を取得
+  // 5. DBから店舗データと表示用エリア名を取得(resultsには、nearestStationとaccess含む)
   const { results, total, areaName } = await fetchServices({db, q, page: 1, area});
-
-  // --- 💡 取得した results に最寄駅情報を付与 ---
-  const resultsWithAccess = await Promise.all(
-    results.map(async (row: any) => {
-      const stations = await calculateNearestStations(db, row.lat, row.lng, 1);
-      const nearestStation = stations.length > 0 ? stations[0] : null;
-      return {
-        ...row,
-        nearestStation,
-        access: nearestStation ? formatAccessTime(
-          nearestStation.distance,
-          nearestStation.lat, nearestStation.lng, // 駅の座標
-          row.lat, row.lng,                       // 店舗の座標
-        ) : null
-      };
-    })
-  );
 
   // 6. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
   return c.render(
     <>
       <TopHeader user={user} areaName={areaName} />
       <TopMain 
-        results={resultsWithAccess} 
+        results={results} 
         total={total} 
         area={area} 
         q={q} 
