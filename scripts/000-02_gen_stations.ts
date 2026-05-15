@@ -3,7 +3,7 @@ import path from 'path';
 import { parse } from 'csv-parse/sync';
 
 /**
- * 実行コマンド: npx tsx scripts/000_gen_stations.ts
+ * 実行コマンド: npx tsx scripts/000-02_gen_stations.ts
  */
 
 const INPUT_DIR = 'scripts/data/ekidata';

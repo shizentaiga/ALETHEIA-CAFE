@@ -58,7 +58,7 @@
  * - Aコードによる採番により、JISコード未取得によるスキップを防止し、全自治体を網羅する。
  */
 
-// scripts/000_gen_areas.ts
+// scripts/000-01-10_gen_areas.ts
 import * as fs from 'fs';
 import path from 'path';
 import { JP_REGIONS, PREFECTURE_MASTER } from '../src/lib/constants';
