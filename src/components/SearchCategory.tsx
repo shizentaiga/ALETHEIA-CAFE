@@ -3,15 +3,6 @@
 import type { FC } from 'hono/jsx'
 
 const moduleStyle = `
-  .search-trigger {
-    width: 100%; padding: 12px 16px; border-radius: 12px;
-    border: 1px solid #e5e7eb; background: #fff;
-    font-size: 0.9rem; 
-    color: #1e293b; /* 👈 エリアと色を統一 */
-    cursor: pointer;
-    display: flex; justify-content: space-between; align-items: center;
-    transition: all 0.15s ease; /* 👈 ホバー効果 */
-  }
   .trigger-content { display: flex; align-items: center; gap: 6px; }
   .trigger-arrow { font-size: 0.8rem; color: #94a3b8; }
 `
@@ -24,7 +15,7 @@ const LABELS = {
 export const SearchCategory: FC<{ class?: string }> = ({ class: className }) => (
   <>
     <style>{moduleStyle}</style>
-    <button class={`search-trigger ${className || ''}`} type="button">
+    <button class={`search-trigger${className || ''}`} type="button">
       
       <div class="trigger-content">
         <span>{LABELS.icon}</span>

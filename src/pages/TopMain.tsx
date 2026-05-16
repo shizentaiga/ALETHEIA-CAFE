@@ -30,6 +30,26 @@ const layoutStyle = `
   .search-bar-row > * {
     flex: 1;
   }
+  /* 💡 共通スタイルを親に集約：ボタンの見た目・高さを完全にシンクロさせる */
+  .search-trigger {
+    width: 100%; 
+    padding: 12px 16px; 
+    border-radius: 12px; 
+    border: 1px solid #e5e7eb; 
+    background: #fff; 
+    text-align: left; 
+    font-size: 0.9rem; 
+    color: #1e293b; 
+    cursor: pointer; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    transition: all 0.15s ease; 
+  }
+  .search-trigger:hover {
+    background: #f9fafb;
+    border-color: #cbd5e1;
+  }
 `
 
 /**

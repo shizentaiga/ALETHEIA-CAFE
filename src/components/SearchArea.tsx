@@ -49,25 +49,6 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => 
   return (
     <div class="search-area-module" style={{ width: CONFIG.design.width }}>
       <style>{`
-        .search-trigger { 
-          width: 100%; 
-          padding: 12px 16px; 
-          border-radius: ${CONFIG.design.borderRadius}; 
-          border: 1px solid ${CONFIG.design.colors.border}; 
-          background: ${CONFIG.design.colors.background}; 
-          text-align: left; 
-          font-size: 0.9rem; 
-          color: ${CONFIG.design.colors.textDark}; 
-          cursor: pointer; 
-          display: flex; 
-          justify-content: space-between; 
-          align-items: center;
-          transition: all 0.15s ease; 
-        }
-        .search-trigger:hover {
-          background: ${CONFIG.design.colors.hoverBg};
-          border-color: ${CONFIG.design.colors.borderHover};
-        }
         #${CONFIG.ids.root} { width: 100%; overflow: hidden; margin-bottom: 8px; border-radius: ${CONFIG.design.borderRadius}; }
         #${CONFIG.ids.root}:has(.area-list-container) { border: 1px solid ${CONFIG.design.colors.border}; }
       `}</style>
