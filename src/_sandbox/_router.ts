@@ -26,6 +26,7 @@ import { test11 } from './test11_api'
 import { test12 } from './test12_iphone'
 import { test13 } from './test13_direction'
 import { test14 } from './test14_chips'
+import { test15 } from './test15_attributes'
 
 export const sandboxApp = new Hono<{}>()
 
@@ -55,3 +56,4 @@ sandboxApp.route('/test11', test11)
 sandboxApp.route('/test12', test12)
 sandboxApp.route('/test13', test13)
 sandboxApp.route('/test14', test14)
+sandboxApp.route('/test15', test15)
