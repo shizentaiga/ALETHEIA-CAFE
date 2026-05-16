@@ -1,4 +1,5 @@
 // Usage: npx tsx scripts/brands/002-4_doutor_schedule_json.ts
+
 // 注意点：平日営業時間 備考 休業:毎週月曜日などは対応していない。(合計80件ほど。)
 
 import fs from 'fs';
@@ -16,17 +17,12 @@ function optimizeSchedule(baseSlots: any[]): any[] {
     const mergedSlots: any[] = [];
 
     for (const current of baseSlots) {
-        // 現在のslotの文字列表現を作成してキーにする (例: '[{"start":"09:00","end":"19:00"}]')
         const currentSlotStr = JSON.stringify(current.slots);
-        
-        // すでにマージ先リストに同じ時間帯のものがあるか探す
         const existing = mergedSlots.find(item => JSON.stringify(item.slots) === currentSlotStr);
 
         if (existing) {
-            // 同じ時間帯があれば、曜日配列（days）を結合する
             existing.days = [...existing.days, ...current.days];
         } else {
-            // 新しい時間帯パターンならディープコピーして追加
             mergedSlots.push({
                 days: [...current.days],
                 slots: JSON.parse(currentSlotStr)
@@ -44,24 +40,19 @@ function parseBusinessHours(rawStr: string | null): any {
     const defaultSchedule = { base: [] };
     if (!rawStr) return defaultSchedule;
 
-    // 全角を半角に、スペースを除去
     const normalized = rawStr.replace(/：/g, ':').replace(/～/g, '-').replace(/\s/g, '');
-
-    // スラッシュで分割して、セグメントごとにパース
     const segments = normalized.split('/');
     const baseSlots: any[] = [];
 
     for (const segment of segments) {
-        // 「備考」や「ラストオーダー」が含まれるセグメントは完全に無視
         if (segment.includes('備考') || segment.includes('ラスト')) {
             continue;
         }
 
-        // 営業日タイプと時間のキャプチャ (例: 平日営業時間09:00-19:00)
         const match = segment.match(/(平日|土曜|日祝)営業時間(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
         if (match) {
             const type = match[1];
-            const start = match[2].padStart(5, '0'); // 9:00 -> 09:00
+            const start = match[2].padStart(5, '0');
             const end = match[3].padStart(5, '0');
 
             let days: string[] = [];
@@ -82,24 +73,42 @@ function parseBusinessHours(rawStr: string | null): any {
         }
     }
 
-    // 有効なスロットが1つでも生成できれば構造を返す
     if (baseSlots.length > 0) {
-        // 重複する時間帯の曜日を1つにマージ
         const optimizedSlots = optimizeSchedule(baseSlots);
-
         return {
             base: optimizedSlots,
-            exclude_holidays: false // カフェチェーンのため、祝日も基本日祝スロットを適用
+            exclude_holidays: false
         };
     }
 
-    // パースに失敗した（または該当スロットがない）場合は例外ログ
     console.warn(`  ⚠️ パース失敗: "${rawStr}" は標準形式ではないため空で出力します。`);
     return defaultSchedule;
 }
 
+/**
+ * 複雑な営業時間から「平日の代表時間のみ」を抽出する
+ * 例: "平日営業時間 09:00-19:00 / 土曜..." -> "09:00-19:00"
+ */
+function extractWeekdayHours(rawStr: string | null): string {
+    if (!rawStr) return "";
+    
+    // 表記揺れを吸収しつつ「平日営業時間」の直後の時間帯をキャプチャ
+    const normalized = rawStr.replace(/：/g, ':').replace(/～/g, '-');
+    const match = normalized.match(/平日営業時間\s*(\d{1,2}:\d{2}-\d{1,2}:\d{2})/);
+    
+    if (match) {
+        // 時刻のパディング調整 (例: 7:00-21:00 -> 07:00-21:00)
+        const times = match[1].split('-');
+        const start = times[0].trim().padStart(5, '0');
+        const end = times[1].trim().padStart(5, '0');
+        return `${start}-${end}`;
+    }
+    
+    return rawStr; // マッチしなかった特殊型（休業備考つき等）は安全のため元の文字列を返す
+}
+
 async function main() {
-    console.log("🚀 ドトール schedule_json の生成を開始します...");
+    console.log("🚀 ドトール schedule_json の生成および business_hours のシンプル化を開始します...");
 
     const inputPath = path.resolve(PATH_CONFIG.INPUT_SQL);
     const outputPath = path.resolve(PATH_CONFIG.OUTPUT_SQL);
@@ -121,7 +130,6 @@ async function main() {
             continue;
         }
 
-        // attributes_json の中身を抽出
         const attrMatch = line.match(/'({.*})'\);/);
         if (!attrMatch) {
             newLines.push(line);
@@ -129,17 +137,24 @@ async function main() {
         }
 
         try {
+            // 既存のJSONオブジェクトを取得
             const attributes = JSON.parse(attrMatch[1].replace(/''/g, "'"));
+            
+            // 1. schedule_json を生成（これは元の複雑な文字列からパースするのが確実）
             const schedule = parseBusinessHours(attributes.business_hours);
             const scheduleJsonStr = JSON.stringify(schedule).replace(/'/g, "''");
 
-            // INSERT文の末尾 ); を置換して schedule_json カラムを追加
+            // 2. attributes_json 側の business_hours を平日の代表時間のみに上書き
+            attributes.business_hours = extractWeekdayHours(attributes.business_hours);
+            const updatedAttrJsonStr = JSON.stringify(attributes).replace(/'/g, "''");
+
+            // 3. カラム定義とVALUESボディをそれぞれきれいに置換
             let updatedLine = line.replace(
                 ', attributes_json)',
                 ', attributes_json, schedule_json)'
             ).replace(
                 `'${attrMatch[1]}');`,
-                `'${attrMatch[1]}', '${scheduleJsonStr}');`
+                `'${updatedAttrJsonStr}', '${scheduleJsonStr}');`
             );
 
             newLines.push(updatedLine);
