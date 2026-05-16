@@ -2,33 +2,25 @@
 
 /**
  * 設計メモ
- * 
- * ・スキーマ
+ * * ・スキーマ
  * CREATE TABLE services (
- *     service_id      TEXT PRIMARY KEY,
- *     -- Availability Schedule (iCalendar-based JSON)
- *     -- -------------------------------------------------------------------------
- *     -- 構造例: {"base": [{"days": ["MO"], "slots": [{"start": "07:00", "end": "12:00"}]}], "exclude_holidays": true}
- *     -- -------------------------------------------------------------------------
- *     schedule_json   TEXT DEFAULT '{}',
- * 
- * ・インプット：src/db/seed/brands/001-1_starbucks.sql
+ * service_id      TEXT PRIMARY KEY,
+ * -- Availability Schedule (iCalendar-based JSON)
+ * -- -------------------------------------------------------------------------
+ * -- 構造例: {"base": [{"days": ["MO"], "slots": [{"start": "07:00", "end": "12:00"}]}], "exclude_holidays": true}
+ * -- -------------------------------------------------------------------------
+ * schedule_json   TEXT DEFAULT '{}',
+ * * ・インプット：src/db/seed/brands/001-1_starbucks.sql
  * "business_hours":"07:00～22:00"
  * INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, attributes_json) VALUES ('STB_333', 'brand_starbucks', '01ARZ3NDEKTSV4RRFFQ69G5FAV', 'free', '01-V10-A001', 'スターバックス コーヒー 札幌グランドホテル店', '北海道 札幌市中央区 北1条西4丁目 札幌グランドホテル 1F', 43.0630144394, 141.351145716, '{"category":"cat_cafe","wifi":true,"ext_source":"starbucks_official","ext_place_id":"STB_OFFICIAL_333","business_hours":"07:00～22:00"}');
- * 
- * ・アウトプット；src/db/seed/brands/001-4_starbucks.sql
+ * * ・アウトプット：src/db/seed/brands/001-4_starbucks.sql
  * ※001-4の数字の4は、スクリプトの番号と合わせたため。(1はfetch、2はconvertなので、本来は2番と4番のみがあれば良いが、そこまで配慮できなかったため、今後はそのように運用しようかと。)
- * {"base": [{"days": ["月曜日〜日曜日"], "slots": [{"start": "07:00", "end": "22:00"}]}]
- * }の正式な書き方に変換。
+ * {"base": [{"days": ["MO", "TU", "WE", "TH", "FR", "SA", "SU"], "slots": [{"start": "07:00", "end": "22:00"}]}], "exclude_holidays": false}
+ * の正式な書き方に変換。
  */
-
 
 import fs from 'fs';
 import path from 'path';
-
-/**
- * [Usage] npx tsx scripts/brands/001-4_starbucks_schedule_json.ts
- */
 
 const PATH_CONFIG = {
     INPUT_SQL: 'src/db/seed/brands/001-1_starbucks.sql',
