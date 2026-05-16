@@ -100,6 +100,8 @@ CREATE TABLE services (
     -- - smoking        : (string)  喫煙ステータス ('NO_SMOKING', 'SMOKING_ROOM', 'SMOKING_SEATS', 'ALL_SMOKING')
     -- - payment        : (array)   決済手段。'CASH_ONLY'、'PayPay'、および主要区分 ('CREDIT', 'E_MONEY', 'QR') を許可
     -- - buffet         : (boolean) 食べ放題（ミスドビュッフェ等）の有無
+    -- - pop_buffet     : (boolean) ドーナツポップ詰め放題の有無
+    -- - free_refill    : (boolean) ドリンクおかわり自由（コーヒー・カフェオレ等）の有無
     -- - baby           : (boolean) 赤ちゃん対応・ベビーカー入店の可否
     -- - business_hours : (string)  基本営業時間（例: '09:00〜21:00' ※予備・フロント表示用）
     -- -------------------------------------------------------------------------
