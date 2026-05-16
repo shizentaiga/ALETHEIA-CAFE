@@ -20,6 +20,11 @@ const layoutStyle = `
     display: flex;
     gap: 12px;
     width: 100%;
+    align-items: flex-start; /* 👈 【追加】子要素の高さの強制引き伸ばし（stretch）を防ぐ */
+  }
+  /* 💡 エリアを広く(2)、条件をコンパクト(1) に割り振ることで黄金比率に */
+  .search-bar-row > .area-wrapper {
+    flex: 2; 
   }
   /* Make all children equal width (1:1). This is the most stable way to align them. */
   .search-bar-row > * {
@@ -48,7 +53,7 @@ export const TopMain: FC<{
       <SearchArea currentParams={currentParams} areaName={areaName} />
       
       {/* SearchCategory is currently under development */}
-      {/* <SearchCategory /> */}
+      <SearchCategory />
     </div>
 
     {/* Search Results Section */}

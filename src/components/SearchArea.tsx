@@ -4,7 +4,7 @@ const CONFIG = {
   api: { basePath: '/api/area-drilldown' },
   ids: { root: 'area-drilldown-root' },
   design: {
-    width: '50%',   // 幅を50％に変更
+    width: '100%',
     borderRadius: '12px',
     colors: { border: '#e5e7eb', text: '#64748b', background: '#fff', hoverBg: '#f9fafb' }
   }
@@ -36,7 +36,20 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => 
   return (
     <div class="search-area-module" style={{ width: CONFIG.design.width }}>
       <style>{`
-        .search-trigger { width: 100%; padding: 12px 16px; border-radius: ${CONFIG.design.borderRadius}; border: 1px solid ${CONFIG.design.colors.border}; background: ${CONFIG.design.colors.background}; text-align: left; font-size: 0.9rem; color: ${CONFIG.design.colors.text}; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .search-trigger { 
+          width: 100%; 
+          padding: 12px 16px; 
+          border-radius: ${CONFIG.design.borderRadius}; 
+          border: 1px solid ${CONFIG.design.colors.border}; 
+          background: ${CONFIG.design.colors.background}; 
+          text-align: left; 
+          font-size: 0.9rem; 
+          color: #1e293b; /* 👈 テキストの色を少しだけ濃くして視認性アップ */
+          cursor: pointer; display: flex; 
+          justify-content: space-between; 
+          align-items: center;
+          transition: all 0.15s ease; /* 👈 なめらかなホバー効果 */
+        }
         #${CONFIG.ids.root} { width: 100%; overflow: hidden; margin-bottom: 8px; border-radius: ${CONFIG.design.borderRadius}; }
         #${CONFIG.ids.root}:has(.area-list-container) { border: 1px solid ${CONFIG.design.colors.border}; }
       `}</style>
