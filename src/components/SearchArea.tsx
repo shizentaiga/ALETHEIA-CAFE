@@ -1,12 +1,25 @@
+// src/components/SearchArea.tsx
+
 import type { FC } from 'hono/jsx'
 
 const CONFIG = {
   api: { basePath: '/api/area-drilldown' },
   ids: { root: 'area-drilldown-root' },
+  labels: {
+    defaultPlaceholder: 'エリアを選択'
+  },
   design: {
     width: '100%',
     borderRadius: '12px',
-    colors: { border: '#e5e7eb', text: '#64748b', background: '#fff', hoverBg: '#f9fafb' }
+    colors: { 
+      border: '#e5e7eb', 
+      borderHover: '#cbd5e1',
+      text: '#64748b', 
+      textDark: '#1e293b',
+      textArrow: '#94a3b8',
+      background: '#fff', 
+      hoverBg: '#f9fafb' 
+    }
   }
 } as const
 
@@ -44,11 +57,16 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => 
           background: ${CONFIG.design.colors.background}; 
           text-align: left; 
           font-size: 0.9rem; 
-          color: #1e293b; /* 👈 テキストの色を少しだけ濃くして視認性アップ */
-          cursor: pointer; display: flex; 
+          color: ${CONFIG.design.colors.textDark}; 
+          cursor: pointer; 
+          display: flex; 
           justify-content: space-between; 
           align-items: center;
-          transition: all 0.15s ease; /* 👈 なめらかなホバー効果 */
+          transition: all 0.15s ease; 
+        }
+        .search-trigger:hover {
+          background: ${CONFIG.design.colors.hoverBg};
+          border-color: ${CONFIG.design.colors.borderHover};
         }
         #${CONFIG.ids.root} { width: 100%; overflow: hidden; margin-bottom: 8px; border-radius: ${CONFIG.design.borderRadius}; }
         #${CONFIG.ids.root}:has(.area-list-container) { border: 1px solid ${CONFIG.design.colors.border}; }
@@ -69,9 +87,9 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => 
           >
             <div style="display: flex; align-items: center; gap: 6px;">
               <span>📍</span>
-              <span>{areaName || 'エリアを選択'}</span>
+              <span>{areaName || CONFIG.labels.defaultPlaceholder}</span>
             </div>
-            <span style="color: #94a3b8;">▼</span>
+            <span style="color: ${CONFIG.design.colors.textArrow};">▼</span>
           </button>
         )}
       </div>

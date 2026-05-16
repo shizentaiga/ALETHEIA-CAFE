@@ -1,7 +1,35 @@
+// src/api/areaDrilldown.ts
+
 import { Hono } from 'hono'
 import { html } from 'hono/html'
 import { dbQueries } from '../db/queries/main'
 import { createSearchUrl } from '../lib/searchUtils'
+
+// 💡 外部から変更しやすいよう、上部に定数を集約
+const CONFIG = {
+  api: { basePath: '/api/area-drilldown' },
+  ids: { targetRoot: '#area-drilldown-root' },
+  labels: {
+    defaultTitle: 'エリアを選択',
+    allJapan: '📍 全国（すべて）',
+    suffixAll: 'すべて'
+  },
+  design: {
+    maxHeight: '300px',
+    colors: {
+      border: '#f3f4f6',
+      borderLight: '#f9fafb',
+      textDark: '#111827',
+      textMuted: '#4b5563',
+      textLight: '#9ca3af',
+      textArrow: '#d1d5db',
+      bgLight: '#f9fafb',
+      bgWhite: '#fff',
+      hoverBg: '#f3f4f6',
+      hoverText: '#0070f3'
+    }
+  }
+} as const
 
 const areaApi = new Hono<{ Bindings: { ALETHEIA_CAFE_DB: D1Database } }>()
 
@@ -30,37 +58,35 @@ areaApi.get('/', async (c) => {
   return c.html(html`
     <div class="area-list-container">
         <style>
-            .area-header-ui { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 0.85rem; font-weight: 600; color: #111827; background: #f9fafb; }
-            .area-list-scroll { max-height: 300px; overflow-y: auto; }
-            .area-item-ui { width: 100%; padding: 12px 16px; border: none; background: #fff; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #4b5563; cursor: pointer; border-bottom: 1px solid #f9fafb; }
-            .area-item-ui:hover { background: #f3f4f6; color: #0070f3; }
-            .back-icon { cursor: pointer; padding-right: 8px; color: #9ca3af; }
+            .area-header-ui { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid ${CONFIG.design.colors.border}; font-size: 0.85rem; font-weight: 600; color: ${CONFIG.design.colors.textDark}; background: ${CONFIG.design.colors.bgLight}; }
+            .area-list-scroll { max-height: ${CONFIG.design.maxHeight}; overflow-y: auto; }
+            .area-item-ui { width: 100%; padding: 12px 16px; border: none; background: ${CONFIG.design.colors.bgWhite}; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: ${CONFIG.design.colors.textMuted}; cursor: pointer; border-bottom: 1px solid ${CONFIG.design.colors.borderLight}; }
+            .area-item-ui:hover { background: ${CONFIG.design.colors.hoverBg}; color: ${CONFIG.design.colors.hoverText}; }
+            .back-icon { cursor: pointer; padding-right: 8px; color: ${CONFIG.design.colors.textLight}; }
         </style>
 
         <div class="area-header-ui">
             <div>
-                ${parentId ? html`<span class="back-icon" hx-get="/api/area-drilldown?parent_id=${backId || ''}${suffix}" hx-target="#area-drilldown-root">←</span>` : ''}
-                ${parentArea ? parentArea.name : 'エリアを選択'}
+                ${parentId ? html`<span class="back-icon" hx-get="${CONFIG.api.basePath}?parent_id=${backId || ''}${suffix}" hx-target="${CONFIG.ids.targetRoot}">←</span>` : ''}
+                ${parentArea ? parentArea.name : CONFIG.labels.defaultTitle}
             </div>
-            <span style="cursor:pointer; color:#9ca3af;" onclick="window.location.href='/'">×</span>
+            <span style="cursor:pointer; color:${CONFIG.design.colors.textLight};" onclick="window.location.href='/'">×</span>
         </div>
 
         <div class="area-list-scroll">
-            <!-- 💡 1. 初期状態（地方選択）の時だけ「全国」ボタンを先頭に出現させる -->
             ${!parentId ? html`
                 <button class="area-item-ui area-item-all" 
                     onclick="window.location.href='${createSearchUrl(searchBaseParams, { area: '00', areaName: null })}'">
-                    <span>📍 全国（すべて）</span>
-                    <span style="font-size: 0.7rem; color: #d1d5db;">❯</span>
+                    <span>${CONFIG.labels.allJapan}</span>
+                    <span style="font-size: 0.7rem; color: ${CONFIG.design.colors.textArrow};">❯</span>
                 </button>
             ` : ''}
 
-            <!-- 💡 2. 各地方・都道府県の「すべて」対応 -->
             ${parentArea ? html`
                 <button class="area-item-ui area-item-all" 
                     onclick="window.location.href='${createSearchUrl(searchBaseParams, { area: parentArea.area_id, areaName: parentArea.name })}'">
-                    <span>📍 ${parentArea.name}すべて</span>
-                    <span style="font-size: 0.7rem; color: #d1d5db;">❯</span>
+                    <span>📍 ${parentArea.name}${CONFIG.labels.suffixAll}</span>
+                    <span style="font-size: 0.7rem; color: ${CONFIG.design.colors.textArrow};">❯</span>
                 </button>
             ` : ''}
 
@@ -72,7 +98,7 @@ areaApi.get('/', async (c) => {
                 return html`
                     <button class="area-item-ui" onclick="window.location.href='${finalUrl}'">
                         <span>${area.name}</span>
-                        <span style="font-size: 0.7rem; color: #d1d5db;">❯</span>
+                        <span style="font-size: 0.7rem; color: ${CONFIG.design.colors.textArrow};">❯</span>
                     </button>
                 `;
             })}
