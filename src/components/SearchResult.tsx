@@ -1,10 +1,11 @@
 /**
- * [File Path] src/components/SearchResult.tsx
+ * [ファイルパス] src/components/SearchResult.tsx
  */
+
 import type { FC } from 'hono/jsx'
 import { formatAttributes } from '../db/queries/main' // 特徴表示用(チップ形式)
 
-// --- Types ---
+// --- 型定義 ---
 export interface ServiceResult {
   service_id: string;
   title: string;
@@ -18,23 +19,25 @@ export interface SearchResultProps {
   results: ServiceResult[];
   total: number;
   area?: string;
-  q?: string; // Normalized query string from the server
+  q?: string; // サーバー側で正規化されたクエリ文字列
 }
 
-// --- Styles ---
+// --- スタイル定義 ---
 /**
- * Scoped styles for the search result module.
- * Using a scope ID to prevent CSS leakage to other components.
+ * 検索結果モジュール専用のスコープスタイル
+ * 他のコンポーネントへのCSS漏洩を防ぐためにスコープIDを使用
  */
 const moduleStyle = (scope: string) => `
   #${scope} { margin-top: 10px; }
   
-  /* ⑧ result-header を静かに */
+  /* result-header を静かに */
   #${scope} .result-header { 
     font-size: 0.75rem; 
-    color: #718096; /* 濃いめのグレーに変更 */
-    margin-bottom: 10px; 
-    letter-spacing: 0.02em;
+    color: #64748b;        /* 👈 柔らかいニュアンスグレーへ */
+    font-weight: 600;      /* 👈 ほんの少しだけ太く */
+    margin-bottom: 12px;   /* 👈 下のカードとの余白を少し拡張 */
+    padding-left: 2px;     /* 👈 左側のカードの端と縦のラインを揃える */
+    letter-spacing: 0.04em;
   }
 
   /* スマホのカラム設定(1カラム or 2カラム) */
@@ -42,31 +45,32 @@ const moduleStyle = (scope: string) => `
     display: grid; 
     /* grid-template-columns: repeat(2, 1fr); */ /* 2カラム */
     grid-template-columns: 1fr; /* 1カラム */
-    gap: 12px; /* 1カラム：12px(広め)、2カラム：8px(狭め) *//
+    gap: 12px; /* 1カラム：12px(広め)、2カラム：8px(狭め) */
   }
 
-  /* ⑥ PCは1カラム維持 */
+  /* PCは1カラム維持 */
   @media (min-width: 640px) {
     #search-results-target { grid-template-columns: 1fr; }
   }
 
-  /* ⑨ カード角丸と ② hoverの調整 */
+  /* カード角丸と hoverの調整 */
   #${scope} .cafe-card {
     display: block; 
     text-decoration: none; 
     color: inherit;
-    padding: 10px; /* ⑦ スマホ時余白減少 */
+    padding: 12px;              /* 👈 10pxから12pxへ。内側の余白にゆとりを持たせる */
     border: 1px solid #f1f5f9; 
-    border-radius: 14px; /* ⑨ 角丸を少し増やす */
+    border-radius: 14px; /* 角丸を少し増やす */
     background: #fff; 
-    transition: border-color 0.15s ease; /* ② hoverを弱く */
+    transition: all 0.15s ease; /* 👈 border-color から all に変更 */
   }
 
   #${scope} .cafe-card:hover { 
-    border-color: #cbd5e1;
+    border-color: #d7dee7;       /* hover 時に border を少しだけ明るく */
+    background: #fafbfc;         /* 👈 マウスが乗ったことが直感的にわかる極薄グレーを追加 */
   }
 
-  /* ③ タイトル行数制限 */
+  /* タイトル行数制限 */
   #${scope} .name { 
     font-weight: 700; 
     color: #111;
@@ -78,7 +82,7 @@ const moduleStyle = (scope: string) => `
     font-size: 0.9rem;
   }
 
-  /* ④ 住所（駅情報）をさらに弱く */
+  /* 住所（駅情報）をさらに弱く */
   #${scope} .addr { 
     font-size: 0.72rem; 
     color: #64748b; /* 視認性を確保しつつ主張を抑える */
@@ -90,16 +94,17 @@ const moduleStyle = (scope: string) => `
     text-overflow: ellipsis; /* 三点リーダを表示 */
   }
 
-  /* ① タグを“静か”にする */
+  /* タグを“静か”にする */
   .tag-box { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
   .tag { 
     font-size: 0.65rem; 
     background: #f1f5f9; 
-    padding: 2px 8px; 
+    padding: 3px 10px;         /* 👈 2px 8px から 3px 10px に広げて文字の窮屈さを解消 */
     border-radius: 999px; /* 完全に丸く */
     color: #55667a; /* タグも一段階濃くして確実にパスさせる */
     font-weight: 400; 
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e8edf3; /* 👈 #e2e8f0 から、少しだけ背景に馴染む優しい色合いへ */
+    line-height: 1.2; /* タグの縦位置だけ少し整える */
   }
 `
 
@@ -108,8 +113,8 @@ const LABELS = {
 }
 
 /**
- * SearchResult Component
- * Renders the list of results and embeds hidden state for client-side JS synchronization.
+ * 検索結果コンポーネント
+ * 結果一覧を描画し、クライアント側のJavaScript同期用に隠し状態を埋め込む
  */
 export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '', q = '' }) => {
   const scope = "search-result-module"
@@ -134,7 +139,7 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
             </span>
 
             <div class="tag-box">
-              {/* Maps formatted attributes into individual tag badges */}
+              {/* 整形された属性を個別のタグバッジにマッピング */}
               {formatAttributes(row.attributes_json).map(tag => (
                 <span class="tag">{tag}</span>
               ))}

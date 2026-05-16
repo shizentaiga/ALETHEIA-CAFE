@@ -1,17 +1,17 @@
 import type { FC } from 'hono/jsx'
 
 /**
- * [File Path] src/pages/TopFooter.tsx
- * [Role] Footer component with copyright link to home.
- * [Notes] PSI（PageSpeed Insights）のコントラスト比を考慮した配色を維持。
+ * [ファイルパス] src/pages/TopFooter.tsx
+ * [役割] ホームへのコピーライトリンクを持つフッターコンポーネント
+ * [注意点] PSI（PageSpeed Insights）のコントラスト比を考慮した配色を維持。
  */
 
-// --- Configuration ---
+// --- 設定 ---
 const FOOTER_CONFIG = {
   copyright: `© 2026 ALETHEIA`,
 } as const
 
-// --- Styles ---
+// --- スタイル定義 ---
 const STYLES = {
   footer: {
     width: '100%',
@@ -27,20 +27,21 @@ const STYLES = {
    */
   homeLink: {
     display: 'inline-block',
+    fontFamily: '"Times New Roman", "Georgia", serif',  // ロゴと同じフォントファミリーを適用
     fontSize: '0.85rem',
     color: '#475569', // 視認性の高い濃いめのグレーを維持
     textDecoration: 'none',
     fontWeight: 500,
-    letterSpacing: '0.05em', // 💡 文字間隔を広げ、視認性とデザイン性を両立
+    letterSpacing: '0.08em', // 💡 ロゴの letter-spacing: 0.08em と歩調を合わせる
     transition: 'color 0.2s ease', // 💡 ホバー時の変化を滑らかに
   }
 } as const
 
-// --- Component ---
+// --- コンポーネント ---
 export const TopFooter: FC = () => {
   return (
     <footer style={STYLES.footer}>
-      <nav aria-label="Footer Navigation">
+      <nav aria-label="フッターナビゲーション">
         {/* ロゴ（コピーライト）クリック時、トップへ戻る */}
         <a 
           href="/" 
