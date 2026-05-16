@@ -14,8 +14,8 @@ import { normalizeAddress } from '../../src/lib/searchUtils.js';
  */
 const CONVERTER_CONFIG = {
     BRAND_ID: 'MISTERDONUTS',
-    INPUT_FILE: '004_misterdonuts.json',
-    OUTPUT_FILE: '004-1_misterdonuts.sql', // 最終出力用SQL
+    INPUT_FILE: '004_misdo.json',
+    OUTPUT_FILE: '004-1_misdo.sql', // 最終出力用SQL
     D1_BINDING: 'ALETHEIA_CAFE_DB',
     D1_DATABASE_ID: '70ed05d4-20d7-484d-bdc1-3a5e9ea63086',
     D1_PERSIST_PATH: '.wrangler/state/v3/d1',
