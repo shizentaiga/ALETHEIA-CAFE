@@ -1,6 +1,7 @@
 /**
- * [File Path] src/routes/sandbox/test15.tsx (または該当のテストルート)
+ * [File Path] src/_sandbox/test15_attributes.tsx
  */
+
 import { Hono } from 'hono'
 
 type Bindings = {
