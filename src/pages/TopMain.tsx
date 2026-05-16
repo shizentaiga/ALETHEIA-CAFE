@@ -57,8 +57,6 @@ export const TopMain: FC<{
     </div>
 
     {/* Search Results Section */}
-    <div id="search-result-module">
-      <SearchResult results={results} total={total} area={area} q={q} />
-    </div>
+    <SearchResult results={results} total={total} area={area} q={q} />
   </section>
 )
