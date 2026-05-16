@@ -44,8 +44,6 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
 
   return (
     <nav id={CONFIG.headerId}>
-      <style>{headerStyle}</style>
-      
       <form 
         class="header-search-form" 
         method="get" 
