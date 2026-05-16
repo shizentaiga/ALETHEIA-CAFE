@@ -26,6 +26,7 @@ interface ShopBase {
 interface ShopDetail extends ShopBase {
     tel?: string;
     business_hours?: string;
+    business_hours_changes?: string; // ★ 臨時休業・変更アナウンス用フィールド
     regular_holiday?: string;
     has_wifi?: string;
     has_power?: string;
@@ -45,21 +46,43 @@ async function fetchShopDetail(page: any, shop: ShopBase): Promise<ShopDetail> {
     console.log(`  🔍 データを取得中 [ID: ${shop.id}]: ${shop.name}`);
 
     try {
-        // 1. 基本的なネットワークの沈静化を待つ
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
+        // ★改善1: 不要なアセットや解析スクリプトをブロックしてハイドレーションを爆速化
+        await page.route('**/*', (route: any) => {
+            const url = route.request().url();
+            const resourceType = route.request().resourceType();
+            if (
+                ['image', 'font', 'media'].includes(resourceType) || 
+                url.includes('google-analytics') || 
+                url.includes('googletagmanager') ||
+                url.includes('analytics.js')
+            ) {
+                return route.abort();
+            }
+            return route.continue();
+        });
 
-        // 2. 【シンプル改善】営業時間のテキストエリアに文字が流し込まれるまで待機
-        // 初期状態は空文字なので、トリミングしたテキストが1文字以上になればVueの展開完了とみなす
+        // ★改善2: networkidleを辞め、DOM構築（commit）の時点で即座に次へ進む
+        await page.goto(url, { waitUntil: 'commit', timeout: 15000 });
+
+        // ★改善3: 「通常営業時間に数値が出現」または「臨時休業テキストが描画」のマルチトリガー待機
         await page.waitForFunction(() => {
-            // v-text="business_hours_description" が付与されているp要素を特定
-            const hoursParagraph = document.querySelector('p.shopDetail__list.multiLine__text');
-            if (!hoursParagraph) return false;
+            // 通常の営業時間エリア
+            const hoursParagraph = document.querySelector('p.shopDetail__list.multiLine__text:not([v-text*="business_hours_changes"])');
+            // 臨時休業・変更エリア
+            const changeParagraph = document.querySelector('p.shopDetail__list.multiLine__text[v-text*="business_hours_changes"]');
+
+            const hoursText = hoursParagraph?.textContent?.trim() || '';
+            const changeText = changeParagraph?.textContent?.trim() || '';
+
+            // パターンA: 通常営業時間に数字（時間）が描画された
+            const hasNormalHours = /\d/.test(hoursText) && !hoursText.includes('business_hours');
             
-            const text = hoursParagraph.textContent?.trim();
-            // 文字が空でなく、かつVueの変数名そのものが漏れ出ていないことを確認
-            return text !== '' && !text.includes('business_hours');
+            // パターンB: 臨時休業・営業時間変更にテキストが流し込まれた
+            const hasChanges = changeText !== '' && !changeText.includes('business_hours_changes');
+
+            return hasNormalHours || hasChanges;
         }, { timeout: 8000 }).catch(() => {
-            console.log(`  ⚠️ 営業時間ベースの同期タイムアウト（現在のDOM状態で処理を続行します）`);
+            console.log(`  ⚠️ 展開監視タイムアウト。現在のDOM状態でパースを試みます。`);
         });
 
         // 3. DOMから詳細データを抽出（絶対に内部エラーで落とさない防護服仕様）
@@ -78,10 +101,13 @@ async function fetchShopDetail(page: any, shop: ShopBase): Promise<ShopDetail> {
             const telAnchor = document.querySelector('a.shopInfoArea__textLink.--tel');
             const headings = Array.from(document.querySelectorAll('h2.shopDetail__title'));
             
-            // 精密に「営業時間」という完全一致のタイトルを持つH2のみをフィルター
+            // 通常の営業時間
             const hoursH2 = headings.find(h => h.textContent?.trim() === '営業時間');
-            // すべてのプロパティアクセスに「?.」を付与して安全にフォールバックさせる
             const hoursText = hoursH2?.nextElementSibling?.textContent?.trim() || '';
+
+            // 営業時間変更・臨時休業（存在する場合のみ回収）
+            const changeH2 = headings.find(h => h.textContent?.trim() === '営業時間変更・臨時休業');
+            const changeText = changeH2?.nextElementSibling?.textContent?.trim() || '';
 
             const holidayH2 = headings.find(h => h.textContent?.trim() === '休日');
             const holidayText = holidayH2?.nextElementSibling?.textContent?.trim() || '';
@@ -89,6 +115,7 @@ async function fetchShopDetail(page: any, shop: ShopBase): Promise<ShopDetail> {
             return {
                 tel: telAnchor ? telAnchor.textContent?.trim() : '',
                 business_hours: hoursText,
+                business_hours_changes: changeText,
                 regular_holiday: holidayText,
                 has_wifi: infoMap['Free Wi-Fi'] || '',
                 has_power: infoMap['電源'] || '',
@@ -141,7 +168,9 @@ async function main() {
         // 差分判定：fetchedAt（取得成否スタンプ）が記録されていない、または致命的エラーで基本項目が抜けているものを再取得
         fetchTargets = masterShops.filter(shop => {
             const existing = existingDataMap.get(shop.id);
-            const isMissingDetail = !existing || !existing.fetchedAt || !existing.tel;
+            // 通常営業時間、または臨時休業変更アナウンスのどちらか一方でも取れていればよしとする
+            const hasHoursInfo = existing && (existing.business_hours || existing.business_hours_changes);
+            const isMissingDetail = !existing || !existing.fetchedAt || !existing.tel || !hasHoursInfo;
             return isMissingDetail;
         });
 
