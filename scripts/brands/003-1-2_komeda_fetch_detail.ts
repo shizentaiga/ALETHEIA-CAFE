@@ -12,7 +12,7 @@ const CONFIG = {
     BASE_DETAIL_URL: 'https://www.komeda.co.jp/shop/detail.html?id=',
     TEST_LIMIT: 1200,      // リミット件数
     BATCH_SIZE: 5,         // 同時並行数
-    INCREMENTAL_MODE: true // ★ true: 差分追記モード / false: 通常モード（全件上書き）
+    INCREMENTAL_MODE: false // ★ true: 差分追記モード / false: 通常モード（全件上書き）
 };
 
 interface ShopBase {
@@ -233,8 +233,11 @@ async function main() {
     ensureDirectory(PATHS.RAW_DATA);
     fs.writeFileSync(outputPath, JSON.stringify(finalOutput, null, 2));
 
+    // プロセス実行時のディレクトリ（プロジェクトルート）からの相対パスを計算
+    const relativeOutputPath = path.relative(process.cwd(), outputPath);
+
     console.log(`\n✨ 処理が完了しました！`);
-    console.log(`💾 保存先: ${outputPath} (総レコード数: ${finalOutput.length} 件)`);
+    console.log(`💾 保存先: ${relativeOutputPath} (総レコード数: ${finalOutput.length} 件)`);
 }
 
 main().catch(err => {
