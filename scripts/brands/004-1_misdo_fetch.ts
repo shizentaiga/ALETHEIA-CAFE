@@ -4,6 +4,8 @@
  * Usage: npx tsx scripts/brands/004-1_misterdonuts_fetch.ts
  */
 
+// ドーナツ食べ放題などのフラグは、こちらで取得しています。
+
 import fs from 'fs';
 import path from 'path';
 import { chromium, BrowserContext, Page } from 'playwright';
