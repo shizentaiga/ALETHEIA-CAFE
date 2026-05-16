@@ -82,22 +82,26 @@ CREATE TABLE services (
     lat             REAL,                         -- Latitude
     lng             REAL,                         -- Longitude
 
-    -- Availability Schedule (iCalendar-based JSON)
+-- Availability Schedule (iCalendar-based JSON)
     -- -------------------------------------------------------------------------
     -- 構造例: {"base": [{"days": ["MO"], "slots": [{"start": "07:00", "end": "12:00"}]}], "exclude_holidays": true}
+    -- ⚠️ システム判定用のプライマリソース。臨時変更等を除いた基本営業枠を定義。
     -- -------------------------------------------------------------------------
     schedule_json   TEXT DEFAULT '{}',
 
     -- Dynamic Attributes (JSON format)
     -- -------------------------------------------------------------------------
-    -- 以下のキー名に厳選し、表記揺れを禁止する:
+    -- 以下のキー名に厳選し、表記揺れを禁止する（未確定時は項目自体を省略または null）:
     -- - category       : (string)  'cat_cafe', 'cat_restaurant', 'cat_bar' など
     -- - wifi           : (boolean) Wi-Fiの有無
     -- - outlets        : (boolean) 電源の有無
-    -- - business_hours : (string)  基本営業時間（例: '09:00〜21:00'）
-    -- - payment        : (array)   利用可能な決済手段（例: ['CASH_ONLY'], ['PayPay', 'Credit Card']）
+    -- - parking        : (boolean) 専用・提携駐車場の有無
+    -- - takeout        : (boolean) テイクアウト・お持ち帰り対応の有無
+    -- - smoking        : (string)  喫煙ステータス ('NO_SMOKING', 'SMOKING_ROOM', 'SMOKING_SEATS', 'ALL_SMOKING')
+    -- - payment        : (array)   決済手段。'CASH_ONLY'、'PayPay'、および主要区分 ('CREDIT', 'E_MONEY', 'QR') を許可
     -- - buffet         : (boolean) 食べ放題（ミスドビュッフェ等）の有無
     -- - baby           : (boolean) 赤ちゃん対応・ベビーカー入店の可否
+    -- - business_hours : (string)  基本営業時間（例: '09:00〜21:00' ※予備・フロント表示用）
     -- -------------------------------------------------------------------------
     attributes_json TEXT DEFAULT '{}',
 
