@@ -83,25 +83,6 @@ export const headerStyle = `
     border-radius: 50%; /* 👈 綺麗な正円を維持 */
     transition: background 0.15s;
   }
-
-  .search-chip-delete:hover {
-    background: #e5e7eb;
-    color: #374151;
-  }
-  .search-chip-delete {
-    text-decoration: none;
-    color: #9ca3af;
-    margin-left: 6px;
-    font-size: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    transition: background 0.15s;
-  }
-
   .search-chip-delete:hover {
     background: #e5e7eb;
     color: #374151;

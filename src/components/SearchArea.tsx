@@ -85,11 +85,13 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => 
             hx-get={getTriggerPath()}
             hx-target={`#${CONFIG.ids.root}`}
           >
-            <div style="display: flex; align-items: center; gap: 6px;">
+            {/* style属性をJSXオブジェクト形式に変更 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>📍</span>
               <span>{areaName || CONFIG.labels.defaultPlaceholder}</span>
             </div>
-            <span style="color: ${CONFIG.design.colors.textArrow};">▼</span>
+            {/* style属性をJSXオブジェクト形式に変更 */}
+            <span style={{ color: CONFIG.design.colors.textArrow }}>▼</span>
           </button>
         )}
       </div>
