@@ -3,10 +3,37 @@
  * [Role] Logic for search query normalization and URL state synchronization.
  */
 
+import { UNIQUE_FEATURES, INFRA_FEATURES } from '../db/queries/transformers';
+
 /**
  * 設定定数
  */
 const MAX_KEYWORDS_LIMIT = 20;
+
+// 💡 許可された特徴検索キーの型を UNIQUE_FEATURES と INFRA_FEATURES から自動抽出
+const VALID_FEATURE_KEYS = [
+  ...UNIQUE_FEATURES.map(f => f.key),
+  ...INFRA_FEATURES.map(f => f.key)
+] as const;
+
+export type ValidAttributeKey = typeof VALID_FEATURE_KEYS[number];
+
+/**
+ * URLクエリパラメータから有効な特徴(attrs)配列を正規化して抽出する（型安全）
+ * - 不正な文字列や未知のキーは自動的に除外（検索対象外）される
+ */
+export const getNormalizedAttributes = (queries: string | string[] | undefined): ValidAttributeKey[] => {
+  if (!queries) return [];
+
+  const rawArray = Array.isArray(queries) ? queries : [queries];
+
+  // 許可リストに存在するキーのみをフィルタリングして重複排除
+  const validAttrs = rawArray
+    .map(v => v?.trim())
+    .filter((v): v is ValidAttributeKey => VALID_FEATURE_KEYS.includes(v as ValidAttributeKey));
+
+  return [...new Set(validAttrs)];
+};
 
 /**
  * URLクエリパラメータ(q)からキーワード配列を正規化して抽出する
@@ -31,8 +58,7 @@ export const getNormalizedKeywords = (queries: string | string[] | undefined): s
 
 /**
  * 現在のURLパラメータを継承しながら、指定した項目だけをピンポイントで更新したURLを生成する
- * 
- * 【目的】
+ * * 【目的】
  * 検索キーワード(q)を更新する際、同時に設定されている「エリア(area)」や「ソート順」などの
  * 他の条件を消さずに、URLの状態を同期し続けるために使用します。
  */
@@ -111,8 +137,7 @@ export const getAreaLevel = (areaId: string | null | undefined): number => {
 
 /**
  * 検索用の LIKE パターンを生成する
- * 
- * @param areaId - 選択されたエリアID
+ * * @param areaId - 選択されたエリアID
  * @returns SQL の LIKE 句に渡す文字列、または全国検索用の空文字
  */
 export const generateAreaLikePattern = (areaId: string | null | undefined): string => {
