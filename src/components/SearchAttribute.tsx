@@ -1,4 +1,6 @@
-// src/components/SearchAttribute.tsx
+/**
+ * [ファイルパス] src/components/SearchAttribute.tsx
+ */
 
 import type { FC } from 'hono/jsx'
 
@@ -24,28 +26,48 @@ interface SearchAttributeProps {
 }
 
 export const SearchAttribute: FC<SearchAttributeProps> = ({ currentParams }) => {  
-  const isOpen = currentParams?.has('open_attrs');  // open_attrs のみで判定
+  const isOpen = currentParams?.has('open_attrs');
 
-  // 💡 1. ボタンクリック時に非同期ロードするパス（URL状態を丸ごと引き継ぎ、オープンフラグを立てる）
   const getTriggerPath = () => {
     const params = new URLSearchParams(currentParams?.toString());
     params.set('open_attrs', '1');
     return `${CONFIG.api.basePath}?${params.toString()}`;
   };
   
-  // 💡 2. 自動ロード（hx-trigger="load"）用のパス（リロード時に状態を維持するため）
   const apiPath = typeof window !== 'undefined' 
     ? `${CONFIG.api.basePath}${window.location.search}`
     : `${CONFIG.api.basePath}?${currentParams?.toString() || ''}`;
+
+  // 💡 JavaScript を使わずに、HTML（aタグ）だけで「 open_attrs 」を消して閉じるURLを作る
+  const closeParams = new URLSearchParams(currentParams?.toString());
+  closeParams.delete('open_attrs');
+  const closeUrl = closeParams.toString() ? `/?${closeParams.toString()}` : '/';
 
   return (
     <div class="search-attribute-module" style={{ width: CONFIG.design.width }}>
       <style>{`
         #${CONFIG.ids.root} { width: 100%; overflow: hidden; margin-bottom: 8px; border-radius: ${CONFIG.design.borderRadius}; }
         #${CONFIG.ids.root}:has(.attribute-modal-container) { border: 1px solid ${CONFIG.design.colors.border}; }
+        
+        /* 💡 モーダルが開いている時、画面全体を覆う透明なバックドロップ（壁）を作る */
+        .modal-backdrop-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          z-index: 999; /* モーダルの直下に配置 */
+          background: transparent;
+        }
+        /* モーダル自体の z-index を上げて、バックドロップより前面に出す */
+        .attribute-modal-container {
+          position: relative;
+          z-index: 1000;
+        }
       `}</style>
 
-      {/* 💡 条件を満たしている場合は自動ロード、そうでなければ初期状態のボタンを表示 */}
+      {/* 💡 モーダルが開いている時だけ、外側クリック用の透明リンクを背後に配置 */}
+      {isOpen && (
+        <a href={closeUrl} class="modal-backdrop-overlay" aria-hidden="true"></a>
+      )}
+
       <div id={CONFIG.ids.root} 
         hx-get={isOpen ? apiPath : null} 
         hx-trigger={isOpen ? "load" : null}>
@@ -65,28 +87,7 @@ export const SearchAttribute: FC<SearchAttributeProps> = ({ currentParams }) => 
         )}
       </div>
 
-      {/* 💡 モーダルの外側をクリックした時に、URLから特徴検索用のオープンフラグをクレンジングして閉じるJavaScript */}
-      <script dangerouslySetInnerHTML={{ __html: `
-        (() => {
-          // 💡 ガード節：初期化済みの場合は即座に終了（ネストを深くしない）
-          if (window.__searchAttributeClickInitialized) return;
-          window.__searchAttributeClickInitialized = true;
-
-          document.addEventListener('click', (e) => {
-            const root = document.getElementById('${CONFIG.ids.root}');
-            
-            // 💡 ガード節：モーダルの外側をクリックした時以外は無視
-            if (!root || root.contains(e.target) || !root.querySelector('.attribute-modal-container')) return;
-
-            // 💡 実際の処理（ネストが最も浅い状態で実行できる）
-            const url = new URL(window.location.href);
-            url.searchParams.delete('open_attrs');
-            
-            // 💡 閉じるときに、もしチェックボックスが何も選ばれていなければ、見た目をスッキリさせるためにリロード
-            window.location.href = url.toString();
-          });
-        })();
-      ` }} />
+      {/* ❌ 複雑なバグの原因になっていた <script> タグ（document.addEventListener）はすべて削除しました */}
     </div>
   );
 };

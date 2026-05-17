@@ -10,10 +10,11 @@ const CONFIG = {
   labels: {
     headerTitle: '特徴・設備で絞り込む',
     sectionUnique: '✨ 注目の特徴',
-    sectionInfra: ' 設備・サービス'
+    sectionInfra: ' 設備・サービス',
+    submitBtn: 'この条件で検索する' // 💡 追加
   },
   design: {
-    maxHeight: '320px',
+    maxHeight: '280px', // 💡 ボタン用に少しスクロール領域を調整
     colors: {
       border: '#f3f4f6',
       borderLight: '#f9fafb',
@@ -22,7 +23,8 @@ const CONFIG = {
       textLight: '#9ca3af',
       bgLight: '#f9fafb',
       bgWhite: '#fff',
-      hoverBg: '#f9fafb'
+      hoverBg: '#f9fafb',
+      primary: '#0070f3' // 💡 追加
     }
   }
 } as const
@@ -30,31 +32,50 @@ const CONFIG = {
 const attributeApi = new Hono()
 
 attributeApi.get('/', async (c) => {
-  const currentParams = new URL(c.req.url).searchParams
   const selectedAttrs = getNormalizedAttributes(c.req.queries('attrs'))
+  
+  const currentParams = new URLSearchParams()
+  const allQueries = c.req.query()
+  for (const key in allQueries) {
+    if (key === 'attrs') {
+      const attrsArr = c.req.queries('attrs') || []
+      attrsArr.forEach(val => currentParams.append('attrs', val))
+    } else {
+      currentParams.set(key, allQueries[key])
+    }
+  }
 
-  // 1. ×ボタン用のパス（open_attrsだけを削除してTOPへ戻る）
   const closeParams = new URLSearchParams(currentParams.toString())
   closeParams.delete('open_attrs')
   const closeUrl = closeParams.toString() ? `/?${closeParams.toString()}` : '/'
 
-  // 2. チェックボックスのトグル用URL生成
+  // 💡 【設計変更】チェックボックスを押した時は「画面リロード」させず、
+  // 単にこのモーダル内の対応するチェックボックスのURL（API宛て）を叩いて
+  // モーダルの中身（チェック状態）だけを部分更新するパスを作る。
   const toggleAttributeUrl = (key: string) => {
-    // 重複を防ぐため、既存のパラメータから open_attrs を一旦削除
-    const baseParams = new URLSearchParams(currentParams.toString())
-    baseParams.delete('open_attrs')
-
+    const apiParams = new URLSearchParams(currentParams.toString())
     let nextAttrs = [...selectedAttrs]
+    
     if (nextAttrs.includes(key as any)) {
       nextAttrs = nextAttrs.filter(a => a !== key)
     } else {
       nextAttrs.push(key as any)
     }
 
-    // 検索結果(TopPage)を更新するため、APIパスではなくルート「/」に対するクエリを生成します
-    const nextQuery = createSearchUrl(baseParams, { attrs: nextAttrs })
-    const finalQuery = nextQuery ? `${nextQuery}&open_attrs=1` : '?open_attrs=1'
-    return `/${finalQuery}`
+    // APIのパス（/api/attribute-search）を維持したまま、attrsを組み立てる
+    apiParams.delete('attrs')
+    nextAttrs.forEach(a => apiParams.append('attrs', a))
+    apiParams.set('open_attrs', '1')
+    return `/api/attribute-search?${apiParams.toString()}`
+  }
+
+  // 💡 【決定ボタン用URL】最後に本当にTOP画面を検索リロードさせるためのURL
+  const getSubmitUrl = () => {
+    const baseParams = new URLSearchParams(currentParams.toString())
+    baseParams.delete('open_attrs') // モーダルは閉じるので削除
+    
+    const nextQuery = createSearchUrl(baseParams, { attrs: selectedAttrs })
+    return nextQuery ? `/${nextQuery}` : '/'
   }
 
   return c.html(html`
@@ -65,8 +86,13 @@ attributeApi.get('/', async (c) => {
         .attr-section-title { font-size: 0.75rem; font-weight: 700; color: ${CONFIG.design.colors.textLight}; padding: 8px 16px 4px 16px; text-transform: uppercase; letter-spacing: 0.05em; }
         .attr-item-ui { width: 100%; padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: ${CONFIG.design.colors.textMuted}; cursor: pointer; border-bottom: 1px solid ${CONFIG.design.colors.borderLight}; transition: background 0.1s; text-align: left; background: ${CONFIG.design.colors.bgWhite}; border: none; }
         .attr-item-ui:hover { background: ${CONFIG.design.colors.hoverBg}; }
-        .attr-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #0070f3; }
+        .attr-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: ${CONFIG.design.colors.primary}; }
         .attr-label-text { flex: 1; cursor: pointer; }
+        
+        /* 💡 決定ボタン用のスタイル */
+        .attr-footer-ui { padding: 12px 16px; border-top: 1px solid ${CONFIG.design.colors.border}; background: ${CONFIG.design.colors.bgWhite}; }
+        .attr-submit-btn { width: 100%; padding: 10px; background: ${CONFIG.design.colors.primary}; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-align: center; }
+        .attr-submit-btn:hover { opacity: 0.9; }
       </style>
 
       <div class="attr-header-ui">
@@ -82,8 +108,8 @@ attributeApi.get('/', async (c) => {
           const isChecked = selectedAttrs.includes(item.key as any)
           const targetUrl = toggleAttributeUrl(item.key)
           return html`
-            <button class="attr-item-ui" onclick="window.location.href='${targetUrl}'">
-              <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); window.location.href='${targetUrl}'" />
+            <button class="attr-item-ui" hx-get="${targetUrl}" hx-target="#attribute-search-root">
+              <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation();" style="pointer-events: none;" />
               <span class="attr-label-text">${item.label}</span>
             </button>
           `
@@ -94,13 +120,19 @@ attributeApi.get('/', async (c) => {
           const isChecked = selectedAttrs.includes(item.key as any)
           const targetUrl = toggleAttributeUrl(item.key)
           return html`
-            <button class="attr-item-ui" onclick="window.location.href='${targetUrl}'">
-              <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); window.location.href='${targetUrl}'" />
+            <button class="attr-item-ui" hx-get="${targetUrl}" hx-target="#attribute-search-root">
+              <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation();" style="pointer-events: none;" />
               <span class="attr-label-text">${item.label}</span>
             </button>
           `
         })}
 
+      </div>
+
+      <div class="attr-footer-ui">
+        <button class="attr-submit-btn" onclick="window.location.href='${getSubmitUrl()}'">
+          ${CONFIG.labels.submitBtn}
+        </button>
       </div>
     </div>
   `)
