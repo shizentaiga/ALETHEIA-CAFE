@@ -4,9 +4,10 @@ import fs from 'fs';
 import path from 'path';
 
 const CONFIG = {
-    INPUT_FILE1: 'scripts/data/raw/004_misdo.json',         // 大まかなRowデータ(食べ放題など)
-    INPUT_FILE2: 'scripts/data/raw/004-2_misdo_detail.json', // 詳細なRowデータ(営業時間など)
-    OUTPUT_FILE: 'src/db/seed/brands/004-4_misdo.sql',       // 完成版のSQL
+    INPUT_FILE1: 'scripts/data/raw/004_misdo.json',             // 大まかなRowデータ(食べ放題など)
+    INPUT_FILE2: 'scripts/data/raw/004-2_misdo_detail.json',    // 詳細なRowデータ(営業時間など)
+    INPUT_FILE3: 'src/db/seed/brands/004-1_misdo.sql',          // エリアIDを取得
+    OUTPUT_FILE: 'src/db/seed/brands/004-4_misdo.sql',          // 完成版のSQL
 };
 
 // 決済配列を厳選ルールに従って組み立てるヘルパー
@@ -65,13 +66,27 @@ async function main() {
     console.log("🚀 ミスタードーナツのデータ統合 & SQLコンバートを開始します...");
 
     // 1. ファイルの存在チェックと読み込み
-    if (!fs.existsSync(CONFIG.INPUT_FILE1) || !fs.existsSync(CONFIG.INPUT_FILE2)) {
+    if (!fs.existsSync(CONFIG.INPUT_FILE1) || !fs.existsSync(CONFIG.INPUT_FILE2) || !fs.existsSync(CONFIG.INPUT_FILE3)) {
         console.error("❌ インプットファイルが存在しません。パスを確認してください。");
         process.exit(1);
     }
 
     const rawData1 = JSON.parse(fs.readFileSync(CONFIG.INPUT_FILE1, 'utf-8'));
     const rawData2 = JSON.parse(fs.readFileSync(CONFIG.INPUT_FILE2, 'utf-8'));
+    
+    // 💡 【追加】ベースSQLから既存のarea_idを一本釣りするための事前パースロジック
+    const baseSqlContent = fs.readFileSync(CONFIG.INPUT_FILE3, 'utf-8');
+    const areaMap = new Map<string, string>();
+    
+    // VALUES の中から ('service_id', ..., 'area_id', ...) を高精度に抽出する正規表現
+    // 例: ('MSD_0742', 'brand_misterdonuts', '01ARZ...', 'free', '10-10-A001',
+    const insertRegex = /VALUES\s*\(\s*'([^']+)'\s*,\s*'[^']+'\s*,\s*'[^']+'\s*,\s*'[^']+'\s*,\s*'([^']+)'/gi;
+    let match;
+    while ((match = insertRegex.exec(baseSqlContent)) !== null) {
+        const serviceId = match[1];
+        const areaId = match[2];
+        areaMap.set(serviceId, areaId);
+    }
 
     // 詳細データをIDをキーにしたマップに変換（高速ルックアップ用）
     const detailMap = new Map<string, any>();
@@ -132,7 +147,10 @@ async function main() {
         const brandId = "brand_misterdonuts";
         const ownerId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
         const planId = "free";
-        const areaId = "10-10-A001"; // ※エリアマスタに応じてロジック化可能、現状は初期値を踏襲
+        
+        // 💡 【修正】事前に INPUT_FILE3 からパースしたマップからエリアIDを引き当てる。
+        // 万が一、マップに存在しない場合は安全装置（フォールバック）として '10-10-A001' を適用
+        const areaId = areaMap.get(serviceId) || "10-10-A001";
         
         // シングルクォーテーションのパース考慮（店名の表記揺れ・エスケープ対応）
         const escapedTitle = `ミスタードーナツ ${shop.name.replace("ミスタードーナツ", "").trim()}`.replace(/'/g, "''");

@@ -1,3 +1,5 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/brands/004-1_misdo.sql --local
+
 -- ALETHEIA Mister Donuts Seed (Area-ID Pre-Mapped)
 
 INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, attributes_json) VALUES ('MSD_0742', 'brand_misterdonuts', '01ARZ3NDEKTSV4RRFFQ69G5FAV', 'free', '10-10-A001', 'ミスタードーナツ けやきウォーク前橋 ショップ', '群馬県前橋市文京町2丁目1-1', 36.379397575872005, 139.07846694444444, '{"category":"cat_cafe","wifi":false,"outlets":false,"business_hours":"","payment":[],"buffet":false,"baby":false,"pop_buffet":false}');
