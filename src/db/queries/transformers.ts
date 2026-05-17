@@ -7,15 +7,15 @@ const MAX_TAG_DISPLAY = 4;  // 営業時間＋タグ3つ
 
 // 「特徴的な項目」を定義。バリューの高い順に並べるのがコツ。
 const UNIQUE_FEATURES = [
-  { key: 'baby', label: '赤ちゃんOK' },
+  { key: 'baby', label: 'ベビーカーOK' },
   { key: 'buffet', label: 'ドーナツ食べ放題' },
   { key: 'pop_buffet', label: 'ドーナツポップ詰め放題' },
-  { key: 'free_refill', label: 'ドリンクおかわり無料' },
-  { key: 'takeout', label: 'テイクアウト' },
 ] as const;
 
 // 「普遍的な項目（インフラ系）」を定義。UNIQUE_FEATURESより後に評価。
 const INFRA_FEATURES = [
+  { key: 'free_refill', label: 'ドリンクおかわり無料' },
+  { key: 'takeout', label: 'テイクアウト' },
   { key: 'parking', label: '駐車場' },
   { key: 'outlets', label: '電源' },
   { key: 'wifi', label: 'Wi-Fi' },

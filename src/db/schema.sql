@@ -102,7 +102,7 @@ CREATE TABLE services (
     -- - buffet         : (boolean) 'ドーナツ食べ放題' の有無
     -- - pop_buffet     : (boolean) 'ドーナツポップ詰め放題' の有無
     -- - free_refill    : (boolean) 'ドリンクおかわり無料' の有無
-    -- - baby           : (boolean) '赤ちゃんOK' の可否
+    -- - baby           : (boolean) 'ベビーカーOK' の可否
     -- - business_hours : (string)  基本営業時間（例: '09:00〜21:00' ※予備・フロント表示用）
     -- -------------------------------------------------------------------------
     attributes_json TEXT DEFAULT '{}',
