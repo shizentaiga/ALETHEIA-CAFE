@@ -2,8 +2,9 @@
 
 import type { FC } from 'hono/jsx'
 import { SearchArea } from '../components/SearchArea'
-import { SearchCategory } from '../components/SearchCategory'
+// import { SearchAttribute } from '../components/SearchAttribute'
 import { SearchResult } from '../components/SearchResult'
+import type { ValidAttributeKey } from '../lib/searchUtils' // 💡 型定義用にインポート
 
 /**
  * [Design Settings]
@@ -22,9 +23,9 @@ const layoutStyle = `
     display: flex;
     gap: 12px;
     width: 100%;
-    align-items: flex-start; /* 👈 【追加】子要素の高さの強制引き伸ばし（stretch）を防ぐ */
+    align-items: flex-start; /* 子要素の高さの強制引き伸ばし（stretch）を防ぐ */
   }
-  /* 💡 エリアを広く(2)、条件をコンパクト(1) に割り振ることで黄金比率に */
+  /* エリアを広く(2)、条件をコンパクト(1) に割り振ることで黄金比率に */
   .search-bar-row > .area-wrapper {
     flex: 2; 
   }
@@ -32,7 +33,7 @@ const layoutStyle = `
   .search-bar-row > * {
     flex: 1;
   }
-  /* 💡 共通スタイルを親に集約：ボタンの見た目・高さを完全にシンクロさせる */
+  /* 共通スタイルを親に集約：ボタンの見た目・高さを完全にシンクロさせる */
   .search-trigger {
     width: 100%; 
     padding: 12px 16px; 
@@ -56,26 +57,28 @@ const layoutStyle = `
 
 /**
  * TopMain Component
- * Propsに currentParams を追加し、SearchAreaへ引き継ぎます。
+ * Propsに currentParams と attrs を受け取るよう拡張します。
  */
 export const TopMain: FC<{ 
   results: any[], 
   total: number, 
   area?: string,
   q?: string,
+  attrs?: ValidAttributeKey[], // 💡 将来的に受け取る配列の型を拡張
   areaName?: string,
-  currentParams?: URLSearchParams // 💡 URLの状態を丸ごと受け取る
+  currentParams?: URLSearchParams // URLの状態を丸ごと受け取る
 }> = ({ results, total, area, q, areaName, currentParams }) => (
+// }> = ({ results, total, area, q, attrs, areaName, currentParams }) => (
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
-    {/* Display search chips (Area and Category) */}
+    {/* Display search chips (Area and Attribute) */}
     <div class="search-bar-row">
-      {/* 💡 SearchArea に currentParams を渡すよう修正 */}
+      {/* SearchArea に currentParams を引き継ぎ */}
       <SearchArea currentParams={currentParams} areaName={areaName} />
       
-      {/* SearchCategory is currently under development */}
-      <SearchCategory />
+      {/* 💡 新しい特徴検索コンポーネントへ差し替え（バトンをそのまま引き継ぐ） */}
+      {/* <SearchAttribute currentParams={currentParams} /> */}
     </div>
 
     {/* Search Results Section */}

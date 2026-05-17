@@ -78,14 +78,23 @@ export const SearchArea: FC<SearchAreaProps> = ({ currentParams, areaName }) => 
       </div>
 
       <script dangerouslySetInnerHTML={{ __html: `
-        document.addEventListener('click', (e) => {
-          const root = document.getElementById('${CONFIG.ids.root}');
-          if (root && !root.contains(e.target) && root.querySelector('.area-list-container')) {
+        (() => {
+          // 💡 ガード節：初期化済みの場合は即座に終了（ネストを深くしない）
+          if (window.__searchAreaClickInitialized) return;
+          window.__searchAreaClickInitialized = true;
+
+          document.addEventListener('click', (e) => {
+            const root = document.getElementById('${CONFIG.ids.root}');
+            
+            // 💡 ガード節：モーダルの外側をクリックした時以外は無視
+            if (!root || root.contains(e.target) || !root.querySelector('.area-list-container')) return;
+
+            // 💡 実際の処理（ネストが最も浅い状態で実行できる）
             const url = new URL(window.location.href);
             url.searchParams.delete('parent_id');
             window.location.href = url.toString();
-          }
-        });
+          });
+        })();
       ` }} />
     </div>
   );

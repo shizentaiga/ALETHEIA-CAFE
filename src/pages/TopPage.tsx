@@ -11,7 +11,7 @@ import { TopFooter } from './TopFooter';
 
 import { fetchServices, fetchAreaCoordInfo } from '../db/queries/main';
 import { resolveDetectionArea } from '../lib/geo';
-import { getNormalizedKeywords, joinKeywords } from '../lib/searchUtils';
+import { getNormalizedKeywords, joinKeywords, getNormalizedAttributes } from '../lib/searchUtils';
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database;
@@ -29,6 +29,10 @@ home.get('/', async (c) => {
   const queryArray = c.req.queries('q');
   const normalized = getNormalizedKeywords(queryArray);
   const q = joinKeywords(normalized);
+
+  // 💡 2.5 特徴検索パラメータ(attrs)の抽出と型安全な正規化
+  const attrArray = c.req.queries('attrs');
+  const attrs = getNormalizedAttributes(attrArray);
 
   // 3. エリア特定：URL指定がなければCDN位置情報をフォールバック
   const urlArea = c.req.query('area');
@@ -51,12 +55,13 @@ home.get('/', async (c) => {
   ? { lat: areaInfo!.lat, lng: areaInfo!.lng } 
   : undefined;
   
-  // 5. DBから店舗データ取得(resultsには、nearestStationとaccess含む)
+  // 5. DBから店舗データ取得(attrs を条件に追加)
   const { results, total } = await fetchServices({
     db, 
     q, 
     page: 1, 
     area,
+    // attrs, // 💡 正規化済みの特徴配列（例: ['wifi', 'outlets']）をクエリに渡す
     userCoords: baseCoords,
     sortBy: baseCoords ? 'near' : 'latest' 
   });
@@ -70,6 +75,7 @@ home.get('/', async (c) => {
         total={total} 
         area={area} 
         q={q} 
+        // attrs={attrs} // 💡 選択中のバッジ表示やUI制御のために念のため渡しておく
         areaName={areaInfo.name}
         currentParams={currentParams} 
       />
