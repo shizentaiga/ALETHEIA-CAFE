@@ -41,14 +41,19 @@ src/
 
 ~~~
 src/
-├── api/               # HTMX からの非同期リクエストを受け、HTML 断片を返すエンドポイント
-│   └── areaDrilldown.ts  # エリア階層選択ロジック
-│
-└── lib/               # ビジネスロジック
-    ├── geo.ts          # 現在地・距離・方角計算
-    ├── geoUtils.ts
-    ├── searchUtils.ts  # URL パラメータと検索状態の同期
-    └── auth.ts         # 認証関連の低レイヤー処理
+ ├── api/
+ │   ├── areaDrilldown.ts
++│   └── attributeSearch.ts # 【新規】特徴選択モーダル/チェックボックスの非同期処理API
+ │
+ ├── components/
+ │   ├── SearchArea.tsx
+-│   └── SearchCategory.tsx  # 【削除・置換】
++│   └── SearchAttribute.tsx # 【新規】特徴検索のトリガー、及びモーダル枠の管理
+ │
+ └── lib/
+     ├── geo.ts
+     ├── geoUtils.ts
+     └── searchUtils.ts     # 【修正】特徴パラメータ(attributes[])の集約・パースロジック
 ~~~
 
 ---
