@@ -2,7 +2,7 @@
 
 import type { FC } from 'hono/jsx'
 import { SearchArea } from '../components/SearchArea'
-// import { SearchAttribute } from '../components/SearchAttribute'
+import { SearchAttribute } from '../components/SearchAttribute'
 import { SearchResult } from '../components/SearchResult'
 import type { ValidAttributeKey } from '../lib/searchUtils' // 💡 型定義用にインポート
 
@@ -25,14 +25,11 @@ const layoutStyle = `
     width: 100%;
     align-items: flex-start; /* 子要素の高さの強制引き伸ばし（stretch）を防ぐ */
   }
+    
   /* エリアを広く(2)、条件をコンパクト(1) に割り振ることで黄金比率に */
-  .search-bar-row > .area-wrapper {
-    flex: 2; 
-  }
-  /* Make all children equal width (1:1). This is the most stable way to align them. */
-  .search-bar-row > * {
-    flex: 1;
-  }
+  .search-bar-row > .search-area-module { flex: 2; }
+  .search-bar-row > .search-attribute-module { flex: 1; }
+
   /* 共通スタイルを親に集約：ボタンの見た目・高さを完全にシンクロさせる */
   .search-trigger {
     width: 100%; 
@@ -68,7 +65,6 @@ export const TopMain: FC<{
   areaName?: string,
   currentParams?: URLSearchParams // URLの状態を丸ごと受け取る
 }> = ({ results, total, area, q, areaName, currentParams }) => (
-// }> = ({ results, total, area, q, attrs, areaName, currentParams }) => (
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
@@ -78,7 +74,7 @@ export const TopMain: FC<{
       <SearchArea currentParams={currentParams} areaName={areaName} />
       
       {/* 💡 新しい特徴検索コンポーネントへ差し替え（バトンをそのまま引き継ぐ） */}
-      {/* <SearchAttribute currentParams={currentParams} /> */}
+      <SearchAttribute currentParams={currentParams}  />
     </div>
 
     {/* Search Results Section */}

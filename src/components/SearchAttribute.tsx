@@ -24,9 +24,7 @@ interface SearchAttributeProps {
 }
 
 export const SearchAttribute: FC<SearchAttributeProps> = ({ currentParams }) => {  
-  // 💡 URLの中にすでに 'attrs'（選択中の特徴）があるか、またはモーダル展開用の 'open_attrs' フラグがあるかを判定
-  const hasAttrs = currentParams?.has('attrs');
-  const isOpen = currentParams?.has('open_attrs') || hasAttrs;
+  const isOpen = currentParams?.has('open_attrs');  // open_attrs のみで判定
 
   // 💡 1. ボタンクリック時に非同期ロードするパス（URL状態を丸ごと引き継ぎ、オープンフラグを立てる）
   const getTriggerPath = () => {

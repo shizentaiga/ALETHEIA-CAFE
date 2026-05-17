@@ -7,6 +7,7 @@ import { home } from './pages/TopPage'
 import { googleAuthApp } from './pages/GoogleAuth'
 import { sandboxApp } from './_sandbox/_router'
 import areaApi from './api/areaDrilldown'
+import attributeApi from './api/attributeSearch'
 
 /**
  * Cloudflare environment variables for c.env
@@ -26,7 +27,8 @@ app.use(renderer) // Apply common layout
 /**
  * Route Modules
  */
-app.route('/api/area-drilldown', areaApi)
+app.route('/api/area-drilldown', areaApi)         // SearchArea.tsxのパスと一致
+app.route('/api/attribute-search', attributeApi)  // SearchAttribute.tsxのパスと一致
 app.route('/', googleAuthApp)   // Google OAuth2.0
 app.route('/', home)            // Main application home
 

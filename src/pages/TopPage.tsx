@@ -51,8 +51,8 @@ home.get('/', async (c) => {
   const areaInfo = await fetchAreaCoordInfo(db, area ?? '00');
 
   // 基準座標オブジェクトの構築
-  const baseCoords = (areaInfo?.lat !== null && areaInfo?.lng !== null) 
-  ? { lat: areaInfo!.lat, lng: areaInfo!.lng } 
+  const baseCoords = (areaInfo && areaInfo.lat !== null && areaInfo.lng !== null) 
+  ? { lat: areaInfo.lat, lng: areaInfo.lng } 
   : undefined;
   
   // 5. DBから店舗データ取得(attrs を条件に追加)
@@ -75,7 +75,7 @@ home.get('/', async (c) => {
         total={total} 
         area={area} 
         q={q} 
-        // attrs={attrs} // 💡 選択中のバッジ表示やUI制御のために念のため渡しておく
+        attrs={attrs} // 💡 選択中のバッジ表示やUI制御のために念のため渡しておく
         areaName={areaInfo.name}
         currentParams={currentParams} 
       />
