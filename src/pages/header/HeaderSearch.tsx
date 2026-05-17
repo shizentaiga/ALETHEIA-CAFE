@@ -104,6 +104,7 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
             placeholder={dynamicPlaceholder}
             disabled={isMax}
             autocomplete="off"
+            aria-label="検索キーワード" // 支援技術向けの説明ラベル(PSI対策)
           />
           
           <button 
