@@ -8,8 +8,8 @@ const MAX_TAG_DISPLAY = 4;  // 営業時間＋タグ3つ
 // 「特徴的な項目」を定義。バリューの高い順に並べるのがコツ。
 const UNIQUE_FEATURES = [
   { key: 'baby', label: '赤ちゃんOK' },
-  { key: 'buffet', label: '食べ放題' },
-  { key: 'pop_buffet', label: '詰め放題' },
+  { key: 'buffet', label: 'ドーナツ食べ放題' },
+  { key: 'pop_buffet', label: 'ドーナツポップ詰め放題' },
   { key: 'free_refill', label: 'ドリンクおかわり無料' },
   { key: 'takeout', label: 'テイクアウト' },
 ] as const;
@@ -23,7 +23,7 @@ const INFRA_FEATURES = [
 
 const PAYMENT_LABELS = {
   CASH_ONLY: '現金のみ',
-  CASHLESS: 'クレカ/電子マネー', // 👈 採用
+  CASHLESS: 'クレカ/電子マネー',
   PAYPAY: 'PayPay',
 } as const;
 
