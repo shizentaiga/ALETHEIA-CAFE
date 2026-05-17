@@ -22,17 +22,30 @@ export const home = new Hono<{ Bindings: Bindings }>();
 home.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB;
 
-  // 1. クエリパラメータの保持（コンポーネントへの引き継ぎ用バトン）
-  const currentParams = new URLSearchParams(c.req.query());
+  // クエリパラメータの保持（URLSearchParams構築時に重複キーが消滅を防ぐ）
+  const currentParams = new URLSearchParams()
+  const allQueries = c.req.query()
+
+  // 1. 先に attrs と q 以外の通常パラメータを詰め込む
+  for (const key in allQueries) {
+    if (key !== 'attrs' && key !== 'q' && key !== 'q-hidden') {
+      currentParams.set(key, allQueries[key])
+    }
+  }
 
   // 2. 検索キーワードの抽出と正規化
-  const queryArray = c.req.queries('q');
+  const queryArray = c.req.query('q');  // キーワード(カンマ区切りで1文字)
   const normalized = getNormalizedKeywords(queryArray);
   const q = joinKeywords(normalized);
 
+  // 安全にURLSearchParamsへ再セット
+  if (normalized.length > 0) {
+    currentParams.set('q', normalized.join(','));
+  }
+
   // 💡 2.5 特徴検索パラメータ(attrs)の抽出と型安全な正規化
-  const attrArray = c.req.queries('attrs');
-  const attrs = getNormalizedAttributes(attrArray);
+  const rawAttrQuery = c.req.query('attrs');  // 特徴(attrs)＝カンマ区切りの文字列
+  const attrs = getNormalizedAttributes(rawAttrQuery);
 
   // 3. エリア特定：URL指定がなければCDN位置情報をフォールバック
   const urlArea = c.req.query('area');

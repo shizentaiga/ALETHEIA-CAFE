@@ -51,23 +51,36 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
         class="header-search-form" 
         method="get" 
         action="/"
-        // 💡 送信時に既存チップのnameを'q'に書き換え、さらにLocalStorageへキーワードを保存
-        onsubmit="this.querySelectorAll('.js-existing-q').forEach(el => el.name = 'q'); window.saveKeyword();"
+
+        // 💡 【重要】送信直前に、既存のチップ（配列）と新規入力値を「1本のカンマ区切り」に結合して js-final-q に注入
+        // 💡 【修正】document.getElementById の引数を JSX の仕組みできちんと評価されるように変更
+        onsubmit={`
+          const inputEl = document.getElementById('${CONFIG.inputId}');
+          const newWord = inputEl ? inputEl.value.trim() : '';
+          let words = ${JSON.stringify(keywords)};
+          if (newWord) {
+            // 空白やカンマで区切られた新規入力を配列化して合算
+            const splitWords = newWord.split(/[\\s　,]+/).filter(Boolean);
+            words = [...new Set([...words, ...splitWords])];
+          }
+          // 最終的な1本化用hiddenフィールドにカンマ区切りでセット
+          document.getElementById('js-final-q').value = words.join(',');
+          if (inputEl) inputEl.name = ''; // ダミー入力のネイティブ送信を無効化（多重送信防止）
+          window.saveKeyword();
+        `}
       >
 
         {/* 2. 状態の維持 (hidden) */}
         {areaValue && <input type="hidden" name="area" value={areaValue} />}
         {areaName && <input type="hidden" name="areaName" value={areaName} />}
 
-        {/* 💡 対策1: hiddenをwrapperの外、formの直下に集約（iOSの認識を助ける） */}
+        {/* attrs等、他の全てのパラメータはここで無傷のまま安全に自動引き継ぎ */}
         {otherParams.map(([key, value]) => (
           <input type="hidden" name={key} value={value} />
         ))}
 
-        {/* 💡 既存キーワードを 'q-hidden' で保持し、送信直前に 'q' に変換する */}
-        {keywords.map(word => (
-          <input type="hidden" name="q-hidden" value={word} class="js-existing-q" />
-        ))}
+        {/* 💡 【対策】最終的にシリアライズされて送信される唯一の q パラメータの格納先 */}
+        <input type="hidden" id="js-final-q" name="q" value="" />
 
         <div class="header-search-input-wrapper">
           {/* 3. エリアチップの表示 */}
@@ -101,7 +114,7 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
             id={CONFIG.inputId}
             type="search"         // iOSで「検索」ボタンを表示させるためsearchを指定
             enterkeyhint="search" // キーボードの確定ボタンを「検索」に変更
-            name="q" 
+            name="q-dummy"        // 💡 【修正】送信直前に JS で一本化するため、素の name="q" による多重送信・上書き衝突を防ぐダミーネームに変更
             list={CONFIG.listId}
             class="header-search-input" 
             placeholder={dynamicPlaceholder}

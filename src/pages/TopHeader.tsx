@@ -27,7 +27,7 @@ export const TopHeader: FC<{
   /**
    * [Logic] Normalize keywords and area.
    */
-  const qParams = c.req.queries('q')
+  const qParams = c.req.query('q')  // キーワード(q)を取得(カンマ区切りの文字列)
   const keywords = getNormalizedKeywords(qParams)
 
   // --- Render Full Header for Initial Page Load ---

@@ -51,7 +51,8 @@ export const getNormalizedKeywords = (queries: string | string[] | undefined): s
 
   // 2. 文字列の分解とクリーニング
   const allWords = rawArray
-    .flatMap((v) => v.split(/[\s　]+/)) // 空白分割（半角・全角対応）
+    // 💡 空白（半角・全角）だけでなく、URLのカンマ（,）区切りにも対応させる
+    .flatMap((v) => v ? v.split(/[\s　,]+/) : [])
     .map((v) => v.trim())              // 前後空白削除
     .filter(Boolean);                  // 空文字排除
 
@@ -80,12 +81,13 @@ export const createSearchUrl = (
       return;
     }
 
-    // 値が配列の場合：カンマ区切りの文字列に変更(attrsが複数ある場合、パラメータ消失を防ぐため)
+    // 値が配列の場合：カンマ区切りの文字列に対応(複数キーワード指定など)
     if (Array.isArray(value)) {
       params.delete(key);
       
-      if (key === 'attrs') {
-        // 💡 attrsの場合は [x1, x2] を "x1,x2" に結合して一意のキーとしてセット
+      // 特徴(attrs)とキーワード(q)は、カンマ区切りで複数指定可能
+      if (key === 'attrs' || key === 'q') {
+        // [x1, x2] を "x1,x2" に結合して一意のキーとしてセット
         params.set(key, value.join(','));
       } else {
         // 既存の他の配列パラメータ（もしあれば）の挙動は壊さない
