@@ -33,7 +33,7 @@ attributeApi.get('/', async (c) => {
   const currentParams = new URLSearchParams(c.req.query())
   const selectedAttrs = getNormalizedAttributes(c.req.queries('attrs'))
 
-  // 1. ×ボタン用のパス（open_attrsだけを削除）
+  // 1. ×ボタン用のパス（open_attrsだけを削除してTOPへ戻る）
   const closeParams = new URLSearchParams(currentParams.toString())
   closeParams.delete('open_attrs')
   const closeUrl = closeParams.toString() ? `/?${closeParams.toString()}` : '/'
@@ -58,7 +58,7 @@ attributeApi.get('/', async (c) => {
         .attr-header-ui { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid ${CONFIG.design.colors.border}; font-size: 0.85rem; font-weight: 600; color: ${CONFIG.design.colors.textDark}; background: ${CONFIG.design.colors.bgLight}; }
         .attr-list-scroll { max-height: ${CONFIG.design.maxHeight}; overflow-y: auto; padding: 8px 0; }
         .attr-section-title { font-size: 0.75rem; font-weight: 700; color: ${CONFIG.design.colors.textLight}; padding: 8px 16px 4px 16px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .attr-item-ui { width: 100%; padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: ${CONFIG.design.colors.textMuted}; cursor: pointer; border-bottom: 1px solid ${CONFIG.design.colors.borderLight}; transition: background 0.1s; text-align: left; background: ${CONFIG.design.colors.bgWhite}; }
+        .attr-item-ui { width: 100%; padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: ${CONFIG.design.colors.textMuted}; cursor: pointer; border-bottom: 1px solid ${CONFIG.design.colors.borderLight}; transition: background 0.1s; text-align: left; background: ${CONFIG.design.colors.bgWhite}; border: none; }
         .attr-item-ui:hover { background: ${CONFIG.design.colors.hoverBg}; }
         .attr-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #0070f3; }
         .attr-label-text { flex: 1; cursor: pointer; }
@@ -66,11 +66,8 @@ attributeApi.get('/', async (c) => {
 
       <div class="attr-header-ui">
         <div>${CONFIG.labels.headerTitle}</div>
-        <!-- 💡 HTMXを使用して画面全体(body)をSPA風に非同期遷移させ、URL履歴もプッシュします -->
         <span style="cursor:pointer; color:${CONFIG.design.colors.textLight}; padding: 0 4px;" 
-              hx-get="${closeUrl}" 
-              hx-target="body" 
-              hx-push-url="true">×</span>
+              onclick="window.location.href='${closeUrl}'">×</span>
       </div>
 
       <div class="attr-list-scroll">
@@ -80,13 +77,10 @@ attributeApi.get('/', async (c) => {
           const isChecked = selectedAttrs.includes(item.key as any)
           const targetUrl = toggleAttributeUrl(item.key)
           return html`
-            <!-- 💡 行全体をクリックした時に、ページ全体を非同期リロードするようにHTMX化 -->
-            <div class="attr-item-ui" hx-get="${targetUrl}" hx-target="body" hx-push-url="true">
-              <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} 
-                hx-get="${targetUrl}" hx-target="body" hx-push-url="true"
-                onclick="event.stopPropagation(); this.parentElement.click();" />
+            <button class="attr-item-ui" onclick="window.location.href='${targetUrl}'">
+              <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); window.location.href='${targetUrl}'" />
               <span class="attr-label-text">${item.label}</span>
-            </div>
+            </button>
           `
         })}
 
@@ -95,12 +89,10 @@ attributeApi.get('/', async (c) => {
           const isChecked = selectedAttrs.includes(item.key as any)
           const targetUrl = toggleAttributeUrl(item.key)
           return html`
-            <div class="attr-item-ui" hx-get="${targetUrl}" hx-target="body" hx-push-url="true">
-              <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} 
-                hx-get="${targetUrl}" hx-target="body" hx-push-url="true"
-                onclick="event.stopPropagation(); this.parentElement.click();" />
+            <button class="attr-item-ui" onclick="window.location.href='${targetUrl}'">
+              <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); window.location.href='${targetUrl}'" />
               <span class="attr-label-text">${item.label}</span>
-            </div>
+            </button>
           `
         })}
 
