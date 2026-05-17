@@ -34,9 +34,9 @@ export const SearchAttribute: FC<SearchAttributeProps> = ({ currentParams }) => 
   };
   
   // 💡 2. 自動ロード（hx-trigger="load"）用のパス（リロード時に状態を維持するため）
-  const apiPath = currentParams?.toString() 
-    ? `${CONFIG.api.basePath}?${currentParams.toString()}` 
-    : CONFIG.api.basePath;
+  const apiPath = typeof window !== 'undefined' 
+    ? `${CONFIG.api.basePath}${window.location.search}`
+    : `${CONFIG.api.basePath}?${currentParams?.toString() || ''}`;
 
   return (
     <div class="search-attribute-module" style={{ width: CONFIG.design.width }}>

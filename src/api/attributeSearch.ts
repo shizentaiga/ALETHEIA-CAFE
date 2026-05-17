@@ -30,7 +30,7 @@ const CONFIG = {
 const attributeApi = new Hono()
 
 attributeApi.get('/', async (c) => {
-  const currentParams = new URLSearchParams(c.req.query())
+  const currentParams = new URL(c.req.url).searchParams
   const selectedAttrs = getNormalizedAttributes(c.req.queries('attrs'))
 
   // 1. ×ボタン用のパス（open_attrsだけを削除してTOPへ戻る）
@@ -40,6 +40,10 @@ attributeApi.get('/', async (c) => {
 
   // 2. チェックボックスのトグル用URL生成
   const toggleAttributeUrl = (key: string) => {
+    // 重複を防ぐため、既存のパラメータから open_attrs を一旦削除
+    const baseParams = new URLSearchParams(currentParams.toString())
+    baseParams.delete('open_attrs')
+
     let nextAttrs = [...selectedAttrs]
     if (nextAttrs.includes(key as any)) {
       nextAttrs = nextAttrs.filter(a => a !== key)
@@ -47,7 +51,8 @@ attributeApi.get('/', async (c) => {
       nextAttrs.push(key as any)
     }
 
-    const nextQuery = createSearchUrl(currentParams, { attrs: nextAttrs })
+    // 検索結果(TopPage)を更新するため、APIパスではなくルート「/」に対するクエリを生成します
+    const nextQuery = createSearchUrl(baseParams, { attrs: nextAttrs })
     const finalQuery = nextQuery ? `${nextQuery}&open_attrs=1` : '?open_attrs=1'
     return `/${finalQuery}`
   }
