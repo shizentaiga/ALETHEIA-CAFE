@@ -1,17 +1,19 @@
 /**
  * [File Path] src/pages/header/HeaderSearch.tsx
- * [Role] 複数キーワード検索（チップ形式）および検索履歴（datalist）のUI
+ * [Role] 複数キーワード検索（チップ形式）、特徴チップ表示、および検索履歴（datalist）のUI
  */
 import type { FC } from 'hono/jsx'
 import { useRequestContext } from 'hono/jsx-renderer'
 import { headerSearchHistory } from './headerSearchHistory'
 import { createSearchUrl, ValidAttributeKey } from '../../lib/searchUtils'
+// 💡 日本語ラベル定義をマスタデータとしてインポート
+import { UNIQUE_FEATURES, INFRA_FEATURES } from '../../db/queries/transformers'
 
 interface HeaderSearchProps {
   keywords: string[];
   placeholder: string;
   areaName?: string;
-  attrs?: ValidAttributeKey[]; // 💡 Propsに型定義を追加
+  attrs?: ValidAttributeKey[]; // Propsに型定義を追加
 }
 
 // 検索窓に関する定数定義
@@ -22,6 +24,12 @@ const CONFIG = {
   listId: 'searchHistoryList',
   maxKeywords: 20,
 } as const
+
+// 💡 UNIQUE_FEATURES と INFRA_FEATURES を結合し、英語キーから日本語名を一発で引ける辞書（Map）を事前ビルド
+const FEATURE_LABEL_MAP = new Map<string, string>([
+  ...UNIQUE_FEATURES.map(f => [f.key, f.label] as const),
+  ...INFRA_FEATURES.map(f => [f.key, f.label] as const)
+]);
 
 export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, areaName: propsAreaName, attrs }) => {
   const c = useRequestContext();
@@ -36,12 +44,13 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
   const isMax = keywords.length >= CONFIG.maxKeywords;
   const dynamicPlaceholder = isMax 
     ? "上限です" 
-    : (keywords.length > 0 || areaName ? "" : placeholder);
+    : (keywords.length > 0 || areaName || (attrs && attrs.length > 0) ? "" : placeholder);
 
-  // 💡 Map化による配列パラメータの消失を防ぎつつ、q, area, areaName を除外
+  // 💡 【バグ防止】q, area, areaName に加え、「attrs」も otherParams の除外対象に追加
+  // これにより、下部のループ展開時に古い attrs フィールドが勝手に量産されるのを防ぎます。
   const otherParams: [string, string][] = [];
   currentParams.forEach((value, key) => {
-    if (key !== 'q' && key !== 'area' && key !== 'areaName' && key !== 'q-hidden') {
+    if (key !== 'q' && key !== 'area' && key !== 'areaName' && key !== 'q-hidden' && key !== 'attrs') {
       otherParams.push([key, value]);
     }
   });
@@ -75,6 +84,11 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
         {areaValue && <input type="hidden" name="area" value={areaValue} />}
         {areaName && <input type="hidden" name="areaName" value={areaName} />}
 
+        {/* 💡 現在選択されている特徴パラメータ(attrs)の状態をフォーム送信時にも維持する隠しフィールド */}
+        {attrs && attrs.length > 0 && (
+          <input type="hidden" name="attrs" value={attrs.join(',')} />
+        )}
+
         {/* attrs等、他の全てのパラメータはここで無傷のまま安全に自動引き継ぎ */}
         {otherParams.map(([key, value]) => (
           <input type="hidden" name={key} value={value} />
@@ -106,6 +120,27 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
               <span class="search-chip">
                 {word}
                 {/* 削除リンク：クリックで対象キーワードを除外したURLへ遷移 */}
+                <a href={deleteUrl} class="search-chip-delete" style="text-decoration: none;">×</a>
+              </span>
+            );
+          })}
+
+          {/* 💡 4.5 特徴チップ(attrs)の表示 */}
+          {attrs && attrs.map(attrKey => {
+            // 定数定義マスタから日本語ラベルを取得（万が一、未知のキーがあれば英語キーのままフォールバック）
+            const label = FEATURE_LABEL_MAP.get(attrKey) || attrKey;
+            
+            // 現在選択されている特徴から、自分自身（このチップ）を除外した配列を作成
+            const otherAttrs = attrs.filter(a => a !== attrKey);
+            
+            // 残りの条件が0個になった場合は、配列ではなく `null` を渡してURLからパラメータごと綺麗に消去する
+            const deleteUrl = createSearchUrl(currentParams, { 
+              attrs: otherAttrs.length > 0 ? otherAttrs : null 
+            });
+
+            return (
+              <span class="search-chip attribute-chip">
+                {label}
                 <a href={deleteUrl} class="search-chip-delete" style="text-decoration: none;">×</a>
               </span>
             );
