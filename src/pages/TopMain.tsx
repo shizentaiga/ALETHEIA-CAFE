@@ -1,3 +1,5 @@
+// src/pages/TopMain.tsx
+
 import type { FC } from 'hono/jsx'
 import { SearchArea } from '../components/SearchArea'
 import { SearchCategory } from '../components/SearchCategory'
