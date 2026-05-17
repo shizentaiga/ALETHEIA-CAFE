@@ -42,39 +42,14 @@ export const SearchAttribute: FC<SearchAttributeProps> = ({ currentParams, attrs
     return `${CONFIG.api.basePath}?${params.toString()}`;
   };
 
-  // 💡 JavaScript を使わずに、HTML（aタグ）だけで「 open_attrs 」を消して閉じるURLを作る
-  const closeParams = new URLSearchParams(currentParams?.toString());
-  closeParams.delete('open_attrs');
-  const closeUrl = closeParams.toString() ? `/?${closeParams.toString()}` : '/';
-
   return (
     <div class="search-attribute-module" style={{ width: CONFIG.design.width }}>
       <style>{`
         #${CONFIG.ids.root} { width: 100%; overflow: hidden; margin-bottom: 8px; border-radius: ${CONFIG.design.borderRadius}; }
         #${CONFIG.ids.root}:has(.attribute-modal-container) { border: 1px solid ${CONFIG.design.colors.border}; }
-        
-        /* 💡 モーダルが開いている時、画面全体を覆う透明なバックドロップ（壁）を作る */
-        .modal-backdrop-overlay {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          z-index: 999; /* モーダルの直下に配置 */
-          background: transparent;
-        }
-        /* モーダル自体の z-index を上げて、バックドロップより前面に出す */
-        .attribute-modal-container {
-          position: relative;
-          z-index: 1000;
-        }
       `}</style>
 
-      {/* 💡 モーダルが開いている時だけ、外側クリック用の透明リンクを背後に配置 */}
-      {isOpen && (
-        <a href={closeUrl} class="modal-backdrop-overlay" aria-hidden="true"></a>
-      )}
-
-      {/* 💡 修正: isOpen 時の重複 load 発火を排除し、コンテンツのコンテナとしての役割に専念させます */}
       <div id={CONFIG.ids.root}>
-
         {!isOpen && (
           <button 
             class="search-trigger" 
@@ -90,7 +65,26 @@ export const SearchAttribute: FC<SearchAttributeProps> = ({ currentParams, attrs
         )}
       </div>
 
-      {/* ❌ 複雑なバグの原因になっていた <script> タグ（document.addEventListener）はすべて削除しました */}
+      {/* 💡 SearchAreaを参考にした外側クリック監視用の最小限のスクリプト */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        (() => {
+          // 💡 ガード節：初期化済みの場合は即座に終了
+          if (window.__searchAttributeClickInitialized) return;
+          window.__searchAttributeClickInitialized = true;
+
+          document.addEventListener('click', (e) => {
+            const root = document.getElementById('${CONFIG.ids.root}');
+            
+            // 💡 ガード節：モーダルの外側をクリックした時以外は無視
+            if (!root || root.contains(e.target) || !root.querySelector('.attribute-modal-container')) return;
+
+            // 💡 open_attrs を削除してクリーンに元の状態へリロード
+            const url = new URL(window.location.href);
+            url.searchParams.delete('open_attrs');
+            window.location.href = url.toString();
+          });
+        })();
+      ` }} />
     </div>
   );
 };
