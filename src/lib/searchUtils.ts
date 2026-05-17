@@ -27,8 +27,11 @@ export const getNormalizedAttributes = (queries: string | string[] | undefined):
 
   const rawArray = Array.isArray(queries) ? queries : [queries];
 
+  // 💡 カンマ区切りの文字列を確実に分解し、フラットな配列にする
+  const splittedArray = rawArray.flatMap(v => v ? v.split(',') : []);
+
   // 許可リストに存在するキーのみをフィルタリングして重複排除
-  const validAttrs = rawArray
+  const validAttrs = splittedArray
     .map(v => v?.trim())
     .filter((v): v is ValidAttributeKey => VALID_FEATURE_KEYS.includes(v as ValidAttributeKey));
 
@@ -77,11 +80,17 @@ export const createSearchUrl = (
       return;
     }
 
-    // 値が配列の場合：既存の同名キーを一度リセットし、新しい値のリストで上書きする
-    // (例: 複数のキーワードチップを扱う際などに使用)
+    // 値が配列の場合：カンマ区切りの文字列に変更(attrsが複数ある場合、パラメータ消失を防ぐため)
     if (Array.isArray(value)) {
       params.delete(key);
-      value.forEach(v => params.append(key, v));
+      
+      if (key === 'attrs') {
+        // 💡 attrsの場合は [x1, x2] を "x1,x2" に結合して一意のキーとしてセット
+        params.set(key, value.join(','));
+      } else {
+        // 既存の他の配列パラメータ（もしあれば）の挙動は壊さない
+        value.forEach(v => params.append(key, v));
+      }
       return;
     }
 

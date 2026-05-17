@@ -11,10 +11,10 @@ const CONFIG = {
     headerTitle: '特徴・設備で絞り込む',
     sectionUnique: '✨ 注目の特徴',
     sectionInfra: ' 設備・サービス',
-    submitBtn: 'この条件で検索する' // 💡 追加
+    submitBtn: 'この条件で検索する'
   },
   design: {
-    maxHeight: '280px', // 💡 ボタン用に少しスクロール領域を調整
+    maxHeight: '280px',
     colors: {
       border: '#f3f4f6',
       borderLight: '#f9fafb',
@@ -24,7 +24,7 @@ const CONFIG = {
       bgLight: '#f9fafb',
       bgWhite: '#fff',
       hoverBg: '#f9fafb',
-      primary: '#0070f3' // 💡 追加
+      primary: '#0070f3'
     }
   }
 } as const
@@ -32,26 +32,30 @@ const CONFIG = {
 const attributeApi = new Hono()
 
 attributeApi.get('/', async (c) => {
-  const selectedAttrs = getNormalizedAttributes(c.req.queries('attrs'))
+  // 💡 【変更点】queries() ではなく、カンマ区切り文字列を query() で確実に1本として受け取る
+  const rawQuery = c.req.query('attrs')
+  const selectedAttrs = getNormalizedAttributes(rawQuery)
   
+  // URLSearchParamsを現在の全クエリから再構築（キー重複のトラップを回避）
   const currentParams = new URLSearchParams()
   const allQueries = c.req.query()
   for (const key in allQueries) {
     if (key === 'attrs') {
-      const attrsArr = c.req.queries('attrs') || []
-      attrsArr.forEach(val => currentParams.append('attrs', val))
+      // 💡 配列が確定した選択済みの値を、カンマ結合の形で安全にセット
+      if (selectedAttrs.length > 0) {
+        currentParams.set('attrs', selectedAttrs.join(','))
+      }
     } else {
       currentParams.set(key, allQueries[key])
     }
   }
 
+  // 1. ×ボタン用のパス（open_attrsだけを削除してTOPへ戻る）
   const closeParams = new URLSearchParams(currentParams.toString())
   closeParams.delete('open_attrs')
   const closeUrl = closeParams.toString() ? `/?${closeParams.toString()}` : '/'
 
-  // 💡 【設計変更】チェックボックスを押した時は「画面リロード」させず、
-  // 単にこのモーダル内の対応するチェックボックスのURL（API宛て）を叩いて
-  // モーダルの中身（チェック状態）だけを部分更新するパスを作る。
+  // 2. モーダル内でのチェックボックスのトグル用URL生成（HTMXの書き換え用）
   const toggleAttributeUrl = (key: string) => {
     const apiParams = new URLSearchParams(currentParams.toString())
     let nextAttrs = [...selectedAttrs]
@@ -62,18 +66,21 @@ attributeApi.get('/', async (c) => {
       nextAttrs.push(key as any)
     }
 
-    // APIのパス（/api/attribute-search）を維持したまま、attrsを組み立てる
+    // 💡 常に1本のカンマ区切りに上書きしてAPIへのパラメータを作成
     apiParams.delete('attrs')
-    nextAttrs.forEach(a => apiParams.append('attrs', a))
+    if (nextAttrs.length > 0) {
+      apiParams.set('attrs', nextAttrs.join(','))
+    }
     apiParams.set('open_attrs', '1')
     return `/api/attribute-search?${apiParams.toString()}`
   }
 
-  // 💡 【決定ボタン用URL】最後に本当にTOP画面を検索リロードさせるためのURL
+  // 3. 【決定ボタン用URL】最後に本当にTOP画面を検索リロードさせるためのURL
   const getSubmitUrl = () => {
     const baseParams = new URLSearchParams(currentParams.toString())
     baseParams.delete('open_attrs') // モーダルは閉じるので削除
     
+    // 💡 searchUtilsの createSearchUrl が自動的に attrs=x1,x2 の形にラップしてくれます
     const nextQuery = createSearchUrl(baseParams, { attrs: selectedAttrs })
     return nextQuery ? `/${nextQuery}` : '/'
   }
@@ -89,7 +96,6 @@ attributeApi.get('/', async (c) => {
         .attr-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: ${CONFIG.design.colors.primary}; }
         .attr-label-text { flex: 1; cursor: pointer; }
         
-        /* 💡 決定ボタン用のスタイル */
         .attr-footer-ui { padding: 12px 16px; border-top: 1px solid ${CONFIG.design.colors.border}; background: ${CONFIG.design.colors.bgWhite}; }
         .attr-submit-btn { width: 100%; padding: 10px; background: ${CONFIG.design.colors.primary}; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-align: center; }
         .attr-submit-btn:hover { opacity: 0.9; }
