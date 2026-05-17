@@ -93,16 +93,16 @@ CREATE TABLE services (
     -- -------------------------------------------------------------------------
     -- 以下のキー名に厳選し、表記揺れを禁止する（未確定時は項目自体を省略または null）:
     -- - category       : (string)  'cat_cafe', 'cat_restaurant', 'cat_bar' など
-    -- - wifi           : (boolean) Wi-Fiの有無
-    -- - outlets        : (boolean) 電源の有無
-    -- - parking        : (boolean) 専用・提携駐車場の有無
-    -- - takeout        : (boolean) テイクアウト・お持ち帰り対応の有無
+    -- - wifi           : (boolean) 'Wi-Fi' の有無
+    -- - outlets        : (boolean) '電源' の有無
+    -- - parking        : (boolean) '駐車場' の有無
+    -- - takeout        : (boolean) 'テイクアウト' の有無
     -- - smoking        : (string)  喫煙ステータス ('NO_SMOKING', 'SMOKING_ROOM', 'SMOKING_SEATS', 'ALL_SMOKING')
-    -- - payment        : (array)   決済手段。'CASH_ONLY'、'PayPay'、および主要区分 ('CREDIT', 'E_MONEY', 'QR') を許可
-    -- - buffet         : (boolean) 食べ放題（ミスドビュッフェ等）の有無
-    -- - pop_buffet     : (boolean) ドーナツポップ詰め放題の有無
-    -- - free_refill    : (boolean) ドリンクおかわり自由（コーヒー・カフェオレ等）の有無
-    -- - baby           : (boolean) 赤ちゃん対応・ベビーカー入店の可否
+    -- - payment        : (array)   決済手段。'CASH_ONLY'、'CASHLESS'（クレカ/電子マネー）、'PAYPAY' を許可
+    -- - buffet         : (boolean) '食べ放題' の有無
+    -- - pop_buffet     : (boolean) '詰め放題' の有無
+    -- - free_refill    : (boolean) 'ドリンクおかわり無料' の有無
+    -- - baby           : (boolean) '赤ちゃんOK' の可否
     -- - business_hours : (string)  基本営業時間（例: '09:00〜21:00' ※予備・フロント表示用）
     -- -------------------------------------------------------------------------
     attributes_json TEXT DEFAULT '{}',

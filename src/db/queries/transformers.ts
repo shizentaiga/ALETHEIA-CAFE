@@ -10,13 +10,14 @@ const UNIQUE_FEATURES = [
   { key: 'baby', label: '赤ちゃんOK' },
   { key: 'buffet', label: '食べ放題' },
   { key: 'pop_buffet', label: '詰め放題' },
-  { key: 'free_refill', label: 'おかわり自由' },
+  { key: 'free_refill', label: 'ドリンクおかわり無料' },
+  { key: 'takeout', label: 'テイクアウト' },
 ] as const;
 
 // 「普遍的な項目（インフラ系）」を定義。UNIQUE_FEATURESより後に評価。
 const INFRA_FEATURES = [
-  { key: 'parking', label: '駐車場あり' },
-  { key: 'outlets', label: '電源あり' },
+  { key: 'parking', label: '駐車場' },
+  { key: 'outlets', label: '電源' },
   { key: 'wifi', label: 'Wi-Fi' },
 ] as const;
 
