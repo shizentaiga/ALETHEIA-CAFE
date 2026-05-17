@@ -40,9 +40,12 @@ areaApi.get('/', async (c) => {
   const rawParentId = c.req.query('parent_id');
   const parentId = (rawParentId === '00' || !rawParentId) ? null : rawParentId;
   
-  const currentParams = new URLSearchParams(c.req.query());
-  const searchBaseParams = new URLSearchParams(currentParams.toString());
-  searchBaseParams.delete('parent_id');
+//   const currentParams = new URLSearchParams(c.req.query());
+//   const searchBaseParams = new URLSearchParams(currentParams.toString());
+//   searchBaseParams.delete('parent_id');
+  // 💡 Honoの生のURLからパラメータを構築することで、attrsなどの配列やカンマ区切りを無傷で完全取得
+  const searchBaseParams = new URL(c.req.url).searchParams;
+  searchBaseParams.delete('parent_id'); // ドリルダウン制御用のキーだけを除外（attrsやqは残る）
 
   const { results: subAreas } = await dbQueries.getSubAreas(db, parentId)
   const parentArea = parentId ? await dbQueries.getAreaInfo(db, parentId) : null

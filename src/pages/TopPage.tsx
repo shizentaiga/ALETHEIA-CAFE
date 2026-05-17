@@ -47,6 +47,11 @@ home.get('/', async (c) => {
   const rawAttrQuery = c.req.query('attrs');  // 特徴(attrs)＝カンマ区切りの文字列
   const attrs = getNormalizedAttributes(rawAttrQuery);
 
+  // 💡 安全にURLSearchParamsへ再セット（SearchArea等のコンポーネントへ引き継ぐため）
+  if (attrs.length > 0) {
+    currentParams.set('attrs', attrs.join(','));
+  }
+
   // 3. エリア特定：URL指定がなければCDN位置情報をフォールバック
   const urlArea = c.req.query('area');
   const area = urlArea || await resolveDetectionArea(c, db);
