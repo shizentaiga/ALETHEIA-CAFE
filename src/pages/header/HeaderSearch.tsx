@@ -4,13 +4,14 @@
  */
 import type { FC } from 'hono/jsx'
 import { useRequestContext } from 'hono/jsx-renderer'
-import { createSearchUrl } from '../../lib/searchUtils'
 import { headerSearchHistory } from './headerSearchHistory'
+import { createSearchUrl, ValidAttributeKey } from '../../lib/searchUtils'
 
 interface HeaderSearchProps {
   keywords: string[];
   placeholder: string;
   areaName?: string;
+  attrs?: ValidAttributeKey[]; // 💡 Propsに型定義を追加
 }
 
 // 検索窓に関する定数定義
@@ -22,7 +23,7 @@ const CONFIG = {
   maxKeywords: 20,
 } as const
 
-export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, areaName: propsAreaName }) => {
+export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, areaName: propsAreaName, attrs }) => {
   const c = useRequestContext();
   const currentUrl = new URL(c.req.url);
   const currentParams = currentUrl.searchParams;
@@ -83,10 +84,11 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
         <input type="hidden" id="js-final-q" name="q" value="" />
 
         <div class="header-search-input-wrapper">
+
           {/* 3. エリアチップの表示 */}
           {areaName && (
             <span class="search-chip area-chip">
-              📍 {areaName}
+              {areaName}
               <a 
                 // 💡 area: '00'(全国、未指定) を明示的に指定
                 href={createSearchUrl(currentParams, { area: '00', areaName: null })} 

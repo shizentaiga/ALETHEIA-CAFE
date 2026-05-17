@@ -82,16 +82,18 @@ home.get('/', async (c) => {
   // 6. 構築したデータを各コンポーネントへ渡し、ページをレンダリング
   return c.render(
     <>
-      <TopHeader user={user} areaName={areaInfo.name} />
+      <TopHeader user={user} areaName={areaInfo.name} attrs={attrs} />
+
       <TopMain 
         results={results} 
         total={total} 
         area={area} 
         q={q} 
-        attrs={attrs} // 💡 選択中のバッジ表示やUI制御のために念のため渡しておく
+        attrs={attrs}
         areaName={areaInfo.name}
         currentParams={currentParams} 
       />
+
       <TopFooter />
     </>
   );

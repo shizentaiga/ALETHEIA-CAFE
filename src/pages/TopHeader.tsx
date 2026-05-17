@@ -8,7 +8,8 @@ import { useRequestContext } from 'hono/jsx-renderer'
 import { HeaderSearch } from './header/HeaderSearch'
 import { HeaderAuth } from './header/HeaderAuth'
 import { headerStyle } from './header/headerStyle'
-import { getNormalizedKeywords } from '../lib/searchUtils'
+
+import { getNormalizedKeywords, ValidAttributeKey } from '../lib/searchUtils'
 
 // --- Configuration ---
 const CONFIG = {
@@ -21,7 +22,8 @@ const CONFIG = {
 export const TopHeader: FC<{
   user?: any,
   areaName?: string,
-}> = ({ user, areaName }) => {
+  attrs?: ValidAttributeKey[], // 💡 将来的に受け取る配列の型を拡張
+}> = ({ user, areaName, attrs }) => {
   const c = useRequestContext()
   
   /**
@@ -44,7 +46,8 @@ export const TopHeader: FC<{
       <HeaderSearch 
         keywords={keywords} 
         placeholder={CONFIG.placeholder} 
-        areaName={areaName} // エリア名を渡す
+        areaName={areaName} // 「エリア」で検索
+        attrs={attrs}       // 「特徴」で検索
       />
 
       {/* 3. Authentication Links */}
