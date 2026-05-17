@@ -5,15 +5,15 @@ import { isTruthy } from './utils';
 
 const MAX_TAG_DISPLAY = 4;  // 営業時間＋タグ3つ
 
-// 「特徴的な項目」を定義。バリューの高い順に並べるのがコツ。
-const UNIQUE_FEATURES = [
+// 特徴的な項目
+export const UNIQUE_FEATURES = [
   { key: 'baby', label: 'ベビーカーOK' },
   { key: 'buffet', label: 'ドーナツ食べ放題' },
   { key: 'pop_buffet', label: 'ドーナツポップ詰め放題' },
 ] as const;
 
-// 「普遍的な項目（インフラ系）」を定義。UNIQUE_FEATURESより後に評価。
-const INFRA_FEATURES = [
+// 普遍的な項目
+export const INFRA_FEATURES = [
   { key: 'free_refill', label: 'ドリンクおかわり無料' },
   { key: 'takeout', label: 'テイクアウト' },
   { key: 'parking', label: '駐車場' },
@@ -21,7 +21,15 @@ const INFRA_FEATURES = [
   { key: 'wifi', label: 'Wi-Fi' },
 ] as const;
 
-const PAYMENT_LABELS = {
+// 喫煙ステータス
+export const SMOKING_LABELS = {
+  NO_SMOKING: '禁煙',
+  SMOKING_ROOM: 'タバコ可',
+  SMOKING_SEATS: 'タバコ可',
+  ALL_SMOKING: 'タバコ可',
+} as const;
+
+export const PAYMENT_LABELS = {
   CASH_ONLY: '現金のみ',
   CASHLESS: 'クレカ/電子マネー',
   PAYPAY: 'PayPay',
@@ -49,10 +57,11 @@ export const formatAttributes = (jsonStr: string): string[] => {
 
     // --- 3. 喫煙ステータス ---
     if (tags.length < MAX_TAG_DISPLAY && attrs.smoking) {
-      if (attrs.smoking === 'SMOKING_ROOM' || attrs.smoking === 'SMOKING_SEATS') {
-        tags.push('喫煙室あり');
-      } else if (attrs.smoking === 'ALL_SMOKING') {
-        tags.push('全席喫煙可');
+      const s = attrs.smoking;
+      if (s === 'SMOKING_ROOM' || s === 'SMOKING_SEATS') {
+        tags.push(SMOKING_LABELS.SMOKING_ROOM);
+      } else if (s === 'ALL_SMOKING') {
+        tags.push(SMOKING_LABELS.ALL_SMOKING);
       }
     }
 

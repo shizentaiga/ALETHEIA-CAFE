@@ -4,6 +4,8 @@
 
 import { Hono } from 'hono'
 import { html } from 'hono/html'
+// 💡 本番用の定義ファイルから、特徴配列と変換関数をそのままインポート
+import { SMOKING_LABELS, UNIQUE_FEATURES, INFRA_FEATURES, formatAttributes } from '../db/queries/transformers'
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
@@ -22,27 +24,20 @@ interface AttributeStats {
   pop_buffet_count: number;
   free_refill_count: number;
   baby_count: number;
+  smoking_count: number; // 💡 統計型にタバコ用カウントを追加
 }
 
-// 💡 スキーマに完全に適合させた店舗データの型定義
+// スキーマに完全に適合させた店舗データの型定義
 interface ShopItem {
-  service_id: string; // id ➔ service_id に修正
-  title: string;      // name ➔ title に修正
+  service_id: string;
+  title: string;
   address: string;
   attributes_json: string;
 }
 
-// 利用可能な属性のマスター定義
-const ATTRIBUTE_MASTER = [
-  { key: 'wifi', label: 'Wi-Fiあり' },
-  { key: 'outlets', label: 'コンセント・電源あり' },
-  { key: 'parking', label: '専用・提携駐車場あり' },
-  { key: 'takeout', label: 'テイクアウト対応' },
-  { key: 'buffet', label: 'ドーナツ食べ放題' },
-  { key: 'pop_buffet', label: 'ドーナツポップ詰め放題' },
-  { key: 'free_refill', label: 'ドリンクおかわり自由' },
-  { key: 'baby', label: '赤ちゃんOK/ベビーカー入店' }
-] as const
+// 固定文言の定義（ハードコード）を完全排除！
+// インポートした本番用マスタ配列を自動的にマージして、既存ロジックと互換性を保ちます
+const ATTRIBUTE_MASTER = [...UNIQUE_FEATURES, ...INFRA_FEATURES];
 
 test15.get('/', async (c) => {
   const db = c.env.ALETHEIA_CAFE_DB
@@ -50,8 +45,11 @@ test15.get('/', async (c) => {
 
   // 選択されたチェックボックスの配列を取得
   const selectedAttrs = c.req.queries('attributes[]') || []
+  // 💡 クエリパラメータからタバコ可の選択状態を取得
+  const isSmokingSelected = c.req.query('smoking') === 'true'
 
   // --- [1] 統計情報の1クエリ爆速集計 ---
+  // 💡 最後の行に、smokingがNO_SMOKING以外（＝タバコ可）である件数を集計するロジックを追加
   const statsQuery = `
     SELECT 
       COUNT(*) as total_count,
@@ -62,16 +60,17 @@ test15.get('/', async (c) => {
       SUM(CASE WHEN json_extract(attributes_json, '$.buffet') = true THEN 1 ELSE 0 END) as buffet_count,
       SUM(CASE WHEN json_extract(attributes_json, '$.pop_buffet') = true THEN 1 ELSE 0 END) as pop_buffet_count,
       SUM(CASE WHEN json_extract(attributes_json, '$.free_refill') = true THEN 1 ELSE 0 END) as free_refill_count,
-      SUM(CASE WHEN json_extract(attributes_json, '$.baby') = true THEN 1 ELSE 0 END) as baby_count
+      SUM(CASE WHEN json_extract(attributes_json, '$.baby') = true THEN 1 ELSE 0 END) as baby_count,
+      SUM(CASE WHEN json_extract(attributes_json, '$.smoking') IN ('SMOKING_ROOM', 'SMOKING_SEATS', 'ALL_SMOKING') THEN 1 ELSE 0 END) as smoking_count
     FROM services
     WHERE deleted_at IS NULL;
   `
   let stats: AttributeStats = {
     total_count: 0, wifi_count: 0, outlets_count: 0, parking_count: 0, takeout_count: 0,
-    buffet_count: 0, pop_buffet_count: 0, free_refill_count: 0, baby_count: 0
+    buffet_count: 0, pop_buffet_count: 0, free_refill_count: 0, baby_count: 0, smoking_count: 0
   }
 
-  // --- [2] 💡 スキーマに合わせてSQLを修正（service_id, title） ---
+  // --- [2] スキーマに合わせてSQLを修正（service_id, title） ---
   let shopsQuery = `SELECT service_id, title, address, attributes_json FROM services WHERE deleted_at IS NULL`
   const queryParams: any[] = []
 
@@ -83,6 +82,12 @@ test15.get('/', async (c) => {
       }
     })
   }
+
+  // 💡 タバコ可のチェックボックスが選択されている場合、条件式を追加（IN句で3つのステータスを内包）
+  if (isSmokingSelected) {
+    shopsQuery += ` AND json_extract(attributes_json, '$.smoking') IN ('SMOKING_ROOM', 'SMOKING_SEATS', 'ALL_SMOKING')`
+  }
+
   shopsQuery += ` LIMIT 10;`
 
   let shopList: ShopItem[] = []
@@ -100,7 +105,7 @@ test15.get('/', async (c) => {
 
   const isHtmx = c.req.header('HX-Request') === 'true'
 
-  // 💡 描画側も shop.title にマッピングを変更
+  // 💡 描画側（店舗チップ生成）に本番用の formatAttributes を適用して完全統一
   const renderShopList = (shops: ShopItem[]) => html`
     <div id="shop-list-target">
       <div style="margin: 12px 0; color: #64748b; font-size: 0.85rem; font-weight: 600;">
@@ -112,19 +117,19 @@ test15.get('/', async (c) => {
             条件に一致する店舗が見つかりませんでした。
           </div>
         ` : shops.map(shop => {
-          let parsedAttrs: Record<string, any> = {}
-          try { parsedAttrs = JSON.parse(shop.attributes_json || '{}') } catch(_) {}
+          // 💡 ここで本番の判定ロジック（タバコ可の自動追加やMAX 4制約など）をそのまま反映します
+          const displayedTags = formatAttributes(shop.attributes_json);
           
           return html`
             <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff;">
-              <strong style="color: #1e293b; font-size: 1rem;">${shop.title}</strong> {/* 👈 title に修正 */}
+              <strong style="color: #1e293b; font-size: 1rem;">${shop.title}</strong>
               <div style="color: #64748b; font-size: 0.75rem; margin-top: 4px;">📍 ${shop.address}</div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
-                ${ATTRIBUTE_MASTER.map(m => parsedAttrs[m.key] === true ? html`
+                ${displayedTags.map(tag => html`
                   <span style="font-size: 0.65rem; background: #f1f5f9; padding: 2px 8px; border-radius: 999px; color: #475569;">
-                    ${m.label}
+                    ${tag}
                   </span>
-                ` : '')}
+                `)}
               </div>
             </div>
           `
@@ -181,6 +186,20 @@ test15.get('/', async (c) => {
                   </label>
                 )
               })}
+
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontSize: '0.9rem', color: '#334155' }}>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input 
+                    type="checkbox" 
+                    name="smoking" 
+                    value="true" 
+                    checked={isSmokingSelected}
+                    style="width: 16px; height: 16px; cursor: pointer;"
+                  />
+                  <span>{SMOKING_LABELS.SMOKING_ROOM}</span>
+                </div>
+                <span style="color: #94a3b8; font-size: 0.8rem;">({stats.smoking_count})</span>
+              </label>
             </div>
             <noscript>
               <button type="submit" style="margin-top: 12px; width: 100%; padding: 8px; border-radius: 6px; background: #374151; color: #fff; border: none;">適用</button>
