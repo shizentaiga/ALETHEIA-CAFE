@@ -5,7 +5,6 @@
 import type { FC } from 'hono/jsx'
 import { useRequestContext } from 'hono/jsx-renderer'
 import { createSearchUrl } from '../../lib/searchUtils'
-import { headerStyle } from './headerStyle'
 import { headerSearchHistory } from './headerSearchHistory'
 
 interface HeaderSearchProps {
@@ -38,9 +37,13 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
     ? "上限です" 
     : (keywords.length > 0 || areaName ? "" : placeholder);
 
-  // 💡 【重要】重複防止：q, area, areaName は個別に hidden を作るので otherParams から除外する
-  const otherParams = Array.from(new Map(currentParams.entries()))
-    .filter(([key]) => key !== 'q' && key !== 'area' && key !== 'areaName');
+  // 💡 Map化による配列パラメータの消失を防ぎつつ、q, area, areaName を除外
+  const otherParams: [string, string][] = [];
+  currentParams.forEach((value, key) => {
+    if (key !== 'q' && key !== 'area' && key !== 'areaName' && key !== 'q-hidden') {
+      otherParams.push([key, value]);
+    }
+  });
 
   return (
     <nav id={CONFIG.headerId}>
