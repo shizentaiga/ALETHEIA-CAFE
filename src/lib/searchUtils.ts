@@ -45,8 +45,8 @@ export const createSearchUrl = (
 
   // 2. 更新したい項目だけをループして適用
   Object.entries(updates).forEach(([key, value]) => {
-    // 値が null の場合：その条件を検索から除外する
-    if (value === null) {
+    // 値が null、または空の配列の場合：その条件を検索から除外する
+    if (value === null || (Array.isArray(value) && value.length === 0)) {
       params.delete(key);
       return;
     }
@@ -66,8 +66,9 @@ export const createSearchUrl = (
   // 3. 最終的なURL文字列を組み立て
   const query = params.toString();
   
-  // クエリがあれば「/?q=...」を返し、なければトップ「/」を返す
-  return query ? `/?${query}` : '/';
+  // クエリがあれば「?q=...」を返し、なければ空文字列を返す
+  // （これにより呼び出し側がベースパスを自由に結合できるようになります）
+  return query ? `?${query}` : '';
 };
 
 /**
@@ -103,8 +104,9 @@ export const getAreaLevel = (areaId: string | null | undefined): number => {
   // 💡 areaId が null, undefined, または "00" の場合はレベル 0 (全国) とみなす
   if (!areaId || areaId === '00') return 0;
   
-  const hyphenCount = (areaId.match(/-/g) || []).length;
-  return hyphenCount + 1;
+  // 文字列の分割数をベースにすることで、より厳密に階層を判定
+  const segments = areaId.split('-');
+  return segments.length;
 };
 
 /**
