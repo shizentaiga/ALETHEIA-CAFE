@@ -64,7 +64,7 @@ export const TopMain: FC<{
   attrs?: ValidAttributeKey[], // 💡 将来的に受け取る配列の型を拡張
   areaName?: string,
   currentParams?: URLSearchParams // URLの状態を丸ごと受け取る
-}> = ({ results, total, area, q, areaName, currentParams }) => (
+}> = ({ results, total, area, q, attrs, areaName, currentParams }) => (
   <section class="top-main-container">
     <style>{layoutStyle}</style>  
 
@@ -74,7 +74,7 @@ export const TopMain: FC<{
       <SearchArea currentParams={currentParams} areaName={areaName} />
       
       {/* 💡 新しい特徴検索コンポーネントへ差し替え（バトンをそのまま引き継ぐ） */}
-      <SearchAttribute currentParams={currentParams}  />
+      <SearchAttribute currentParams={currentParams} attrs={attrs}  />
     </div>
 
     {/* Search Results Section */}

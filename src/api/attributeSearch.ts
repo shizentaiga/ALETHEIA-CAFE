@@ -32,9 +32,10 @@ const CONFIG = {
 const attributeApi = new Hono()
 
 attributeApi.get('/', async (c) => {
-  // 💡 【変更点】queries() ではなく、カンマ区切り文字列を query() で確実に1本として受け取る
-  const rawQuery = c.req.query('attrs')
-  const selectedAttrs = getNormalizedAttributes(rawQuery)
+  // 💡 【バグ修正】カンマ区切りの文字列を、安全に配列化してから getNormalizedAttributes に引き渡す
+  const rawQuery = c.req.query('attrs') || '' // 特徴(attrs)を取得
+  const parsedArray = rawQuery ? rawQuery.split(',') : []
+  const selectedAttrs = getNormalizedAttributes(parsedArray as any)
   
   // URLSearchParamsを現在の全クエリから再構築（キー重複のトラップを回避）
   const currentParams = new URLSearchParams()
@@ -48,6 +49,13 @@ attributeApi.get('/', async (c) => {
     } else {
       currentParams.set(key, allQueries[key])
     }
+  }
+  
+  // 💡 【バグ修正】ループの通過順に関わらず、抽出済みの正規化 attrs を確実に反映させる
+  if (selectedAttrs.length > 0) {
+    currentParams.set('attrs', selectedAttrs.join(','));
+  } else {
+    currentParams.delete('attrs');
   }
 
   // 1. ×ボタン用のパス（open_attrsだけを削除してTOPへ戻る）
