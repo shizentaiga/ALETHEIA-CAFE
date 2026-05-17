@@ -1,4 +1,6 @@
-// src/api/attributeSearch.ts
+/**
+ * [ファイルパス] src/api/attributeSearch.ts
+ */
 
 import { Hono } from 'hono'
 import { html } from 'hono/html'
@@ -21,10 +23,12 @@ const CONFIG = {
       textDark: '#111827',
       textMuted: '#4b5563',
       textLight: '#9ca3af',
-      bgLight: '#f9fafb',
+      // 💡 ⑥ ヘッダー背景をほんの少し白寄りにしてグレー感を減らし、高級感を演出
+      bgLight: '#fbfbfc', 
       bgWhite: '#fff',
-      hoverBg: '#f9fafb',
-      primary: '#0070f3'
+      // 💡 ④ CTAボタンを「少しだけ軽く」して全体に馴染ませる (Slate-700 -> Slate-800)
+      primary: '#334155',
+      primaryHover: '#1e293b'
     }
   }
 } as const
@@ -32,8 +36,8 @@ const CONFIG = {
 const attributeApi = new Hono()
 
 attributeApi.get('/', async (c) => {
-  // 💡 【バグ修正】カンマ区切りの文字列を、安全に配列化してから getNormalizedAttributes に引き渡す
-  const rawQuery = c.req.query('attrs') || '' // 特徴(attrs)を取得
+  // 💡 カンマ区切りの文字列を安全に配列化してから getNormalizedAttributes に引き渡す
+  const rawQuery = c.req.query('attrs') || ''
   const parsedArray = rawQuery ? rawQuery.split(',') : []
   const selectedAttrs = getNormalizedAttributes(parsedArray as any)
   
@@ -42,7 +46,6 @@ attributeApi.get('/', async (c) => {
   const allQueries = c.req.query()
   for (const key in allQueries) {
     if (key === 'attrs') {
-      // 💡 配列が確定した選択済みの値を、カンマ結合の形で安全にセット
       if (selectedAttrs.length > 0) {
         currentParams.set('attrs', selectedAttrs.join(','))
       }
@@ -51,7 +54,6 @@ attributeApi.get('/', async (c) => {
     }
   }
   
-  // 💡 【バグ修正】ループの通過順に関わらず、抽出済みの正規化 attrs を確実に反映させる
   if (selectedAttrs.length > 0) {
     currentParams.set('attrs', selectedAttrs.join(','));
   } else {
@@ -74,7 +76,6 @@ attributeApi.get('/', async (c) => {
       nextAttrs.push(key as any)
     }
 
-    // 💡 常に1本のカンマ区切りに上書きしてAPIへのパラメータを作成
     apiParams.delete('attrs')
     if (nextAttrs.length > 0) {
       apiParams.set('attrs', nextAttrs.join(','))
@@ -86,9 +87,8 @@ attributeApi.get('/', async (c) => {
   // 3. 【決定ボタン用URL】最後に本当にTOP画面を検索リロードさせるためのURL
   const getSubmitUrl = () => {
     const baseParams = new URLSearchParams(currentParams.toString())
-    baseParams.delete('open_attrs') // モーダルは閉じるので削除
+    baseParams.delete('open_attrs')
     
-    // 💡 searchUtilsの createSearchUrl が自動的に attrs=x1,x2 の形にラップしてくれます
     const nextQuery = createSearchUrl(baseParams, { attrs: selectedAttrs })
     return nextQuery ? `/${nextQuery}` : '/'
   }
@@ -98,15 +98,26 @@ attributeApi.get('/', async (c) => {
       <style>
         .attr-header-ui { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid ${CONFIG.design.colors.border}; font-size: 0.85rem; font-weight: 600; color: ${CONFIG.design.colors.textDark}; background: ${CONFIG.design.colors.bgLight}; }
         .attr-list-scroll { max-height: ${CONFIG.design.maxHeight}; overflow-y: auto; padding: 8px 0; }
-        .attr-section-title { font-size: 0.75rem; font-weight: 700; color: ${CONFIG.design.colors.textLight}; padding: 8px 16px 4px 16px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .attr-item-ui { width: 100%; padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: ${CONFIG.design.colors.textMuted}; cursor: pointer; border-bottom: 1px solid ${CONFIG.design.colors.borderLight}; transition: background 0.1s; text-align: left; background: ${CONFIG.design.colors.bgWhite}; border: none; }
-        .attr-item-ui:hover { background: ${CONFIG.design.colors.hoverBg}; }
-        .attr-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: ${CONFIG.design.colors.primary}; }
+        
+        /* 💡 ① section title を少し柔らかく調整（管理画面感を排除して洗練） */
+        .attr-section-title { font-size: 0.72rem; font-weight: 600; color: #64748b; padding: 10px 16px 6px; letter-spacing: 0.02em; }
+        
+        /* 💡 ② hover をもっと静かに滑らかに＋トランジション付与 */
+        .attr-item-ui { width: 100%; padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: ${CONFIG.design.colors.textMuted}; cursor: pointer; border-bottom: 1px solid ${CONFIG.design.colors.borderLight}; text-align: left; background: ${CONFIG.design.colors.bgWhite}; border: none; transition: background-color 0.12s ease, color 0.12s ease; }
+        .attr-item-ui:hover { background: #fafbfc; }
+        
+        /* 💡 ⑤ checkbox をほんの少しだけ大きくしスマホのUXを最適化 */
+        .attr-checkbox { width: 17px; height: 17px; cursor: pointer; accent-color: ${CONFIG.design.colors.primary}; }
         .attr-label-text { flex: 1; cursor: pointer; }
         
-        .attr-footer-ui { padding: 12px 16px; border-top: 1px solid ${CONFIG.design.colors.border}; background: ${CONFIG.design.colors.bgWhite}; }
-        .attr-submit-btn { width: 100%; padding: 10px; background: ${CONFIG.design.colors.primary}; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-align: center; }
-        .attr-submit-btn:hover { opacity: 0.9; }
+        /* 💡 「選択済み」アイテムの視認性とアプリ感を向上させるスタイリング */
+        .attr-item-ui.is-selected { background: #f8fafc; }
+        .attr-item-ui.is-selected .attr-label-text { color: #111827; font-weight: 500; }
+        
+        /* 💡 ③ footer の余白を広げ、ほんの少し浮かせる立体的なシャドウを追加 */
+        .attr-footer-ui { padding: 14px 16px; border-top: 1px solid ${CONFIG.design.colors.border}; background: #fcfcfd; box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.03); }
+        .attr-submit-btn { width: 100%; padding: 10px; background: ${CONFIG.design.colors.primary}; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-align: center; transition: background-color 0.15s ease; }
+        .attr-submit-btn:hover { background-color: ${CONFIG.design.colors.primaryHover}; }
       </style>
 
       <div class="attr-header-ui">
@@ -121,8 +132,9 @@ attributeApi.get('/', async (c) => {
         ${UNIQUE_FEATURES.map(item => {
           const isChecked = selectedAttrs.includes(item.key as any)
           const targetUrl = toggleAttributeUrl(item.key)
+          // 💡 isChecked の場合に 'is-selected' クラスを付与
           return html`
-            <button class="attr-item-ui" hx-get="${targetUrl}" hx-target="#attribute-search-root">
+            <button class="attr-item-ui ${isChecked ? 'is-selected' : ''}" hx-get="${targetUrl}" hx-target="#attribute-search-root">
               <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation();" style="pointer-events: none;" />
               <span class="attr-label-text">${item.label}</span>
             </button>
@@ -133,8 +145,9 @@ attributeApi.get('/', async (c) => {
         ${INFRA_FEATURES.map(item => {
           const isChecked = selectedAttrs.includes(item.key as any)
           const targetUrl = toggleAttributeUrl(item.key)
+          // 💡 isChecked の場合に 'is-selected' クラスを付与
           return html`
-            <button class="attr-item-ui" hx-get="${targetUrl}" hx-target="#attribute-search-root">
+            <button class="attr-item-ui ${isChecked ? 'is-selected' : ''}" hx-get="${targetUrl}" hx-target="#attribute-search-root">
               <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation();" style="pointer-events: none;" />
               <span class="attr-label-text">${item.label}</span>
             </button>
