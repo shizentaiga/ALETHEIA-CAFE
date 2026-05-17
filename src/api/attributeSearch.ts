@@ -81,12 +81,10 @@ attributeApi.get('/', async (c) => {
           const targetUrl = toggleAttributeUrl(item.key)
           return html`
             <!-- 💡 行全体をクリックした時に、ページ全体を非同期リロードするようにHTMX化 -->
-            <div class="attr-item-ui" 
-                 hx-get="${targetUrl}" 
-                 hx-target="body" 
-                 hx-push-url="true">
+            <div class="attr-item-ui" hx-get="${targetUrl}" hx-target="body" hx-push-url="true">
               <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} 
-                     onclick="event.stopPropagation(); this.parentElement.click();" />
+                hx-get="${targetUrl}" hx-target="body" hx-push-url="true"
+                onclick="event.stopPropagation(); this.parentElement.click();" />
               <span class="attr-label-text">${item.label}</span>
             </div>
           `
@@ -97,12 +95,10 @@ attributeApi.get('/', async (c) => {
           const isChecked = selectedAttrs.includes(item.key as any)
           const targetUrl = toggleAttributeUrl(item.key)
           return html`
-            <div class="attr-item-ui" 
-                 hx-get="${targetUrl}" 
-                 hx-target="body" 
-                 hx-push-url="true">
+            <div class="attr-item-ui" hx-get="${targetUrl}" hx-target="body" hx-push-url="true">
               <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} 
-                     onclick="event.stopPropagation(); this.parentElement.click();" />
+                hx-get="${targetUrl}" hx-target="body" hx-push-url="true"
+                onclick="event.stopPropagation(); this.parentElement.click();" />
               <span class="attr-label-text">${item.label}</span>
             </div>
           `

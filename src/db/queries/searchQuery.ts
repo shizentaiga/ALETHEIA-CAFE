@@ -21,13 +21,13 @@ export type SearchOptions = {
   limit?: number;
   sortBy?: 'latest' | 'near';
   userCoords?: { lat: number; lng: number };
+  attrs?: string[]; // 特徴検索用のアトリビュート
 };
 
 /**
  * 補助関数: エリアIDから「名前」と「基準座標」を解決する
  */
 export async function fetchAreaCoordInfo(db: D1Database, areaId?: string) {
-  // areaIdがない場合はデフォルトで全国(00)として扱う
   const targetId = areaId || '00';
 
   try {
@@ -50,8 +50,8 @@ export async function fetchAreaCoordInfo(db: D1Database, areaId?: string) {
  * メイン関数: サービス検索実行
  */
 export const fetchServices = async (options: SearchOptions) => {
-  // 1. 変数の準備
-  const { db, q, page, area, limit = DEFAULT_LIMIT, sortBy = 'latest', userCoords } = options;
+  // 1. 変数の準備（💡 options から attrs をしっかり受け取る）
+  const { db, q, page, area, attrs, limit = DEFAULT_LIMIT, sortBy = 'latest', userCoords } = options;
   const offset = (page - 1) * limit;
   const keywords = getNormalizedKeywords(q);
   const conditions = ["deleted_at IS NULL"];
@@ -74,11 +74,21 @@ export const fetchServices = async (options: SearchOptions) => {
     }
   }
 
-  // --- 💡 空間検索・ソートロジックの注入 ---
+  // 💡 3.5 動的SQL構築: 特徴・設備検索（追加）
+  // スキーマの定義に沿って、attributes_json 内の boolean 項目が true であるものを AND で絞り込みます
+  if (attrs && attrs.length > 0) {
+    attrs.forEach(attrKey => {
+      // 例: json_extract(attributes_json, '$.wifi') = 1 
+      // D1(SQLite)においてJSONのbooleanのtrueは整数1として評価されます
+      conditions.push(`json_extract(attributes_json, '$.' || ?) = 1`);
+      params.push(attrKey);
+    });
+  }
+
+  // --- 空間検索・ソートロジックの注入 ---
   let selectFields = `service_id, title, address, lat, lng, attributes_json`;
   let orderBy = `created_at DESC`;
 
-  // ユーザー座標が有効かつ「近い順」が指定されている場合
   const hasValidCoords = userCoords && 
     typeof userCoords.lat === 'number' && 
     typeof userCoords.lng === 'number' &&
@@ -86,7 +96,6 @@ export const fetchServices = async (options: SearchOptions) => {
 
   if (hasValidCoords && sortBy === 'near') {
     const { lat, lng } = userCoords!;
-    // 数値を直接埋め込むことで、params.unshift(lat, lat...) を完全に廃止
     selectFields += `, ((lat - ${lat}) * (lat - ${lat}) + (lng - ${lng}) * (lng - ${lng})) AS dist_sq`;
     orderBy = `dist_sq ASC`;
   }
@@ -106,17 +115,15 @@ export const fetchServices = async (options: SearchOptions) => {
 
   // 6. 最寄駅と駅座標の取得
   const services = await Promise.all((results || []).map(async (row: any) => {
-    // 6-1. ユーザー位置からの距離（ソート用）
     const userDistance = hasValidCoords ? Math.round(calculateDistance(userCoords!.lat, userCoords.lng, row.lat, row.lng)) : null;
 
-    // 6-2. 最寄駅とアクセス情報の取得(async関数は、awaitが必須)
     const stations = await calculateNearestStations(db, row.lat, row.lng, 1);
     const nearestStation = stations.length > 0 ? stations[0] : null;
     
     const access = nearestStation ? formatAccessTime(
       nearestStation.distance,
-      nearestStation.lat, nearestStation.lng, // 駅座標
-      row.lat, row.lng                        // 店舗座標
+      nearestStation.lat, nearestStation.lng,
+      row.lat, row.lng
     ) : null;
 
     return { 

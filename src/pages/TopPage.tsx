@@ -61,7 +61,7 @@ home.get('/', async (c) => {
     q, 
     page: 1, 
     area,
-    // attrs, // 💡 正規化済みの特徴配列（例: ['wifi', 'outlets']）をクエリに渡す
+    attrs, // 💡 正規化済みの特徴配列（例: ['wifi', 'outlets']）をクエリに渡す
     userCoords: baseCoords,
     sortBy: baseCoords ? 'near' : 'latest' 
   });
