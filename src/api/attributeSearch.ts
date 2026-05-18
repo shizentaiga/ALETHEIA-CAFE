@@ -65,7 +65,7 @@ attributeApi.get('/', async (c) => {
   closeParams.delete('open_attrs')
   const closeUrl = closeParams.toString() ? `/?${closeParams.toString()}` : '/'
 
-  // 2. モーダル内でのチェックボックスのトグル用URL生成（HTMXの書き換え用）
+  // 2. モーダル内でのチェックボックスのトグル用URL生成（HTMXの書き換え用：ロジック維持のため残す）
   const toggleAttributeUrl = (key: string) => {
     const apiParams = new URLSearchParams(currentParams.toString())
     let nextAttrs = [...selectedAttrs]
@@ -84,7 +84,7 @@ attributeApi.get('/', async (c) => {
     return `/api/attribute-search?${apiParams.toString()}`
   }
 
-  // 3. 【決定ボタン用URL】最後に本当にTOP画面を検索リロードさせるためのURL
+  // 3. 【決定ボタン用URL】最後に本当にTOP画面を検索リロードさせるためのURL（ロジック完全維持）
   const getSubmitUrl = () => {
     const baseParams = new URLSearchParams(currentParams.toString())
     baseParams.delete('open_attrs')
@@ -131,33 +131,44 @@ attributeApi.get('/', async (c) => {
         <div class="attr-section-title">${CONFIG.labels.sectionUnique}</div>
         ${UNIQUE_FEATURES.map(item => {
           const isChecked = selectedAttrs.includes(item.key as any)
-          const targetUrl = toggleAttributeUrl(item.key)
-          // 💡 isChecked の場合に 'is-selected' クラスを付与
+          // 💡 変更点①: `hx-get` や `hx-target` などのHTMX属性を完全に排除。
+          // これにより、チェックボックスを押した段階でのサーバー通信は完全に発生しなくなります。
           return html`
-            <button class="attr-item-ui ${isChecked ? 'is-selected' : ''}" hx-get="${targetUrl}" hx-target="#attribute-search-root">
+            <div class="attr-item-ui ${isChecked ? 'is-selected' : ''}" data-key="${item.key}" onclick="const cb = this.querySelector('.attr-checkbox'); cb.checked = !cb.checked; this.classList.toggle('is-selected', cb.checked);">
               <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation();" style="pointer-events: none;" />
               <span class="attr-label-text">${item.label}</span>
-            </button>
+            </div>
           `
         })}
 
         <div class="attr-section-title">${CONFIG.labels.sectionInfra}</div>
         ${INFRA_FEATURES.map(item => {
           const isChecked = selectedAttrs.includes(item.key as any)
-          const targetUrl = toggleAttributeUrl(item.key)
-          // 💡 isChecked の場合に 'is-selected' クラスを付与
           return html`
-            <button class="attr-item-ui ${isChecked ? 'is-selected' : ''}" hx-get="${targetUrl}" hx-target="#attribute-search-root">
+            <div class="attr-item-ui ${isChecked ? 'is-selected' : ''}" data-key="${item.key}" onclick="const cb = this.querySelector('.attr-checkbox'); cb.checked = !cb.checked; this.classList.toggle('is-selected', cb.checked);">
               <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation();" style="pointer-events: none;" />
               <span class="attr-label-text">${item.label}</span>
-            </button>
+            </div>
           `
         })}
 
       </div>
 
       <div class="attr-footer-ui">
-        <button class="attr-submit-btn" onclick="window.location.href='${getSubmitUrl()}'">
+        <button class="attr-submit-btn" onclick="
+          const activeKeys = Array.from(document.querySelectorAll('.attr-item-ui:has(.attr-checkbox:checked)')).map(el => el.getAttribute('data-key'));
+          let targetPath = '${getSubmitUrl()}';
+          
+          if (targetPath.includes('attrs=')) {
+            targetPath = targetPath.replace(/attrs=[^&]*/, activeKeys.length > 0 ? 'attrs=' + activeKeys.join(',') : '');
+          } else if (activeKeys.length > 0) {
+            const separator = targetPath.includes('?') ? '&' : '?';
+            targetPath += separator + 'attrs=' + activeKeys.join(',');
+          }
+          
+          targetPath = targetPath.replace('&&', '&').replace('?&', '?');
+          window.location.href = targetPath;
+        ">
           ${CONFIG.labels.submitBtn}
         </button>
       </div>
