@@ -98,7 +98,7 @@ CREATE TABLE services (
     -- - parking        : (boolean) '駐車場' の有無
     -- - takeout        : (boolean) 'テイクアウト' の有無
     -- - smoking        : (string)  喫煙ステータス ('NO_SMOKING', 'SMOKING_ROOM', 'SMOKING_SEATS', 'ALL_SMOKING')
-    -- - payment        : (array)   決済手段。'CASH_ONLY'、'CASHLESS'（クレカ/電子マネー）、'PAYPAY' を許可
+    -- - payment        : (array)   決済手段。'CASH_ONLY', 'CREDIT', 'E_MONEY', 'PayPay', 'QR' を許可
     -- - buffet         : (boolean) 'ドーナツ食べ放題' の有無
     -- - pop_buffet     : (boolean) 'ドーナツポップ詰め放題' の有無
     -- - free_refill    : (boolean) 'ドリンクおかわり無料' の有無
