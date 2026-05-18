@@ -74,8 +74,9 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
             words = [...new Set([...words, ...splitWords])];
           }
           // 最終的な1本化用hiddenフィールドにカンマ区切りでセット
+          // ダミー入力のネイティブ送信を無効化（多重送信防止）
           document.getElementById('js-final-q').value = words.join(',');
-          if (inputEl) inputEl.name = ''; // ダミー入力のネイティブ送信を無効化（多重送信防止）
+          if (inputEl) inputEl.name = ''; // 
           window.saveKeyword();
         `}
       >
