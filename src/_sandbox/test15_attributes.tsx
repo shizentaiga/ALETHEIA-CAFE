@@ -5,7 +5,7 @@
 import { Hono } from 'hono'
 import { html } from 'hono/html'
 // 💡 本番用の定義ファイルから、特徴配列と変換関数をそのままインポート
-import { SMOKING_LABELS, UNIQUE_FEATURES, INFRA_FEATURES, formatAttributes } from '../db/queries/transformers'
+import { UNIQUE_FEATURES, INFRA_FEATURES, formatAttributes } from '../db/queries/transformers'
 
 type Bindings = {
   ALETHEIA_CAFE_DB: D1Database
@@ -187,19 +187,6 @@ test15.get('/', async (c) => {
                 )
               })}
 
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', fontSize: '0.9rem', color: '#334155' }}>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <input 
-                    type="checkbox" 
-                    name="smoking" 
-                    value="true" 
-                    checked={isSmokingSelected}
-                    style="width: 16px; height: 16px; cursor: pointer;"
-                  />
-                  <span>{SMOKING_LABELS.SMOKING_ROOM}</span>
-                </div>
-                <span style="color: #94a3b8; font-size: 0.8rem;">({stats.smoking_count})</span>
-              </label>
             </div>
             <noscript>
               <button type="submit" style="margin-top: 12px; width: 100%; padding: 8px; border-radius: 6px; background: #374151; color: #fff; border: none;">適用</button>
