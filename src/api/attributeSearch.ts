@@ -131,8 +131,6 @@ attributeApi.get('/', async (c) => {
         <div class="attr-section-title">${CONFIG.labels.sectionUnique}</div>
         ${UNIQUE_FEATURES.map(item => {
           const isChecked = selectedAttrs.includes(item.key as any)
-          // 💡 変更点①: `hx-get` や `hx-target` などのHTMX属性を完全に排除。
-          // これにより、チェックボックスを押した段階でのサーバー通信は完全に発生しなくなります。
           return html`
             <div class="attr-item-ui ${isChecked ? 'is-selected' : ''}" data-key="${item.key}" onclick="const cb = this.querySelector('.attr-checkbox'); cb.checked = !cb.checked; this.classList.toggle('is-selected', cb.checked);">
               <input type="checkbox" class="attr-checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation();" style="pointer-events: none;" />
@@ -156,7 +154,11 @@ attributeApi.get('/', async (c) => {
 
       <div class="attr-footer-ui">
         <button class="attr-submit-btn" onclick="
-          const activeKeys = Array.from(document.querySelectorAll('.attr-item-ui:has(.attr-checkbox:checked)')).map(el => el.getAttribute('data-key'));
+          const activeKeys = Array.from(document.querySelectorAll('.attr-checkbox:checked'))
+            .map(cb => cb.closest('.attr-item-ui'))
+            .filter(Boolean)
+            .map(el => el.getAttribute('data-key'));
+            
           let targetPath = '${getSubmitUrl()}';
           
           if (targetPath.includes('attrs=')) {
