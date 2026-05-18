@@ -97,8 +97,15 @@ export const renderer = jsxRenderer(({ children }) => {
           {children}
         </main>
 
-        {/* 💡 画面描画をブロックしないよう、deferを付与してbody最下部で非同期ロード */}
-+       <script src={SITE_CONFIG.assets.htmx} defer crossorigin="anonymous"></script>
+        {/* 画面描画をブロックしないよう、deferを付与してbody最下部で非同期ロード */}
+       <script src={SITE_CONFIG.assets.htmx} defer crossorigin="anonymous"></script>
+
+       {/* Cloudflare Web Analytics */}
+        <script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "a9d2bedaed264647bbad4c0ede646815"}'
+        ></script>
 
       </body>
     </html>
