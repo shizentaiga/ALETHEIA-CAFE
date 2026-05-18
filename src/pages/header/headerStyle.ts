@@ -11,6 +11,7 @@ export const headerStyle = `
     top: 0;
     z-index: 50;
     gap: 16px;
+    transition: all 0.15s ease; /* PC版でのフル幅ブレイクアウトのベース設定（初期値） */
   }
 
   /* ロゴ：現状維持 */
@@ -24,10 +25,16 @@ export const headerStyle = `
     text-decoration: none;
   }
 
-  /* 検索フォーム：メインコンテンツの最大幅と同期させて一体感を作る */
+  /* HTMLの階層順に合わせ、フォームスタイルの前にナビゲーション枠の広がりを定義 */
+  #header-search-nav {
+    flex: 1;
+    width: 100%;
+  }
+
+  /* 検索フォーム：PC版では最大幅を100%に変更 */
   .header-search-form {
     flex: 1;
-    max-width: 800px; /* 👈 900px から 800px に調整し、下部コンテンツとの視線の縦ラインを整える */
+    max-width: 100%; /* 800px から 100% に変更 */
   }
 
   /* 🔑 メイン：静かなワイド検索ボックス */
