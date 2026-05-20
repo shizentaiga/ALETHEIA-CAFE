@@ -68,17 +68,23 @@ export const HeaderSearch: FC<HeaderSearchProps> = ({ keywords, placeholder, are
           const inputEl = document.getElementById('${CONFIG.inputId}');
           const newWord = inputEl ? inputEl.value.trim() : '';
           let words = ${JSON.stringify(keywords)};
+          
           if (newWord) {
-            // 空白やカンマで区切られた新規入力を配列化して合算
+            // 1. 履歴保存を先に実行（DOMが操作される前の状態で行う）
+            window.saveKeyword(); 
+            
+            // 2. 配列計算
             const splitWords = newWord.split(/[\\s　,]+/).filter(Boolean);
             words = [...new Set([...words, ...splitWords])];
           }
-          // 最終的な1本化用hiddenフィールドにカンマ区切りでセット
-          // ダミー入力のネイティブ送信を無効化（多重送信防止）
+            
+          // 3. 最終的な1本化用hiddenフィールドにカンマ区切りでセット
           document.getElementById('js-final-q').value = words.join(',');
-          if (inputEl) inputEl.name = ''; // 
-          window.saveKeyword();
+          
+          // 4. 送信用の設定（最後にダミー名をクリア）
+          if (inputEl) inputEl.name = ''; 
         `}
+        
       >
 
         {/* 2. 状態の維持 (hidden) */}
