@@ -31,10 +31,10 @@ INSERT OR REPLACE INTO services (
     , 35.7329303
     , 139.8816307
     , json_object(
-        'wifi', true
+        'cash_only', false
         , 'business_hours', '11:00～16:00'
         , 'baby', true
-        , 'payment', json_array('PayPay', 'Rakuten Pay', 'JCB', 'AMEX')
+        , 'wifi', true
         , 'ext_place_id', 'GOOGLE_PLACE_AYAS_KOIWA'
         , 'category', 'cat_cafe'
     )
@@ -63,12 +63,11 @@ INSERT OR REPLACE INTO services (
     , 35.7310024
     , 139.8803454
     , json_object(
-        'wifi', true
+        'cash_only', false
         , 'business_hours', '10:00～17:00'
-        , 'payment', json_array('AirPay')
+        , 'wifi', true
         , 'outlets', true
         , 'ext_place_id', 'GOOGLE_PLACE_CAFE_BLOOM'
-        , 'type', 'Medical/Welfare Counselor'
         , 'category', 'cat_cafe'
     )
 );
@@ -96,7 +95,7 @@ INSERT OR REPLACE INTO services (
     , 35.733901
     , 139.8859927
     , json_object(
-        'payment', json_array('PayPay')
+        'cash_only', false
         , 'business_hours', '9:30～18:00'
         , 'ext_place_id', 'GOOGLE_PLACE_SUNRISE_CAFE'
         , 'category', 'cat_cafe'
@@ -126,7 +125,7 @@ INSERT OR REPLACE INTO services (
     , 35.7347552
     , 139.8799785
     , json_object(
-        'payment', json_array('PayPay')
+       'cash_only', false
         , 'business_hours', '10:00～19:00'
         , 'category', 'cat_cafe'
     )
@@ -155,10 +154,8 @@ INSERT OR REPLACE INTO services (
     , 35.7280417
     , 139.8791536
     , json_object(
-        'payment', json_array('CASH_ONLY')
+        'cash_only', true
         , 'business_hours', '12:00～19:00'
         , 'category', 'cat_cafe'
-        , 'ext_source', 'google_maps'
-        , 'price_range', '￥1,000'
     )
 );

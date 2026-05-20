@@ -7,9 +7,10 @@ const MAX_TAG_DISPLAY = 4;  // 営業時間＋タグ3つ
 
 // 特徴的な項目
 export const UNIQUE_FEATURES = [
-  { key: 'baby', label: 'ベビーカーOK' },
   { key: 'buffet', label: 'ドーナツ食べ放題' },
   { key: 'pop_buffet', label: 'ドーナツポップ詰め放題' },
+  { key: 'cash_only', label: '現金のみ' },
+  { key: 'baby', label: 'ベビーカーOK' },
 ] as const;
 
 // 普遍的な項目
@@ -18,14 +19,8 @@ export const INFRA_FEATURES = [
   { key: 'takeout', label: 'テイクアウト' },
   { key: 'parking', label: '駐車場' },
   { key: 'outlets', label: '電源' },
-  { key: 'wifi', label: 'Wi-Fi' },
+  // { key: 'wifi', label: 'Wi-Fi' }, // Wi-Fi普及に伴い非表示に変更
 ] as const;
-
-export const PAYMENT_LABELS = {
-  CASH_ONLY: '現金のみ',
-  CASHLESS: 'クレカ/電子マネー',
-  PAYPAY: 'PayPay',
-} as const;
 
 export const formatAttributes = (jsonStr: string): string[] => {
   try {
@@ -44,22 +39,6 @@ export const formatAttributes = (jsonStr: string): string[] => {
     for (const item of UNIQUE_FEATURES) {
       if (tags.length < MAX_TAG_DISPLAY && isTruthy(attrs[item.key])) {
         tags.push(item.label);
-      }
-    }
-
-    // --- 3. 決済方法（優先順位のロジックを変更） ---
-    if (tags.length < MAX_TAG_DISPLAY) {
-      const p = attrs.payment;
-      if (Array.isArray(p) && p.length > 0) {
-        if (p.includes('CASH_ONLY')) {
-          tags.push(PAYMENT_LABELS.CASH_ONLY);
-        } else if (p.includes('CREDIT') || p.includes('E_MONEY')) {
-          tags.push(PAYMENT_LABELS.CASHLESS);
-        } else if (p.includes('PayPay') || p.includes('QR')) {
-          tags.push(PAYMENT_LABELS.PAYPAY);
-        } else {
-          tags.push(PAYMENT_LABELS.CASHLESS);
-        }
       }
     }
 
