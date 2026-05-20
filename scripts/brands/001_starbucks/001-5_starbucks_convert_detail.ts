@@ -4,24 +4,33 @@ import fs from 'fs';
 import path from 'path';
 
 const PATH_CONFIG = {
-    INPUT_FILE: 'scripts/data/raw/001-2_starbucks_detail.json', // 整形済みJSON（area_idは無視）
+    INPUT_FILE: 'scripts/data/raw/001-2_starbucks_detail.json', // 生のJSON
     INPUT_SQL: 'src/db/seed/brands/001-4_starbucks.sql',        // area_idの抽出元
     OUTPUT_SQL: 'src/db/seed/brands/001-5_starbucks.sql'
 };
 
-interface JsonStore {
-    service_id: string;
-    brand_id: string;
-    owner_id: string | null;
-    plan_id: string;
-    area_id: string | null;
-    title: string;
-    address: string;
-    lat: number;
-    lng: number;
-    website_url: string;
-    schedule_json: string;
-    attributes_json: string;
+// 1. 生のスクレイピングデータの型定義
+interface RawStoreDetail {
+    store_id: string;
+    detail_url: string;
+    raw_input_fields: {
+        name: string;
+        address_5: string;
+        location: string; // "lat,lng" の文字列
+        public_wireless_service_flg?: string;
+        business_day_mon_thu?: string;
+        business_day_fri?: string;
+        // 曜日別の営業時間
+        mon_open?: string; mon_close?: string;
+        tue_open?: string; tue_close?: string;
+        wed_open?: string; wed_close?: string;
+        thu_open?: string; thu_close?: string;
+        fri_open?: string; fri_close?: string;
+        sat_open?: string; sat_close?: string;
+        sun_open?: string; sun_close?: string;
+        hol_open?: string; hol_close?: string;
+    };
+    fetched_at: string;
 }
 
 interface ScheduleSlot {
@@ -34,83 +43,85 @@ interface BaseSchedule {
     slots: ScheduleSlot[];
 }
 
-/**
- * 曜日ごとに独立しているスケジュールを、同じ営業時間ごとに集約する
- */
-function optimizeScheduleJson(originalScheduleJsonString: string): string {
-    try {
-        const parsed = JSON.parse(originalScheduleJsonString);
-        if (!parsed.base || !Array.isArray(parsed.base)) {
-            return originalScheduleJsonString;
-        }
-
-        // 営業時間の組み合わせ（例: "07:00|22:00") をキーにして曜日を集約するマップ
-        const timeMap = new Map<string, { days: string[]; slots: ScheduleSlot[] }>();
-
-        for (const item of parsed.base) {
-            const day = item.days[0]; // 元データは1要素ずつ ["MO"] の想定
-            const slot = item.slots?.[0];
-            
-            if (!day || !slot) continue;
-
-            // 集約用のユニークキーを作成
-            const timeKey = `${slot.start}|${slot.end}`;
-
-            if (timeMap.has(timeKey)) {
-                timeMap.get(timeKey)!.days.push(day);
-            } else {
-                timeMap.set(timeKey, {
-                    days: [day],
-                    slots: [{ start: slot.start, end: slot.end }]
-                });
-            }
-        }
-
-        // マップから新しい base 配列を再構築
-        const optimizedBase: BaseSchedule[] = Array.from(timeMap.values());
-
-        return JSON.stringify({
-            base: optimizedBase,
-            exclude_holidays: parsed.exclude_holidays ?? true
-        });
-
-    } catch (e) {
-        console.warn('  [Warning] スケジュールの集約処理に失敗しました。元のデータを返します。');
-        return originalScheduleJsonString;
-    }
+function cleanDisplayAddress(str: string) {
+    if (!str) return '';
+    return str.normalize('NFKC')
+              .replace(/[‐－]/g, '-')    // 住所の番地で使われる全角ハイフン・マイナスだけを半角に（「ー」は除外）
+              .replace(/\t/g, ' ')      // タブを半角スペースに
+              .replace(/\r?\n/g, ' ')   // 改行を半角スペースに
+              .trim();                  // 先頭と末尾の空白を削除
 }
 
 /**
- * attributes_json からスタバに無関係な項目、未確定な項目を完全に排除する
+ * 生の曜日データから、同一の営業時間ごとに集約された iCalendar 形式の JSON 文字列を生成する
  */
-function cleanAttributesJson(originalAttributesJsonString: string): string {
-    try {
-        const parsed = JSON.parse(originalAttributesJsonString);
-        
-        // 確実にスターバックスで確定・判明している情報のみに厳選
-        const cleaned: Record<string, any> = {};
+function buildScheduleJson(fields: RawStoreDetail['raw_input_fields']): string {
+    const dayMapping: Record<string, { open?: string; close?: string }> = {
+        'MO': { open: fields.mon_open, close: fields.mon_close },
+        'TU': { open: fields.tue_open, close: fields.tue_close },
+        'WE': { open: fields.wed_open, close: fields.wed_close },
+        'TH': { open: fields.thu_open, close: fields.thu_close },
+        'FR': { open: fields.fri_open, close: fields.fri_close },
+        'SA': { open: fields.sat_open, close: fields.sat_close },
+        'SU': { open: fields.sun_open, close: fields.sun_close }
+    };
 
-        if (parsed.category) cleaned.category = parsed.category;
-        if (parsed.wifi === true) cleaned.wifi = true;
-        if (parsed.takeout === true) cleaned.takeout = true;
-        if (parsed.smoking === false || parsed.smoking === true) cleaned.smoking = parsed.smoking;
-        if (parsed.business_hours) cleaned.business_hours = parsed.business_hours;
+    const timeMap = new Map<string, string[]>();
 
-        return JSON.stringify(cleaned);
-    } catch (e) {
-        console.warn('  [Warning] 属性JSONのクレンジングに失敗しました。元のデータを返します。');
-        return originalAttributesJsonString;
+    for (const [dayCode, range] of Object.entries(dayMapping)) {
+        if (range.open && range.close && range.open !== '00:00' && range.close !== '00:00') {
+            const timeKey = `${range.open}|${range.close}`;
+            if (timeMap.has(timeKey)) {
+                timeMap.get(timeKey)!.push(dayCode);
+            } else {
+                timeMap.set(timeKey, [dayCode]);
+            }
+        }
     }
+
+    const base: BaseSchedule[] = [];
+    timeMap.forEach((days, timeKey) => {
+        const [start, end] = timeKey.split('|');
+        base.push({
+            days: days,
+            slots: [{ start, end }]
+        });
+    });
+
+    return JSON.stringify({
+        base: base,
+        exclude_holidays: false // スタバの基本営業スケジュールは祝日も考慮された時間が入るためfalse
+    });
+}
+
+/**
+ * 生データから必要な属性のみに厳選した attributes_json を生成する
+ */
+function buildAttributesJson(fields: RawStoreDetail['raw_input_fields']): string {
+    const cleaned: Record<string, any> = {
+        category: 'cat_cafe',
+        // ext_source: 'starbucks_official'
+    };
+
+    // Wi-Fiフラグのハンドリング
+    if (fields.public_wireless_service_flg === '1') {
+        cleaned.wifi = true;
+    }
+
+    // フロント表示用の代表営業時間文字列をセット
+    const mainHours = fields.business_day_mon_thu || fields.business_day_fri || '営業時間確認';
+    cleaned.business_hours = mainHours;
+
+    return JSON.stringify(cleaned);
 }
 
 function main() {
-    console.log('🚀 Starting SQL conversion and merging process (with JSON cleaning)...');
+    console.log('🚀 Starting SQL conversion from raw JSON and merging area_id...');
 
     const jsonPath = path.resolve(PATH_CONFIG.INPUT_FILE);
     const inputSqlPath = path.resolve(PATH_CONFIG.INPUT_SQL);
     const outputSqlPath = path.resolve(PATH_CONFIG.OUTPUT_SQL);
 
-    // 1. ファイルの存在チェックと読み込み
     if (!fs.existsSync(jsonPath)) {
         console.error(`[Error] Input JSON file not found: ${jsonPath}`);
         process.exit(1);
@@ -120,11 +131,12 @@ function main() {
         process.exit(1);
     }
 
-    const jsonStores: JsonStore[] = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+    const rawStores: RawStoreDetail[] = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
     const inputSqlContent = fs.readFileSync(inputSqlPath, 'utf-8');
 
     // 2. 既存SQLから service_id -> area_id のマッピングを作成
     const areaIdMap = new Map<string, string>();
+    // VALUES ('service_id', ..., 'area_id' の位置を捕捉する正規表現
     const insertRegex = /VALUES\s*\(\s*'([^']+)'\s*,\s*'[^']+'\s*,\s*'[^']*'\s*,\s*'[^']+'\s*,\s*'([^']+)'/g;
     
     let match;
@@ -139,25 +151,46 @@ function main() {
     // 3. 新しいSQL文の生成
     const outputLines: string[] = [];
 
-    for (const store of jsonStores) {
-        const serviceId = store.service_id;
-        
-        // 既存SQLから正しい area_id を取得
+    for (const store of rawStores) {
+        const fields = store.raw_input_fields;
+        if (!fields) continue;
+
+        // 識別子の生成
+        const serviceId = `STB_${store.store_id}`;
+        const brandId = 'brand_starbucks';
+        const planId = 'free';
+
+        // マップから既存の area_id を引き当てる
         const areaId = areaIdMap.get(serviceId) || 'NULL';
         const areaIdStr = areaId !== 'NULL' ? `'${areaId}'` : 'NULL';
 
-        // JSONデータのクレンジングと最適化
-        const optimizedSchedule = optimizeScheduleJson(store.schedule_json);
-        const cleanedAttributes = cleanAttributesJson(store.attributes_json);
+        // 基本情報のマッピング（cleanDisplayAddress関数を適用）
+        const title = `スターバックス コーヒー ${fields.name}`;
+        const address = cleanDisplayAddress(fields.address_5);
+        const websiteUrl = store.detail_url;
+
+        // 座標パース ("43.0630144394,141.351145716" -> lat, lng)
+        let lat = 0;
+        let lng = 0;
+        if (fields.location) {
+            const [latStr, lngStr] = fields.location.split(',');
+            lat = parseFloat(latStr) || 0;
+            lng = parseFloat(lngStr) || 0;
+        }
+
+        // 動的JSONの構築
+        const scheduleJson = buildScheduleJson(fields);
+        const attributesJson = buildAttributesJson(fields);
 
         // SQLエスケープ処理
-        const escapedTitle = store.title.replace(/'/g, "''");
-        const escapedAddress = store.address.replace(/'/g, "''");
-        const escapedAttributes = cleanedAttributes.replace(/'/g, "''");
-        const escapedSchedule = optimizedSchedule.replace(/'/g, "''");
+        const escapedTitle = title.replace(/'/g, "''");
+        const escapedAddress = address.replace(/'/g, "''");
+        const escapedWebsiteUrl = websiteUrl.replace(/'/g, "''");
+        const escapedAttributes = attributesJson.replace(/'/g, "''");
+        const escapedSchedule = scheduleJson.replace(/'/g, "''");
 
-        // SQL出力
-        const sqlLine = `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, attributes_json, schedule_json) VALUES ('${serviceId}', '${store.brand_id}', NULL, '${store.plan_id}', ${areaIdStr}, '${escapedTitle}', '${escapedAddress}', ${store.lat}, ${store.lng}, '${escapedAttributes}', '${escapedSchedule}');`;
+        // スキーマ順: service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, website_url, attributes_json, schedule_json
+        const sqlLine = `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, website_url, attributes_json, schedule_json) VALUES ('${serviceId}', '${brandId}', NULL, '${planId}', ${areaIdStr}, '${escapedTitle}', '${escapedAddress}', ${lat}, ${lng}, '${escapedWebsiteUrl}', '${escapedAttributes}', '${escapedSchedule}');`;
         
         outputLines.push(sqlLine);
     }
