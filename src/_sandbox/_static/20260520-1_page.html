@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="自分に最適な場所を見つけるための検索プラットフォーム"/>
+<link rel="preconnect" href="https://unpkg.com"/>
+<title>ALETHEIA - 次世代ページネーションデザイン案</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml"/>
+<style>
+:root {
+  --bg-color: #ffffff;
+  --text-color: #1f2937;
+  --accent-color: #374151;
+}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0;
+}
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+* { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<main>
+<header class="header-container">
+<style>
+.header-container {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 64px;
+  border-bottom: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 16px;
+}
+.header-logo {
+  font-family: "Times New Roman", "Georgia", serif;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: #111827;
+  flex-shrink: 0;
+}
+#header-search-nav { flex: 1; width: 100%; }
+.header-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  height: 44px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+.search-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #f2f4f7;
+  color: #374151;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-right: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.search-chip-delete { color: #9ca3af; margin-left: 6px; }
+.header-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  outline: none;
+}
+.header-search-button { background: none; border: none; color: #9ca3af; font-size: 1rem; padding-left: 8px;}
+@media (max-width: 640px) {
+  .header-container { padding: 0 12px; gap: 10px; }
+  .header-logo { font-size: 1rem; }
+}
+@media (max-width: 480px) { .header-logo { display: none; } }
+</style>
+<a href="/" class="header-logo">ALETHEIA</a>
+<nav id="header-search-nav">
+  <form class="header-search-form" method="get" action="/">
+    <div class="header-search-input-wrapper">
+      <span class="search-chip area-chip">関東<a href="?area=00" class="search-chip-delete">×</a></span>
+      <input type="search" class="header-search-input" autocomplete="off" aria-label="検索キーワード"/>
+      <button type="submit" class="header-search-button">🔍</button>
+    </div>
+  </form>
+</nav>
+</header>
+
+<section class="top-main-container">
+<style>
+.top-main-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.search-bar-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+.search-bar-row > .search-area-module { flex: 2; }
+.search-bar-row > .search-attribute-module { flex: 1; }
+.search-trigger {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #1e293b;
+  display: flex;
+  justify-content: space-between;
+}
+</style>
+
+<div class="search-bar-row">
+  <div class="search-area-module" style="width:100%">
+    <button class="search-trigger">
+      <div style="display:flex;align-items:center;gap:6px"><span>📍</span><span>関東</span></div>
+      <span style="color:#94a3b8">▼</span>
+    </button>
+  </div>
+  <div class="search-attribute-module" style="width:100%">
+    <button class="search-trigger">
+      <div style="display:flex;align-items:center;gap:6px"><span>⚙</span><span>特徴で探す</span></div>
+      <span style="color:#94a3b8">▼</span>
+    </button>
+  </div>
+</div>
+
+<section id="search-result-module">
+<style>
+#search-result-module { margin-top: 10px; }
+#search-result-module .result-header {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-left: 2px;
+  letter-spacing: 0.04em;
+}
+#search-results-target { display: grid; grid-template-columns: 1fr; gap: 12px; }
+#search-result-module .cafe-card {
+  display: block;
+  padding: 12px;
+  border: 1px solid #f1f5f9;
+  border-radius: 14px;
+  background: #fff;
+}
+#search-result-module .name {
+  font-weight: 700;
+  color: #111;
+  font-size: 0.9rem;
+}
+#search-result-module .addr {
+  font-size: 0.72rem;
+  color: #64748b;
+  display: block;
+  margin-top: 4px;
+}
+.tag-box { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.tag {
+  font-size: 0.65rem;
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #55667a;
+  border: 1px solid #e8edf3;
+}
+
+/* ──────────────────────────────────────────
+   🆕 改良版：静寂のページネーション（2026年基準）
+   ────────────────────────────────────────── */
+.p-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 36px; /* 👈 指摘5: 余白を28pxから36pxへ拡張し高級感を */
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+/* PC用レイアウト（デフォルト） */
+.p-desktop {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* スマホ用レイアウト（デフォルト非表示） */
+.p-mobile {
+  display: none;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 共通アイテム定義 */
+.p-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid transparent; /* 👈 指摘4: 通常時は枠線を透明に */
+  background: transparent;
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+/* テキスト入りボタン（前へ、次へ）のパディング調整 */
+.p-item.p-text {
+  padding: 0 10px;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+/* 省略符（...）のスタイル：ホバー不感 */
+.p-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 36px;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+/* 👈 指摘3: ホバーを極限まで弱く (fcfcfd / e2e8f0) */
+.p-item:not(.disabled):not(.active):hover {
+  background: #fcfcfd;
+  border-color: #e2e8f0;
+  color: #111827;
+}
+
+/* 👈 指摘1・4: active時の存在感を弱め、ウェイトに寄せる */
+.p-item.active {
+  background: #ffffff;      /* 👈 指摘1: 反転を廃止し白（またはtransparent）へ */
+  border-color: #e2e8f0;     /* 👈 指摘4: 静かな細い境界線 */
+  color: #111827;            /* 👈 濃いテキスト */
+  font-weight: 700;          /* 👈 指摘4: weight主体で現在地を主張 */
+  pointer-events: none;
+}
+
+/* 無効状態（最初のページでの「前へ」など） */
+.p-item.disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* スマホ用インジケーターテキスト */
+.p-mobile-indicator {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.04em;
+}
+
+/* ──────────────────────────────────────────
+   📱 レスポンシブ切り替え（ブレイクポイント）
+   ────────────────────────────────────────── */
+@media (max-width: 520px) {
+  /* 👈 指摘2: スマホでは「前へ」「次へ」とインジケーターのみに絞る */
+  .p-desktop { display: none; }
+  .p-mobile { display: flex; }
+  
+  /* スマホのタップ領域と押しやすさを考慮 */
+  .p-mobile .p-item {
+    min-width: 40px;
+    height: 40px;
+    border-color: #f1f5f9;
+    background: #ffffff;
+  }
+}
+</style>
+
+<div class="result-header">検索結果: 2304件</div>
+<div id="search-results-target">
+  <a class="cafe-card">
+    <span class="name">スターバックス コーヒー 新宿中央公園 SHUKNOVA店</span>
+    <span class="addr">都庁前駅 ← 徒歩4分</span>
+    <div class="tag-box"><span class="tag">07:00～21:00</span><span class="tag">Wi-Fi</span></div>
+  </a>
+</div>
+
+<nav class="p-nav" aria-label="ページナビゲーション">
+
+  <div class="p-desktop">
+    <a href="?page=5" class="p-item p-text">‹ 前へ</a>
+    
+    <a href="?page=1" class="p-item">1</a>
+    <span class="p-ellipsis">…</span>
+    
+    <a href="?page=4" class="p-item">4</a>
+    <a href="?page=5" class="p-item">5</a>
+    <span class="p-item active" aria-current="page">6</span>
+    <a href="?page=7" class="p-item">7</a>
+    <a href="?page=8" class="p-item">8</a>
+    
+    <span class="p-ellipsis">…</span>
+    <a href="?page=116" class="p-item">116</a>
+    
+    <a href="?page=7" class="p-item p-text">次へ ›</a>
+  </div>
+
+  <div class="p-mobile">
+    <a href="?page=5" class="p-item" aria-label="前のページへ">‹</a>
+    <span class="p-mobile-indicator">6 / 116</span>
+    <a href="?page=7" class="p-item" aria-label="次のページへ">›</a>
+  </div>
+
+</nav>
+
+</section>
+</section>
+
+<footer style="width:100%;padding:40px 0 32px;border-top:1px solid #f8fafc;background-color:#ffffff;text-align:center;margin-top:auto">
+  <nav aria-label="フッターナビゲーション">
+    <a href="/" style="display:inline-block;font-family:'Times New Roman', 'Georgia', serif;font-size:0.85rem;color:#475569;font-weight:500;letter-spacing:0.08em;">© 2026 ALETHEIA</a>
+  </nav>
+</footer>
+</main>
+</body>
+</html>
