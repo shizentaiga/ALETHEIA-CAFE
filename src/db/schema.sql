@@ -82,6 +82,9 @@ CREATE TABLE services (
     lat             REAL,                         -- Latitude
     lng             REAL,                         -- Longitude
 
+    -- Web & Source Links 
+    website_url     TEXT,                         -- Official shop details page URL
+
 -- Availability Schedule (iCalendar-based JSON)
     -- -------------------------------------------------------------------------
     -- 構造例: {"base": [{"days": ["MO"], "slots": [{"start": "07:00", "end": "12:00"}]}], "exclude_holidays": true}
