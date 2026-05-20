@@ -3,7 +3,8 @@
  */
 
 import type { FC } from 'hono/jsx'
-import { formatAttributes } from '../db/queries/main' // 特徴表示用(チップ形式)
+import { formatAttributes, DEFAULT_LIMIT } from '../db/queries/main' // 特徴表示用(チップ形式)
+import { SearchResultPages } from './SearchResultPages' // 分離したコンポーネントをインポート
 
 // --- 型定義 ---
 export interface ServiceResult {
@@ -20,13 +21,13 @@ export interface SearchResultProps {
   total: number;
   area?: string;
   q?: string; // サーバー側で正規化されたクエリ文字列
-  page?: number; // 💡 ページネーション用パラメータ
+  page?: number; // ページネーション用パラメータ
 }
 
 // --- スタイル定義 ---
 /**
  * 検索結果モジュール専用のスコープスタイル
- * 他のコンポーネントへのCSS漏洩を防ぐためにスコープIDを使用
+ * 他のコンポーネントへのCSS漏洩を防群にスコープIDを使用
  */
 const moduleStyle = (scope: string) => `
   #${scope} { margin-top: 10px; }
@@ -107,6 +108,54 @@ const moduleStyle = (scope: string) => `
     border: 1px solid #e8edf3; /* 👈 #e2e8f0 から、少しだけ背景に馴染む優しい色合いへ */
     line-height: 1.2; /* タグの縦位置だけ少し整える */
   }
+
+  /* ──────────────────────────────────────────
+   * 🆕 ページネーションスタイル（カプセル化を維持）
+   * ────────────────────────────────────────── */
+  .p-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 36px; /* 👈 高級感を持たせる広い余白 */
+    margin-bottom: 12px;
+    gap: 8px;
+    user-select: none;
+  }
+  .p-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #4b5563;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    text-decoration: none;
+  }
+  /* ホバーを極限まで弱く */
+  .p-item:not(.disabled):hover {
+    background: #fcfcfd;
+    border-color: #e2e8f0;
+    color: #111827;
+  }
+  /* 1ページ目での「戻る」などの無効化 */
+  .p-item.disabled {
+    color: #d1d5db;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  /* 現在位置インジケーター（道具感のある静かなテキスト） */
+  .p-indicator {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+    letter-spacing: 0.04em;
+    padding: 0 8px;
+  }
 `
 
 const LABELS = {
@@ -115,7 +164,6 @@ const LABELS = {
 
 /**
  * 検索結果コンポーネント
- * 結果一覧を描画し、クライアント側のJavaScript同期用に隠し状態を埋め込む
  */
 export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '', q = '', page = 1 }) => {
   const scope = "search-result-module"
@@ -148,6 +196,17 @@ export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '',
           </a>
         ))}
       </div>
+
+      {/* インポートした `DEFAULT_LIMIT`(1ページの表示件数で、想定は20件) を引き渡す */}
+      <SearchResultPages 
+        page={page} 
+        total={total} 
+        area={area} 
+        q={q} 
+        currentResultCount={results.length}
+        perPage={DEFAULT_LIMIT} 
+      />
+
     </section>
   )
 }

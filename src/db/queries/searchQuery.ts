@@ -9,7 +9,7 @@ import { calculateNearestStations } from '../../db/queries/stationQuery';
 import { formatAccessTime } from '../../lib/geoUtils';
 
 // --- CONFIGURATION ---
-const DEFAULT_LIMIT = 20; // 1ページあたりのデフォルト表示件数
+export const DEFAULT_LIMIT = 20; // 1ページあたりのデフォルト表示件数
 // -------------------
 
 // 引数の型定義
