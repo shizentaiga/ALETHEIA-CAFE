@@ -68,22 +68,22 @@ CREATE TABLE areas (
 -- 4. Service Locations (Core Data)
 -- =============================================================================
 CREATE TABLE services (
-    service_id      TEXT PRIMARY KEY,
-    brand_id        TEXT,                         -- Chain brand identifier
-    owner_id        TEXT,                         -- Business owner identifier
-    plan_id         TEXT DEFAULT 'free' NOT NULL, -- Service listing plan
+    service_id      TEXT PRIMARY KEY,               -- e.g, 'STB_333', 'DTR_0142212626'
+    brand_id        TEXT,                           -- e.g, 'brand_starbucks', 'brand_doutor'
+    owner_id        TEXT,                           -- ビジネスオーナーID(デフォルトNULL、ID詳細未定、'pro'/'biz'プラン向けの予定)
+    plan_id         TEXT DEFAULT 'free' NOT NULL,   -- 'free', 'pro', or 'biz'
 
     -- New Hierarchy Identifier (Migration Bridge)
-    area_id         TEXT,                         -- FK-like logic link to areas.area_id
+    area_id         TEXT,                           -- e.g., '00'(全国), '10', '10-08', '10-08-A001'
     
     -- Basic Information
-    title           TEXT NOT NULL,                -- Shop or Facility name
-    address         TEXT NOT NULL,                -- Full street address
-    lat             REAL,                         -- Latitude
-    lng             REAL,                         -- Longitude
+    title           TEXT NOT NULL,                  -- e.g, 'コメダ珈琲店 久喜店'
+    address         TEXT NOT NULL,                  -- Full street address
+    lat             REAL,                           -- Latitude
+    lng             REAL,                           -- Longitude
 
     -- Web & Source Links 
-    website_url     TEXT,                         -- Official shop details page URL
+    website_url     TEXT,                           -- Official shop details page URL
 
 -- Availability Schedule (iCalendar-based JSON)
     -- -------------------------------------------------------------------------
