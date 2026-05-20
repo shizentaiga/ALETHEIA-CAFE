@@ -1,12 +1,12 @@
-// Usage: npx tsx scripts/brands/003-4_komeda_schedule_json.ts
+// Usage: npx tsx scripts/brands/003_komeda/003-4_komeda_schedule_json.ts
 
 import fs from 'fs';
 import path from 'path';
 
 const CONFIG = {
     INPUT_FILE1: 'scripts/data/raw/003-2_komeda_detail.json',   // Rowデータ
-    INPUT_FILE2: 'src/db/seed/brands/003-3_komeda.sql',        // 緯度経度マージ済みSQL
-    OUTPUT_FILE: 'src/db/seed/brands/003-4_komeda.sql',        // 上書き完全版SQL
+    INPUT_FILE2: 'src/db/seed/brands/003-3_komeda.sql',         // 緯度経度マージ済みSQL
+    OUTPUT_FILE: 'src/db/seed/brands/003-4_komeda.sql',         // 上書き完全版SQL
 };
 
 // Rowデータのインターフェース定義
@@ -49,38 +49,6 @@ function parseSchedule(rawHours: string): any {
     return { base: [{ days, slots: [] }], exclude_holidays: false };
 }
 
-/**
- * 喫煙ステータスのマッピング
- */
-function parseSmoking(status: string): string {
-    if (!status) return 'NO_SMOKING';
-    if (status.includes('全席禁煙')) return 'NO_SMOKING';
-    if (status.includes('喫煙専用室')) return 'SMOKING_ROOM';
-    if (status.includes('分煙') || status.includes('喫煙席あり')) return 'SMOKING_SEATS';
-    if (status.includes('全席喫煙')) return 'ALL_SMOKING';
-    return 'NO_SMOKING'; // フォールバック
-}
-
-/**
- * 決済方法の文字列から標準化配列を生成
- */
-function parsePayment(methods: string): string[] {
-    if (!methods) return [];
-    const tokens: string[] = [];
-
-    // 'CASH_ONLY' 判定：もし決済方法が空か「現金」のみなら入れる（コメダは基本キャッシュレス対応なので基本入らない）
-    if (methods.includes('クレジットカード')) tokens.push('CREDIT');
-    if (methods.includes('電子マネー')) tokens.push('E_MONEY');
-    
-    // コード決済が含まれる場合、日本市場の最重要トークン 'PayPay' と汎用 'QR' をセットで注入
-    if (methods.includes('コード決済')) {
-        tokens.push('PayPay');
-        tokens.push('QR');
-    }
-
-    return Array.from(new Set(tokens)); // 重複排除
-}
-
 async function main() {
     const projectRoot = process.cwd();
     const rowDataPath = path.join(projectRoot, CONFIG.INPUT_FILE1);
@@ -106,7 +74,6 @@ async function main() {
     let updateCount = 0;
 
     // servicesテーブルの各カラムを安全にキャプチャするための正規表現
-    // 最後に schedule_json を追加するため、INTO と VALUES の構造をバラす
     const insertRegex = /^INSERT OR REPLACE INTO services \(([^)]+)\) VALUES \((.+)\);/i;
 
     for (const line of lines) {
@@ -129,53 +96,67 @@ async function main() {
             const rowShop = shopMap.get(shopId);
 
             if (rowShop) {
-                // --- カラム定義のアップデート（schedule_json の追加） ---
+                // --- 1. カラム定義のアップデート確認 ---
                 let updatedColumns = columnsStr.trim();
                 if (!updatedColumns.includes('schedule_json')) {
                     updatedColumns += ', schedule_json';
                 }
 
-                // --- VALUES のパースと再構築 ---
-                // クォーテーションを考慮してカンマで分割
-                const tokens = valuesStr.split(/,(?=(?:[^']*'[^']*')*[^']*$)/);
+                // --- 2. VALUES のパースと再構築 ---
+                // クォーテーションを考慮してカンマで分割（文字列内のカンマで誤分割するのを防ぐ）
+                const tokens = valuesStr.split(/,(?=(?:[^']*'[^']*')*[^']*$)/).map(t => t.trim());
 
-                // 既存の attributes_json（最後の要素）を取得してパース
+                // 💡 変更点①: owner_id を一律 NULL（クォートなし）に書き換え
+                // インデックス位置のズレ防止のため、スキーマ構造の3番目 (index: 2) を上書き
+                tokens[2] = 'NULL';
+
+                // 既存の attributes_json（末尾の要素）を取得してパース
                 const lastIdx = tokens.length - 1;
                 let originalAttributes: any = {};
                 try {
-                    // シングルクォーテーションを剥ぎ取ってJSONパース
-                    const rawJsonStr = tokens[lastIdx].trim().replace(/^'|'$/g, '');
+                    const rawJsonStr = tokens[lastIdx].replace(/^'|'$/g, '').replace(/''/g, "'");
                     originalAttributes = JSON.parse(rawJsonStr);
                 } catch (e) {
                     originalAttributes = {};
                 }
 
-                // --- 新スキーマに基くデータの生成 ---
-                const scheduleObj = parseSchedule(rowShop.business_hours);
-                
+                // 💡 変更点②: 不要な古いキー（ext_source, ext_place_id, brand_type）を完全に除外
+                const { ext_source, ext_place_id, brand_type, ...baseAttributes } = originalAttributes;
+
+                // 💡 変更点③: smoking の判定ロジック変更
+                // smoking_status に「喫煙」という文字が含まれている場合のみ true、それ以外は項目自体を省略するか false (スキーマ仕様に基づき true のみセット)
+                const isSmokingAllowed = rowShop.smoking_status && rowShop.smoking_status.includes('喫煙');
+
                 // 基本営業時間の1行目を抽出
                 const displayHours = rowShop.business_hours.split('\n')[0].trim();
 
-                // 既存のオブジェクトに厳選された新属性をマージ
-                const newAttributes = {
-                    ...originalAttributes,
+                // 新スキーマに準拠したアトリビュートオブジェクトを厳選して再構築
+                const finalAttributes: any = {
+                    category: baseAttributes.category || 'cat_cafe',
                     wifi: rowShop.has_wifi !== '' && rowShop.has_wifi !== 'なし',
                     outlets: rowShop.has_power === 'あり',
                     parking: rowShop.has_parking === 'あり',
                     takeout: rowShop.shop_services.includes('お持ち帰り'),
-                    smoking: parseSmoking(rowShop.smoking_status),
-                    payment: parsePayment(rowShop.payment_methods),
-                    buffet: false,
-                    baby: null,
-                    business_hours: displayHours // 予備・表示用アトリビュート
                 };
 
-                // --- SQL行の組み立て ---
-                // attributes_json を更新
-                tokens[lastIdx] = `'${JSON.stringify(newAttributes)}'`;
+                // smoking が True の場合のみ項目を設定（不要なら出さない、または false）
+                if (isSmokingAllowed) {
+                    finalAttributes.smoking = true;
+                }
+
+                // 残りの必須項目を追加
+                finalAttributes.business_hours = displayHours;
+
+                const scheduleObj = parseSchedule(rowShop.business_hours);
+
+                // --- 3. SQL行の組み立て ---
+                // attributes_json を新しいものに差し替え (SQLエスケープ対応)
+                const attrJsonStr = JSON.stringify(finalAttributes).replace(/'/g, "''");
+                tokens[lastIdx] = `'${attrJsonStr}'`;
 
                 // schedule_json を末尾に追加
-                const finalValuesStr = tokens.join(',') + `, '${JSON.stringify(scheduleObj)}'`;
+                const schedJsonStr = JSON.stringify(scheduleObj).replace(/'/g, "''");
+                const finalValuesStr = tokens.join(', ') + `, '${schedJsonStr}'`;
 
                 const updatedLine = `INSERT OR REPLACE INTO services (${updatedColumns}) VALUES (${finalValuesStr});`;
                 updatedLines.push(updatedLine);
