@@ -97,8 +97,8 @@ CREATE TABLE services (
     -- - outlets        : (boolean) '電源' の有無
     -- - parking        : (boolean) '駐車場' の有無
     -- - takeout        : (boolean) 'テイクアウト' の有無
-    -- - smoking        : (string)  喫煙ステータス ('NO_SMOKING', 'SMOKING_ROOM', 'SMOKING_SEATS', 'ALL_SMOKING')
-    -- - cash_only      : (boolean) '現金のみ' (True:現金のみ, False:キャッシュレス)
+    -- - smoking        : (boolean) '喫煙可能'
+    -- - cash_only      : (boolean) '現金のみ'
     -- - buffet         : (boolean) 'ドーナツ食べ放題' の有無
     -- - pop_buffet     : (boolean) 'ドーナツポップ詰め放題' の有無
     -- - free_refill    : (boolean) 'ドリンクおかわり無料' の有無

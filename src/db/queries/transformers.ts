@@ -19,6 +19,7 @@ export const INFRA_FEATURES = [
   { key: 'takeout', label: 'テイクアウト' },
   { key: 'parking', label: '駐車場' },
   { key: 'outlets', label: '電源' },
+  { key: 'smoking', label: '喫煙可能' },
   // { key: 'wifi', label: 'Wi-Fi' }, // Wi-Fi普及に伴い非表示に変更
 ] as const;
 
