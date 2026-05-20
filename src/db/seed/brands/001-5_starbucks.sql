@@ -1,4 +1,5 @@
-
+-- # 生成された完全版SQLを実行するコマンド
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/brands/001-5_starbucks.sql --local
 
 INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, website_url, attributes_json, schedule_json) VALUES ('STB_333', 'brand_starbucks', NULL, 'free', '01-V10-A001', 'スターバックス コーヒー 札幌グランドホテル店', '北海道 札幌市中央区 北1条西4丁目 札幌グランドホテル 1F', 43.0630144394, 141.351145716, 'https://store.starbucks.co.jp/detail-333/', '{"category":"cat_cafe","wifi":true,"business_hours":"07:00～22:00"}', '{"base":[{"days":["MO","TU","WE","TH","FR"],"slots":[{"start":"07:00","end":"22:00"}]},{"days":["SA","SU"],"slots":[{"start":"07:30","end":"22:00"}]}],"exclude_holidays":false}');
 INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, website_url, attributes_json, schedule_json) VALUES ('STB_373', 'brand_starbucks', NULL, 'free', '01-V10-A001', 'スターバックス コーヒー 札幌南一条店', '北海道 札幌市中央区 南1条西2丁目5 南一条Kビル 1F', 43.0591565839, 141.354881139, 'https://store.starbucks.co.jp/detail-373/', '{"category":"cat_cafe","wifi":true,"business_hours":"07:30～22:30"}', '{"base":[{"days":["MO","TU","WE","TH","FR","SA","SU"],"slots":[{"start":"07:30","end":"22:30"}]}],"exclude_holidays":false}');
