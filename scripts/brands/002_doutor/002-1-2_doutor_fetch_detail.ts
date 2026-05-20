@@ -7,9 +7,6 @@
  * ③詳細情報を取得
  */
 
-// Usage: npx tsx scripts/brands/002_doutor/002-1-2_doutor_fetch_detail.ts
-// Output：scripts/data/raw/002-2_doutor_detail.json
-
 import fs from 'fs';
 import path from 'path';
 import { chromium, BrowserContext } from 'playwright';
