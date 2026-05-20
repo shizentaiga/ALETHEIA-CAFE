@@ -1,3 +1,6 @@
+-- # 生成された完全版SQLを実行するコマンド
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/brands/002-5_doutor.sql --local
+
 -- =============================================================================
 -- Generated Service Seed Data (Doutor Coffee Shop Detailed)
 -- =============================================================================
