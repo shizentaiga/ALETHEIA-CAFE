@@ -4,7 +4,7 @@
 
 import type { FC } from 'hono/jsx'
 import { formatAttributes, DEFAULT_LIMIT } from '../db/queries/main' // 特徴表示用(チップ形式)
-import { SearchResultPages } from './SearchResultPages' // 分離したコンポーネントをインポート
+import { SearchResultPages } from './SearchResultPages' // 💡 分離したコンポーネントをインポート
 
 // --- 型定義 ---
 export interface ServiceResult {
@@ -116,7 +116,7 @@ const moduleStyle = (scope: string) => `
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 36px; /* 👈 高級感を持たせる広い余白 */
+    margin-top: 36px; /* 高級感を持たせる広い余白 */
     margin-bottom: 12px;
     gap: 8px;
     user-select: none;
@@ -130,7 +130,7 @@ const moduleStyle = (scope: string) => `
     border-radius: 10px;
     border: 1px solid transparent;
     background: transparent;
-    color: #4b5563;
+    color: #374151;            /* 👈 修正: #4b5563 から引き上げ（コントラスト比 約5.3:1 で安全圏） */
     font-size: 0.8rem;
     font-weight: 500;
     transition: all 0.15s ease;
@@ -144,17 +144,18 @@ const moduleStyle = (scope: string) => `
   }
   /* 1ページ目での「戻る」などの無効化 */
   .p-item.disabled {
-    color: #d1d5db;
+    color: #94a3b8;            /* 👈 修正: #d1d5db だと薄すぎてPSIで警告が出るため、不活性ながら視認できるレベルに調整 */
     cursor: not-allowed;
     pointer-events: none;
   }
-  /* 現在位置インジケーター（道具感のある静かなテキスト） */
-  .p-indicator {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #374151;
-    letter-spacing: 0.04em;
-    padding: 0 8px;
+  
+  /* スマホ用現在位置インジケーター */
+  .p-mobile-indicator {
+    font-size: 0.74rem;      
+    font-weight: 500;        
+    color: #475569;            /* 👈 修正: #64748b(コントラスト比約4:1でNG) から #475569(コントラスト比約4.6:1) へ引き上げ、PSIを確実にパスさせます */
+    letter-spacing: 0.02em;   
+    padding: 0 6px;
   }
 `
 
