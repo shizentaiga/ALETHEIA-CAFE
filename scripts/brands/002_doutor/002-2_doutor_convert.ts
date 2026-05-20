@@ -12,8 +12,8 @@ import path from 'path';
 import crypto from 'crypto';
 import dotenv from 'dotenv'; // .dev.vars 読み込み用
 import { Miniflare } from "miniflare";
-import { PATHS, CONFIG, ensureDirectory } from '../utils.js';
-import { normalizeAddress } from '../../src/lib/searchUtils.js';
+import { PATHS, CONFIG, ensureDirectory } from '../../utils.js';
+import { normalizeAddress } from '../../../src/lib/searchUtils.js';
 
 /**
  * プロバイダー固有の設定

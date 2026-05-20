@@ -4,7 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 import { chromium, BrowserContext } from 'playwright';
-import { PATHS, sleep, ensureDirectory } from '../utils.js';
+import { PATHS, sleep, ensureDirectory } from '../../utils.js';
 
 const CONFIG = {
     INPUT_FILE: '004_misdo.json',

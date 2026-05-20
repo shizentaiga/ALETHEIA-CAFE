@@ -6,8 +6,8 @@
 import fs from 'fs';
 import path from 'path';
 import { Miniflare } from "miniflare";
-import { PATHS, CONFIG, ensureDirectory } from '../utils.js';
-import { normalizeAddress } from '../../src/lib/searchUtils.js';
+import { PATHS, CONFIG, ensureDirectory } from '../../utils.js';
+import { normalizeAddress } from '../../../src/lib/searchUtils.js';
 
 /**
  * プロバイダー固有の設定

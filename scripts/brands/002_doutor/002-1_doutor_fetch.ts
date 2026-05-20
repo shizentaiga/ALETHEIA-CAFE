@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import { chromium, BrowserContext, Page } from 'playwright';
-import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
+import { PATHS, CONFIG, sleep, ensureDirectory } from '../../utils.js';
 
 /**
  * プロバイダー固有の設定

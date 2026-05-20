@@ -11,7 +11,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { PATHS, CONFIG, sleep, ensureDirectory } from '../utils.js';
+import { PATHS, CONFIG, sleep, ensureDirectory } from '../../utils.js';
 
 /**
  * プロバイダー固有の設定

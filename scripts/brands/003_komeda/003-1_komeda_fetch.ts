@@ -7,8 +7,8 @@
 import fs from 'fs';
 import path from 'path';
 import { chromium, BrowserContext, Page } from 'playwright';
-import { PATHS, sleep, ensureDirectory } from '../utils.js';
-import { PREFECTURE_MASTER } from '../../src/lib/constants';
+import { PATHS, sleep, ensureDirectory } from '../../utils.js';
+import { PREFECTURE_MASTER } from '../../../src/lib/constants';
 
 /**
  * プロバイダー固有の設定

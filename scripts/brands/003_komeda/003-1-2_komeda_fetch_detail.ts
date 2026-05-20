@@ -4,7 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
-import { PATHS, sleep, ensureDirectory } from '../utils.js';
+import { PATHS, sleep, ensureDirectory } from '../../utils.js';
 
 const CONFIG = {
     INPUT_FILE: '003_komeda.json',
