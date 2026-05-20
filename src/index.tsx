@@ -21,20 +21,20 @@ const app = new Hono<{ Bindings: Bindings }>()
 /**
  * Global Middlewares
  */
-app.use(htmlMinifier()) // HTML配信時に不要なコメントアウトを削除
-app.use(renderer) // Apply common layout
+app.use(htmlMinifier()) // 不要なコメント削除(HTML配信時)
+app.use(renderer)       // 共通レイアウト
 
 /**
  * Route Modules
  */
 app.route('/api/area-drilldown', areaApi)         // SearchArea.tsxのパスと一致
 app.route('/api/attribute-search', attributeApi)  // SearchAttribute.tsxのパスと一致
-app.route('/', googleAuthApp)   // Google OAuth2.0
-app.route('/', home)            // Main application home
+app.route('/', googleAuthApp)                     // Google OAuth2.0
+app.route('/', home)                              // Main application home
 
 /**
  * Development Only
  */
-app.route('/_sandbox', sandboxApp) // Prototyping area
+app.route('/_sandbox', sandboxApp) // 検証エリア
 
 export default app
