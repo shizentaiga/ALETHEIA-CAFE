@@ -20,6 +20,7 @@ export interface SearchResultProps {
   total: number;
   area?: string;
   q?: string; // サーバー側で正規化されたクエリ文字列
+  page?: number; // 💡 ページネーション用パラメータ
 }
 
 // --- スタイル定義 ---
@@ -116,7 +117,7 @@ const LABELS = {
  * 検索結果コンポーネント
  * 結果一覧を描画し、クライアント側のJavaScript同期用に隠し状態を埋め込む
  */
-export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '', q = '' }) => {
+export const SearchResult: FC<SearchResultProps> = ({ results, total, area = '', q = '', page = 1 }) => {
   const scope = "search-result-module"
 
   return (

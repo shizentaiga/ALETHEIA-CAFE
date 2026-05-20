@@ -61,6 +61,11 @@ home.get('/', async (c) => {
     currentParams.set('area', area);
   }
 
+  // 💡 3.5 ページ番号の抽出と受け渡し
+  const urlPage = c.req.query('page');
+  const page = urlPage ? Math.max(1, parseInt(urlPage, 10) || 1) : 1;
+  currentParams.set('page', String(page));
+
   // 4. ユーザーセッションの確認
   const userId = getCookie(c, 'aletheia_session');
   const user = userId ? {} : null;
@@ -77,7 +82,7 @@ home.get('/', async (c) => {
   const { results, total } = await fetchServices({
     db, 
     q, 
-    page: 1, 
+    page, 
     area,
     attrs, // 💡 正規化済みの特徴配列（例: ['wifi', 'outlets']）をクエリに渡す
     userCoords: baseCoords,
@@ -92,10 +97,11 @@ home.get('/', async (c) => {
       <TopMain 
         results={results} 
         total={total} 
-        area={area} 
         q={q} 
+        area={area} 
         attrs={attrs}
         areaName={areaInfo.name}
+        page={page}
         currentParams={currentParams} 
       />
 
