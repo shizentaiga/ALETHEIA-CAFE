@@ -45,9 +45,19 @@ async function getDoutorPageData(page: Page, prefCode: string, currentTotalExpec
         for (const row of spotRows) {
             const rawText = await row.innerText();
             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
+
+            // URLを取得
+            const href = await row.evaluate((el) => {
+                return el.querySelector('a')?.getAttribute('href') || null;
+            });
+            
+            // 必要に応じて完全なURLに変換
+            const fullUrl = href ? (href.startsWith('//') ? `https:${href}` : href) : null;
+
             if (lines.length >= 2) {
                 extractedData.push({
                     rawLines: lines,
+                    url: fullUrl,   // データにURL追加
                     fetchedAt: new Date().toISOString()
                 });
             }
