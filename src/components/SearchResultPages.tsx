@@ -94,28 +94,6 @@ export const SearchResultPages: FC<SearchResultPagesProps> = ({
         </a>
       </div>
 
-      {/* 📱 スマホ用レイアウト */}
-      <div class="p-mobile">
-        <a
-          href={hasPrev ? createPageUrl(page - 1) : '#'}
-          class={`p-item ${!hasPrev ? 'disabled' : ''}`}
-          aria-label="前のページへ"
-        >
-          ‹
-        </a>
-        
-        {/* 💡 修正点: 主張の強かった「{page} / {totalPages}」を廃止し、世界観に合わせた静かな表記へ */}
-        <span class="p-mobile-indicator">Page {page}</span>
-        
-        <a
-          href={hasNext ? createPageUrl(page + 1) : '#'}
-          class={`p-item ${!hasNext ? 'disabled' : ''}`}
-          aria-label="次のページへ"
-        >
-          ›
-        </a>
-      </div>
-
     </nav>
   );
 };
