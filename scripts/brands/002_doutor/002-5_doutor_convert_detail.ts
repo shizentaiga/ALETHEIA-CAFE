@@ -13,7 +13,7 @@ const CONFIG = {
 interface ExistingMeta {
     service_id: string;
     brand_id: string;
-    owner_id: string;
+    owner_id: string | null; // NULLを許容
     plan_id: string;
     area_id: string;
 }
@@ -38,14 +38,17 @@ function parseExistingSql(sqlPath: string): Map<string, ExistingMeta> {
     const content = fs.readFileSync(sqlPath, 'utf-8');
     const lines = content.split('\n');
 
-    // VALUES句から各フィールドを確実に抽出する正規表現
-    // 1:service_id, 2:brand_id, 3:owner_id, 4:plan_id, 5:area_id, 6:title
-    const regex = /VALUES\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'/;
+    // 💡 変更: owner_id が NULL (クォートなし) または '値' (クォートあり) のどちらでも抽出できるように正規表現を修正
+    // 1:service_id, 2:brand_id, 3:owner_id(クォート内かNULL文字), 4:plan_id, 5:area_id, 6:title
+    const regex = /VALUES\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*(?:'([^']+)'|(NULL))\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'/;
 
     for (const line of lines) {
         const match = line.match(regex);
         if (match) {
-            const [_, service_id, brand_id, owner_id, plan_id, area_id, title] = match;
+            // match[3] はクォートありの値、match[4] は生NULL文字
+            const [_, service_id, brand_id, quoted_owner, raw_null_owner, plan_id, area_id, title] = match;
+            const owner_id = raw_null_owner === 'NULL' ? null : quoted_owner;
+            
             // 比較しやすくするため、既存SQL内のエスケープされたシングルクォートを戻す
             const cleanTitle = title.replace(/''/g, "'");
             titleToMetaMap.set(cleanTitle, { service_id, brand_id, owner_id, plan_id, area_id });
@@ -81,9 +84,9 @@ function main() {
         
         // デフォルトのフォールバック値（既存SQLに存在しない新規店舗用）
         let service_id = `DTR_${shopCode}`;
-        let meta = {
+        let meta: { brand_id: string; owner_id: string | null; plan_id: string; area_id: string } = {
             brand_id: 'brand_doutor',
-            owner_id: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+            owner_id: null, // 💡 変更: デフォルトのフォールバックも null に設定
             plan_id: 'free',
             area_id: '01-V40-A041' // 一応のデフォルト（北海道等）
         };
@@ -94,7 +97,7 @@ function main() {
             service_id = existing.service_id;
             meta = {
                 brand_id: existing.brand_id,
-                owner_id: existing.owner_id,
+                owner_id: null, // 💡 変更: 既存SQLに値があってもなくても一律で NULL(null) に上書き
                 plan_id: existing.plan_id,
                 area_id: existing.area_id
             };
@@ -146,8 +149,11 @@ function main() {
         const schedJsonStr = JSON.stringify(schedule).replace(/'/g, "''");
         const websiteUrl = shop.url || '';
 
+        // 💡 変更: SQL出力時に owner_id が null の場合はクォートなしの NULL、値がある場合は '${meta.owner_id}' になるよう動的制御
+        const sqlOwnerValue = meta.owner_id === null ? 'NULL' : `'${meta.owner_id}'`;
+
         // 8. SQL文の組み立て
-        const sql = `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, website_url, attributes_json, schedule_json) VALUES ('${service_id}', '${meta.brand_id}', '${meta.owner_id}', '${meta.plan_id}', '${meta.area_id}', '${escapedTitle}', '${escapedAddress}', ${info.lat || 'NULL'}, ${info.lon || 'NULL'}, '${websiteUrl}', '${attrJsonStr}', '${schedJsonStr}');`;
+        const sql = `INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, website_url, attributes_json, schedule_json) VALUES ('${service_id}', '${meta.brand_id}', ${sqlOwnerValue}, '${meta.plan_id}', '${meta.area_id}', '${escapedTitle}', '${escapedAddress}', ${info.lat || 'NULL'}, ${info.lon || 'NULL'}, '${websiteUrl}', '${attrJsonStr}', '${schedJsonStr}');`;
         
         sqlLines.push(sql);
     }
