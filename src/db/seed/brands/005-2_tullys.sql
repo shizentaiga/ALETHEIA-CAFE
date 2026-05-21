@@ -1,0 +1,4 @@
+-- npx wrangler d1 execute ALETHEIA_CAFE_DB --file=./src/db/seed/brands/005-2_tullys.sql --local
+
+-- 新店舗で営業時間がJSONに設定されていなかったため。
+INSERT OR REPLACE INTO services (service_id, brand_id, owner_id, plan_id, area_id, title, address, lat, lng, website_url, schedule_json, attributes_json) VALUES ('TLY_1003199', 'brand_tullys', NULL, 'free', '10-13-A015', 'タリーズコーヒー コミュシティ高円寺マシタ店', '東京都杉並区高円寺南3-70-1', 35.70528432872994, 139.64898721166125, 'https://shop.tullys.co.jp/detail/1003199', '{"base":[{"days":["TH","FR","SA","SU","MO","TU","WE"],"slots":[{"start":"07:30","end":"21:00"}]}],"exclude_holidays":false}', '{"category":"cat_cafe","wifi":true,"smoking":false,"business_hours":"07:30～21:00"}');

@@ -1,0 +1,39 @@
+{
+  "id": "1003199",
+  "name": "タリーズコーヒー コミュシティ高円寺マシタ店",
+  "url": "https://shop.tullys.co.jp/detail/1003199",
+  "phone": "03-5327-8514",
+  "postal_code": "166-0003",
+  "address_region": "東京都",
+  "address_locality": "杉並区",
+  "street_address": "高円寺南3-70-1",
+  "full_address": "東京都杉並区高円寺南3-70-1",
+  "geo": {
+    "latitude": 35.70528432872994,
+    "longitude": 139.64898721166125
+  },
+  "business_hours": {
+    "monday": "07:30～21:00",
+    "tuesday": "07:30～21:00",
+    "wednesday": "07:30～21:00",
+    "thursday": "07:30～21:00",
+    "friday": "07:30～21:00",
+    "saturday": "08:00～21:00",
+    "sunday": "08:00～21:00"
+  },
+  "payment_methods": {
+    "e_money": ["交通系電子マネー", "楽天Edy", "QUICPay", "iD"],
+    "credit_card": ["VISAカード", "JCBカード", "Diners Club", "MasterCard", "AMERICAN EXPRESS", "DISCOVER"],
+    "qr_code": ["PayPay", "メルペイ", "WeChat Pay", "Alipay", "au PAY", "d払い", "楽天ペイ"]
+  },
+  "facilities": ["Tully’s Wi-Fi", "ChargeSpot", "禁煙"],
+  "menu_features": ["デカフェ・エスプレッソ"],
+  "services": ["タリーズカード", "ドリンクチケット", "モバイルオーダー"],
+  "delivery": ["出前館", "Uber Eats"],
+  "latest_notice": {
+    "date": "2026-05-13",
+    "title": "＼本日5月13日より／",
+    "description": "あなたはどっちの気分？「クッキー＆クリームシェイク」「チョコミントシェイク」が発売！",
+    "image": "https://meocloud-image.s3-ap-northeast-1.amazonaws.com/images/202605136a03caee02776drink_LINE1040_1040A.jpg"
+  }
+}
