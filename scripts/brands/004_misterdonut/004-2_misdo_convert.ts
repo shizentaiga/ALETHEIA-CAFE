@@ -1,6 +1,6 @@
 /**
  * ミスタードーナツ データコンバーター (D1エリア参照付きSQL生成)
- * * 使用方法: npx tsx scripts/brands/004-2_misterdonuts_convert.ts
+ * * 使用方法: npx tsx scripts/brands/004_misterdonut/004-2_misdo_convert.ts
  */
 
 import fs from 'fs';
