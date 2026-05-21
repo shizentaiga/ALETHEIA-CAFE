@@ -144,9 +144,9 @@ const moduleStyle = (scope: string) => `
   }
   /* 1ページ目での「戻る」などの無効化 */
   .p-item.disabled {
-    color: #727b8e;         /* 白背景に対して「4.5:1」をクリアする限界の濃いグレー */
-    background: #fff;    /* 少しだけバックグラウンドを落とす */
-    border-color: #fff;  /* 枠線も少しだけ認識できるように調整 */
+    color: #64748b;         /* 白背景に対して「4.5:1」をクリアする限界の濃いグレー */
+    background: #fff; 
+    border-color: #fff;
     cursor: not-allowed;
     pointer-events: none;
   }
