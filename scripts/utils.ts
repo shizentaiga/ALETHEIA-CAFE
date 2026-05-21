@@ -29,6 +29,7 @@ export const CONFIG = {
         DOUTOR: getBrandId('DOUTOR'),
         KOMEDA: getBrandId('KOMEDA'),
         MISTERDONUTS: getBrandId('MISTERDONUTS'),
+        TULLYS: getBrandId('TULLYS'),
     },
     OWNER_ID: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
     WAIT_LONG: 2000,    // 大規模なデータチャンク間の待機時間 (ms)
