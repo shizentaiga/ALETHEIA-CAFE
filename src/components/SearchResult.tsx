@@ -145,8 +145,8 @@ const moduleStyle = (scope: string) => `
   /* 1ページ目での「戻る」などの無効化 */
   .p-item.disabled {
     color: #727b8e;         /* 白背景に対して「4.5:1」をクリアする限界の濃いグレー */
-    background: #f8fafc;    /* 少しだけバックグラウンドを落とす */
-    border-color: #e2e8f0;  /* 枠線も少しだけ認識できるように調整 */
+    background: #fff;    /* 少しだけバックグラウンドを落とす */
+    border-color: #fff;  /* 枠線も少しだけ認識できるように調整 */
     cursor: not-allowed;
     pointer-events: none;
   }
