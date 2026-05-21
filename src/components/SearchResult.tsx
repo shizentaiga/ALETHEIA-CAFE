@@ -35,10 +35,10 @@ const moduleStyle = (scope: string) => `
   /* result-header を静かに */
   #${scope} .result-header { 
     font-size: 0.75rem; 
-    color: #64748b;        /* 👈 柔らかいニュアンスグレーへ */
-    font-weight: 600;      /* 👈 ほんの少しだけ太く */
-    margin-bottom: 12px;   /* 👈 下のカードとの余白を少し拡張 */
-    padding-left: 2px;     /* 👈 左側のカードの端と縦のラインを揃える */
+    color: #64748b;       /* 柔らかいニュアンスグレーへ */
+    font-weight: 600;       /* ほんの少しだけ太く */
+    margin-bottom: 12px;    /* 下のカードとの余白を少し拡張 */
+    padding-left: 2px;      /* 左側のカードの端と縦のラインを揃える */
     letter-spacing: 0.04em;
   }
 
@@ -60,16 +60,16 @@ const moduleStyle = (scope: string) => `
     display: block; 
     text-decoration: none; 
     color: inherit;
-    padding: 12px;              /* 👈 10pxから12pxへ。内側の余白にゆとりを持たせる */
+    padding: 12px;              /* 内側の余白にゆとりを持たせる */
     border: 1px solid #f1f5f9; 
     border-radius: 14px; /* 角丸を少し増やす */
     background: #fff; 
-    transition: all 0.15s ease; /* 👈 border-color から all に変更 */
+    transition: all 0.15s ease; /* border-color から all に変更 */
   }
 
   #${scope} .cafe-card:hover { 
     border-color: #d7dee7;       /* hover 時に border を少しだけ明るく */
-    background: #fafbfc;         /* 👈 マウスが乗ったことが直感的にわかる極薄グレーを追加 */
+    background: #fafbfc;         /* マウスが乗ったことが直感的にわかる極薄グレーを追加 */
   }
 
   /* タイトル行数制限 */
@@ -101,11 +101,11 @@ const moduleStyle = (scope: string) => `
   .tag { 
     font-size: 0.65rem; 
     background: #f1f5f9; 
-    padding: 3px 10px;         /* 👈 2px 8px から 3px 10px に広げて文字の窮屈さを解消 */
+    padding: 3px 10px;         /* 2px 8px から 3px 10px に広げて文字の窮屈さを解消 */
     border-radius: 999px; /* 完全に丸く */
     color: #55667a; /* タグも一段階濃くして確実にパスさせる */
     font-weight: 400; 
-    border: 1px solid #e8edf3; /* 👈 #e2e8f0 から、少しだけ背景に馴染む優しい色合いへ */
+    border: 1px solid #e8edf3; /* #e2e8f0 から、少しだけ背景に馴染む優しい色合いへ */
     line-height: 1.2; /* タグの縦位置だけ少し整える */
   }
 
@@ -130,7 +130,7 @@ const moduleStyle = (scope: string) => `
     border-radius: 10px;
     border: 1px solid transparent;
     background: transparent;
-    color: #374151;            /* 👈 修正: #4b5563 から引き上げ（コントラスト比 約5.3:1 で安全圏） */
+    color: #374151;            /* #4b5563 から引き上げ（コントラスト比 約5.3:1 で安全圏） */
     font-size: 0.8rem;
     font-weight: 500;
     transition: all 0.15s ease;
@@ -144,16 +144,17 @@ const moduleStyle = (scope: string) => `
   }
   /* 1ページ目での「戻る」などの無効化 */
   .p-item.disabled {
-    color: #94a3b8;            /* 👈 修正: #d1d5db だと薄すぎてPSIで警告が出るため、不活性ながら視認できるレベルに調整 */
+    color: #727b8e;         /* 白背景に対して「4.5:1」をクリアする限界の濃いグレー */
+    background: #f8fafc;    /* 少しだけバックグラウンドを落とす */
+    border-color: #e2e8f0;  /* 枠線も少しだけ認識できるように調整 */
     cursor: not-allowed;
     pointer-events: none;
   }
-  
   /* スマホ用現在位置インジケーター */
   .p-mobile-indicator {
     font-size: 0.74rem;      
     font-weight: 500;        
-    color: #475569;            /* 👈 修正: #64748b(コントラスト比約4:1でNG) から #475569(コントラスト比約4.6:1) へ引き上げ、PSIを確実にパスさせます */
+    color: #475569;            /* #475569(コントラスト比約4.6:1)  */
     letter-spacing: 0.02em;   
     padding: 0 6px;
   }
